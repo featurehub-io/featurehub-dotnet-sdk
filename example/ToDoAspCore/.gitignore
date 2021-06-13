@@ -1,0 +1,6 @@
+bin/
+obj/
+.openapi-generator
+ToDoAspCore.sln
+src/ToDoAspCore/ToDoAspCore.csproj
+

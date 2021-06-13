@@ -1,0 +1,6 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=_002FUsers_002Frichard_002Fprojects_002Ffh_002Ffeaturehub_002Fsdks_002Fclient_002Dcsharp_002FFeatureHubSDK_002Fbin_002FRelease_002Fnetstandard2_002E0_002Fpublish_002FFeatureHubSDK_002Edll/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=_002FUsers_002Frichard_002Fprojects_002Ffh_002Ffeaturehub_002Fsdks_002Fclient_002Dcsharp_002FFeatureHubSDK_002Fbin_002FRelease_002Fnetstandard2_002E0_002Fpublish_002FFeatureHubSDK_002Epdb/@EntryIndexedValue">True</s:Boolean>
+	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;
+  &lt;Assembly Path="/Users/richard/projects/fh/featurehub/sdks/client-csharp/FeatureHubSDK/bin/Release/netstandard2.0/publish/FeatureHubSDK.dll" /&gt;
+&lt;/AssemblyExplorer&gt;</s:String></wpf:ResourceDictionary>
