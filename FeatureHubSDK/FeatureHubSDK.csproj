@@ -26,7 +26,7 @@
       <PackageReference Include="murmurhash" Version="1.0.3" />
       <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
       <PackageReference Include="NodaTime" Version="3.0.5" />
-      <PackageReference Include="RestSharp" Version="106.10.1" />
+      <PackageReference Include="RestSharp" Version="106.11.8-alpha.0.13" />
       <None Include="FeatureHub-icon.png" Pack="true" PackagePath="\" />
       <None Include="README.md" Pack="true" PackagePath="\" />
       <PackageReference Include="SemanticVersioning" Version="1.3.0" />
