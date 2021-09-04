@@ -1,10 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# 
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeatureHubSDK", "FeatureHubSDK\FeatureHubSDK.csproj", "{0775375C-09ED-4086-8F39-69FC5039F0DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp", "ConsoleApp\ConsoleApp.csproj", "{258A00EC-9D1B-4180-811E-FC8E0D808E81}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleAppExample", "ConsoleAppExample\ConsoleAppExample.csproj", "{258A00EC-9D1B-4180-811E-FC8E0D808E81}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeatureHubTestProject", "FeatureHubTestProject\FeatureHubTestProject.csproj", "{284F78BD-1C24-4ED0-8789-585095F1F40D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeatureHubTest", "FeatureHubTest\FeatureHubTest.csproj", "{284F78BD-1C24-4ED0-8789-585095F1F40D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ToDoAspCoreExample", "ToDoAspCoreExample\ToDoAspCoreExample.csproj", "{925FD71E-1C59-4EE2-AF21-5D0181EAAD43}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +27,9 @@ Global
 		{284F78BD-1C24-4ED0-8789-585095F1F40D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{284F78BD-1C24-4ED0-8789-585095F1F40D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{284F78BD-1C24-4ED0-8789-585095F1F40D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{925FD71E-1C59-4EE2-AF21-5D0181EAAD43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{925FD71E-1C59-4EE2-AF21-5D0181EAAD43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{925FD71E-1C59-4EE2-AF21-5D0181EAAD43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{925FD71E-1C59-4EE2-AF21-5D0181EAAD43}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
