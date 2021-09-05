@@ -21,8 +21,9 @@ namespace ConsoleAppExample
     {
       Console.WriteLine("Hello World!");
 
-      var config = new EdgeFeatureHubConfig("http://localhost:8903",
-        "default/82afd7ae-e7de-4567-817b-dd684315adf7/SJXBRyGCe1dZ*PNYGy7iOFeKE");
+      var config = new EdgeFeatureHubConfig("http://localhost:8064",
+        "default/b63faed0-1a66-48a6-8679-e362d1d33d7d/QgoWPhyDisWwHY5heuVzXbB41xqXwB*fL7QfLvLTb6OA00Cx8t1");
+      config.Init();
 
       Console.WriteLine($"Server evaluated {config.ServerEvaluation}");
 
@@ -61,7 +62,7 @@ namespace ConsoleAppExample
 
 
       Console.WriteLine("Context initialized, waiting for readyness - Press a key when readyness appears");
-      // Console.ReadKey();
+      Console.ReadKey();
 
       // this will set up a ClientContext - which is a bucket of information about this user
 // and then attempt to connect to the repository and retrieve your data. It will return once it
@@ -81,11 +82,11 @@ namespace ConsoleAppExample
         await context.UserKey("DJElif").Country(StrategyAttributeCountryName.Turkey).Attr("city", "istanbul").Build();
 
         Console.WriteLine($"Istanbul 1 is {val()}");
-        // Console.ReadKey();
+        Console.ReadKey();
         Console.WriteLine($"Istanbul 2 is {val()}");
 
         Console.Write("Press a key (change context2)");
-        // Console.ReadKey();
+        Console.ReadKey();
 
         await context.UserKey("AmyWiles").Country(StrategyAttributeCountryName.Unitedkingdom).Attr("city", "london").Build();
         Console.WriteLine($"london 1 is {val()}");
@@ -98,6 +99,7 @@ namespace ConsoleAppExample
       {
         Console.WriteLine("Not ready yet");
       }
+      
       context.Close();
     }
   }

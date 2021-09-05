@@ -111,13 +111,13 @@ namespace FeatureHubSDK
 
       _eventSource = new EventSource(config);
 
-      if (FeatureLogging.DebugLogger != null)
-      {
-        _eventSource.Closed += (sender, args) =>
-        {
-          FeatureLogging.DebugLogger(this, "source closed");
-        };
-      }
+      // if (FeatureLogging.DebugLogger != null)
+      // {
+      //   _eventSource.Closed += (sender, args) =>
+      //   {
+      //     FeatureLogging.DebugLogger(this, "source closed");
+      //   };
+      // }
 
       _eventSource.MessageReceived += (sender, args) =>
       {
