@@ -17,7 +17,7 @@ namespace FeatureHubTest
       var counter = 0;
       for (var count = 0; count < 1000; count++)
       {
-        if (calc.DetermineClientPercentage(Guid.NewGuid().ToString(), featureId) <= 200000)
+        if (calc.DetermineClientPercentage(Guid.NewGuid().ToString(), new Guid()) <= 200000)
         {
           counter++;
         }

@@ -88,7 +88,7 @@ namespace ConsoleAppExample
         Console.Write("Press a key (change context2)");
         Console.ReadKey();
 
-        await context.UserKey("AmyWiles").Country(StrategyAttributeCountryName.Unitedkingdom).Attr("city", "london").Build();
+        await context.UserKey("AmyWiles").Country(StrategyAttributeCountryName.UnitedKingdom).Attr("city", "london").Build();
         Console.WriteLine($"london 1 is {val()}");
         // Console.ReadKey();
         Console.WriteLine($"london 1 is {val()}");

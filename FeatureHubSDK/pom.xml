@@ -39,24 +39,31 @@
 
   <build>
     <plugins>
+      <!-- pull the defined API and unzip it -->
       <plugin>
-        <groupId>cd.connect.maven</groupId>
-        <artifactId>merge-yaml-plugin</artifactId>
-        <version>1.1</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
-            <id>combine</id>
-            <goals>
-              <goal>mergeYaml</goal>
-            </goals>
+            <id>extract-sse-edge-components</id>
             <phase>initialize</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
             <configuration>
-              <files>
-                <file>${project.basedir}/../../../backend/sse-edge-api/src/main/resources/sse-api.yaml</file>
-                <file>${project.basedir}/../../../backend/mr-api/end2end-common.yaml</file>
-                <file>${project.basedir}/../../../backend/mr-api/strategy-enums.yaml</file>
-              </files>
-              <finalYaml>${project.basedir}/final.yaml</finalYaml>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>io.featurehub.edge</groupId>
+                  <artifactId>sse-edge-api</artifactId>
+                  <version>1.4-SNAPSHOT</version>
+                  <classifier>api</classifier>
+                  <type>yaml</type>
+                  <outputDirectory>${project.basedir}/target</outputDirectory>
+                  <destFileName>sse.yaml</destFileName>
+                </artifactItem>
+              </artifactItems>
+              <overWriteReleases>true</overWriteReleases>
+              <overWriteSnapshots>true</overWriteSnapshots>
             </configuration>
           </execution>
         </executions>
@@ -109,7 +116,7 @@
             <phase>generate-sources</phase>
             <configuration>
               <output>${project.basedir}</output>
-              <inputSpec>${project.basedir}/final.yaml</inputSpec>
+              <inputSpec>${project.basedir}/target/sse.yaml</inputSpec>
               <generatorName>csharp-netcore</generatorName>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateModelDocumentation>false</generateModelDocumentation>
@@ -124,6 +131,7 @@
                 <additionalProperty>optionalProjectFile=false</additionalProperty>
                 <additionalProperty>optionalAssemblyInfo=false</additionalProperty>
                 <additionalProperty>validatable=false</additionalProperty>
+                <additionalProperty>targetFramework=netstandard2.0</additionalProperty>
               </additionalProperties>
               <typeMappings>
                 <typeMapping>AnyType=object</typeMapping>
@@ -137,7 +145,7 @@
       <plugin>
         <groupId>io.repaint.maven</groupId>
         <artifactId>tiles-maven-plugin</artifactId>
-        <version>2.17</version>
+        <version>2.23</version>
         <extensions>true</extensions>
         <configuration>
           <filtering>false</filtering>

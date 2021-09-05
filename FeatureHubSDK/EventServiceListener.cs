@@ -139,7 +139,7 @@ namespace FeatureHubSDK
             state = SSEResultState.Failure;
             break;
           case "delete_feature":
-            state = SSEResultState.Deletefeature;
+            state = SSEResultState.DeleteFeature;
             break;
           case "bye":
             state = null;

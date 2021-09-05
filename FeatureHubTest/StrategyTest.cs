@@ -34,7 +34,7 @@ namespace FeatureHubTest
       var feature = new FeatureState();
       feature.Key = "bool1";
       feature.Value = true;
-      feature.Version = 1;
+      feature._Version = 1;
       feature.Type = FeatureValueType.BOOLEAN;
       var strategy = new RolloutStrategy("id", "name");
       strategy.Value = false;
@@ -50,7 +50,7 @@ namespace FeatureHubTest
       repo.Notify(new List<FeatureState>{feature});
 
       var matchCC = new TestClientContext().Country(StrategyAttributeCountryName.Turkey);
-      var unmatchCC = new TestClientContext().Country(StrategyAttributeCountryName.Newzealand);
+      var unmatchCC = new TestClientContext().Country(StrategyAttributeCountryName.NewZealand);
 
       Assert.AreEqual(false, repo.GetFeature("bool1").WithContext(matchCC).BooleanValue);
       Assert.AreEqual(true, repo.GetFeature("bool1").WithContext(unmatchCC).BooleanValue);
@@ -64,7 +64,7 @@ namespace FeatureHubTest
       var feature = new FeatureState();
       feature.Key = "num1";
       feature.Value = 16;
-      feature.Version = 1;
+      feature._Version = 1;
       feature.Type = FeatureValueType.NUMBER;
       var over40Strategy = new RolloutStrategy("id", "name");
       over40Strategy.Value = 6;
@@ -106,7 +106,7 @@ namespace FeatureHubTest
       var feature = new FeatureState();
       feature.Key = "s1";
       feature.Value = "feature";
-      feature.Version = 1;
+      feature._Version = 1;
       feature.Type = ft;
       var notMobileStrategy = new RolloutStrategy("id", "not-mobile");
       notMobileStrategy.Value = "not-mobile";

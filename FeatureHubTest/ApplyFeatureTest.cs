@@ -1,5 +1,6 @@
 
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FeatureHubSDK;
@@ -12,7 +13,7 @@ namespace FeatureHubTest
   {
     public int pc = 21;
 
-    public int DetermineClientPercentage(string percentageText, string featureId)
+    public int DetermineClientPercentage(string percentageText, Guid featureId)
     {
       return pc;
     }
@@ -62,7 +63,7 @@ namespace FeatureHubTest
       // and: we have a context
       var cc = new TestClientContext().UserKey("mary@mary.com");
 
-      var val = _applyFeature.Apply(new List<RolloutStrategy> {rs}, "fred", "id", null);
+      var val = _applyFeature.Apply(new List<RolloutStrategy> {rs}, "fred", new Guid(), null);
 
       Assert.AreEqual(val.Matched, false);
     }
@@ -78,7 +79,7 @@ namespace FeatureHubTest
       // and: we have a context
       var cc = new TestClientContext().UserKey("mary@mary.com");
 
-      var val = _applyFeature.Apply(new List<RolloutStrategy> {rs}, "fred", "id", cc);
+      var val = _applyFeature.Apply(new List<RolloutStrategy> {rs}, "fred", new Guid(), cc);
 
       Assert.AreEqual(expected, val.Value);
       Assert.AreEqual(matched, val.Matched);
@@ -98,7 +99,7 @@ namespace FeatureHubTest
       // and: we have a context
       var cc = new TestClientContext().UserKey("mary@mary.com");
 
-      var val = _applyFeature.Apply(new List<RolloutStrategy> {}, "fred", "id", cc);
+      var val = _applyFeature.Apply(new List<RolloutStrategy> {}, "fred", new Guid(), cc);
 
       Assert.AreEqual(expected, val.Value);
       Assert.AreEqual(matched, val.Matched);
