@@ -1,0 +1,12 @@
+# action.yml
+name: 'Push to Nuget'
+description: 'Build, test and publish to Nuget'
+inputs:
+  version-to-release:  # version for Nuget package to be released
+    description: 'Version to be published to Nuget'
+    required: true
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.command }}
