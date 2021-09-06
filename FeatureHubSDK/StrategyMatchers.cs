@@ -18,7 +18,7 @@ namespace FeatureHubSDK
 {
   public interface IPercentageCalculator
   {
-    int DetermineClientPercentage(string percentageText, string featureId);
+    int DetermineClientPercentage(string percentageText, Guid featureId);
   }
 
   public class PercentageMurmur3Calculator : IPercentageCalculator, IDisposable
@@ -36,7 +36,7 @@ namespace FeatureHubSDK
       _hashAlgorithm = MurmurHash.Create32(seed: seed);
     }
 
-    public int DetermineClientPercentage(string percentageText, string featureId)
+    public int DetermineClientPercentage(string percentageText, Guid featureId)
     {
       var hashCode = _hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(percentageText + featureId));
       var result = BitConverter.ToInt32(hashCode, 0);
@@ -73,7 +73,7 @@ namespace FeatureHubSDK
       _matcherRepository = matcherRepository;
     }
 
-    public Applied Apply(List<RolloutStrategy> strategies, string key, string featureValueId,
+    public Applied Apply(List<RolloutStrategy> strategies, string key, Guid featureValueId,
       IClientContext context)
     {
       if (context != null && strategies != null && strategies.Count != 0)

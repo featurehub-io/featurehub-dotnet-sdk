@@ -111,13 +111,13 @@ namespace FeatureHubSDK
 
       _eventSource = new EventSource(config);
 
-      if (FeatureLogging.DebugLogger != null)
-      {
-        _eventSource.Closed += (sender, args) =>
-        {
-          FeatureLogging.DebugLogger(this, "source closed");
-        };
-      }
+      // if (FeatureLogging.DebugLogger != null)
+      // {
+      //   _eventSource.Closed += (sender, args) =>
+      //   {
+      //     FeatureLogging.DebugLogger(this, "source closed");
+      //   };
+      // }
 
       _eventSource.MessageReceived += (sender, args) =>
       {
@@ -128,7 +128,7 @@ namespace FeatureHubSDK
             state = SSEResultState.Features;
             if (FeatureLogging.TraceLogger != null)
             {
-              FeatureLogging.TraceLogger(this, "featurehub: fresh feature set received, ready to rumble");
+              FeatureLogging.TraceLogger(this, "featurehub: Features are available...");
             }
 
             break;
@@ -139,7 +139,7 @@ namespace FeatureHubSDK
             state = SSEResultState.Failure;
             break;
           case "delete_feature":
-            state = SSEResultState.Deletefeature;
+            state = SSEResultState.DeleteFeature;
             break;
           case "bye":
             state = null;

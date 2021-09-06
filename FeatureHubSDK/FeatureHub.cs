@@ -200,7 +200,7 @@ namespace FeatureHubSDK
 
     public bool IsSet => GetValue(_feature?.Type) != null;
 
-    public long? Version => _feature?.Version;
+    public long? Version => _feature?._Version;
 
     public FeatureState FeatureState
     {
@@ -388,7 +388,7 @@ namespace FeatureHubSDK
           }
 
           break;
-        case SSEResultState.Deletefeature:
+        case SSEResultState.DeleteFeature:
           if (data != null)
           {
             DeleteFeature(JsonConvert.DeserializeObject<FeatureState>(data));
@@ -455,8 +455,8 @@ namespace FeatureHubSDK
       }
       else if (holder.Version != null)
       {
-        if (holder.Version > fs.Version || (
-          holder.Version == fs.Version && !FeatureStateBaseHolder.ValueChanged(holder.Value, fs.Value)))
+        if (holder.Version > fs._Version || (
+          holder.Version == fs._Version && !FeatureStateBaseHolder.ValueChanged(holder.Value, fs.Value)))
         return false;
       }
 
