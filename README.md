@@ -31,9 +31,11 @@ var config = new FeatureHubConfig("http://localhost:8903",
   "default/82afd7ae-e7de-4567-817b-dd684315adf7/SJXBRyGCe1dZ*PNYGy7iOFeKE");
   
 config.Init(); // tell it to asynchronously connect and start listening
+```
 
 You can optionally set an analytics provider on the config (see below).
 
+```
 // this will set up a ClientContext - which is a bucket of information about this user
 // and then attempt to connect to the repository and retrieve your data. It will return once it
 // has received your data.  
@@ -48,6 +50,7 @@ context["FLUTTER_COLOUR"].FeatureUpdateHandler += (object sender, IFeatureStateH
 {
   Console.WriteLine($"Received type {holder.Key}: {context[holder.Key].StringValue}");        
 };
+```
 
 There are many more convenience methods on the `IClientContext`, including:
 
@@ -55,7 +58,6 @@ There are many more convenience methods on the `IClientContext`, including:
     - IsSet - does this feature have a value?
     - LogAnalyticEvent - logs an analytics event if you have set up an analytics provider.
 
-``` 
 
 ### ASP.NET 
 

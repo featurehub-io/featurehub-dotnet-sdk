@@ -128,7 +128,7 @@ namespace FeatureHubSDK
             state = SSEResultState.Features;
             if (FeatureLogging.TraceLogger != null)
             {
-              FeatureLogging.TraceLogger(this, "featurehub: fresh feature set received, ready to rumble");
+              FeatureLogging.TraceLogger(this, "featurehub: Features are available...");
             }
 
             break;

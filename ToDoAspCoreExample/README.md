@@ -67,7 +67,7 @@ docker run -p 8099:8099 todoaspcore
 ```
 
 
-You should see `"Features are available, starting server..."` message in the console. If no message shows up, it is likely the API Url is incorrect.
+You should see `"Features are available..."` message in the console. If no message shows up, it is likely the API Url is incorrect.
 
 once the app is running, you should be able to do:
 

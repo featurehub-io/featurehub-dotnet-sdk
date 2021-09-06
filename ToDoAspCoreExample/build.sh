@@ -5,4 +5,4 @@
 
 dotnet restore ToDoAspCoreExample.csproj && \
     dotnet build ToDoAspCoreExample.csproj && \
-    echo "Now, run the following to start the project: dotnet run -p ToDoAspCoreExample.csproj --launch-profile web"
+    echo "Now, run the following to start the project: dotnet run -p ToDoAspCoreExample.csproj"
