@@ -12,5 +12,5 @@ jobs:
     - name: My first step
       uses: ./.github/actions/build-dotnet-fh-sdk
       with:
-        command: |
-          docker build --build-arg Version=2.1.4 -t featurehub-dotnet-sdk .
+        args: |
+          Version=2.1.4
