@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build-env
 ARG Version
 WORKDIR /app
-ADD . /app
+ADD ../../.. /app
 RUN dotnet restore FeatureHubSDK.sln
 RUN dotnet publish  -c Release -o out
 RUN dotnet test
