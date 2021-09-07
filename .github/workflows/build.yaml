@@ -9,8 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: My first step
+    - name: Build
       uses: ./.github/actions/build-dotnet-fh-sdk
       with:
-        args: |
-          Version=2.1.4
+        args: Version=2.1.4
