@@ -7,7 +7,6 @@ inputs:
     required: true
 runs:
   using: 'docker'
-  image: 'Dockerfile'
-  path: ../../
+  image: '../../Dockerfile'
   args:
     - ${{ inputs.args }}
