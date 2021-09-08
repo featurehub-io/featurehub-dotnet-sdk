@@ -1,4 +1,4 @@
-name: "CodeQL C# SDK"
+name: "CodeQL .Net SDK"
 
 on:
   push:

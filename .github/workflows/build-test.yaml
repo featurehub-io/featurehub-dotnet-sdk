@@ -1,4 +1,4 @@
-name: NetLicensing C# Client - CI
+name: Build and test .Net SDK
 
 on:
   pull_request:
