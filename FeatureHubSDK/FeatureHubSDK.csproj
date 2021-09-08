@@ -18,7 +18,7 @@
         <PackageTags>FeatureFlags FeatureToggles SDK Flags Toggles RemoteConfig</PackageTags>
         <PackageReleaseNotes>2.1.4 - Bump dependencies version. Update source repository reference.
         </PackageReleaseNotes>
-        <PackageVersion>2.1.4</PackageVersion>
+        <Version>2.1.4</Version>
     </PropertyGroup>
 
     <ItemGroup>
