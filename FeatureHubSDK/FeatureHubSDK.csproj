@@ -12,11 +12,11 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageIconUrl>https://docs.featurehub.io/favicon.ico</PackageIconUrl>
         <PackageIcon>FeatureHub-icon.png</PackageIcon>
-        <Description>.Net SDK implementation for FeatureHub.io - Cloud Native platform to help software teams manage their features, from feature flags (also known as feature toggles) to A/B experiments and remote or centralised configuration.</Description>
-        <RepositoryUrl>https://github.com/featurehub-io/featurehub/tree/master/sdks/client-csharp</RepositoryUrl>
+        <Description>.Net SDK implementation for FeatureHub.io - Open source Feature flags management, A/B testing and remote configuration platform.</Description>
+        <RepositoryUrl>https://github.com/featurehub-io/featurehub-dotnet-sdk</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <PackageTags>FeatureFlags Features Toggles CloudNative</PackageTags>
-        <PackageReleaseNotes>Bump dependencies versions. Update source repository reference.
+        <PackageTags>FeatureFlags FeatureToggles SDK Flags Toggles RemoteConfig</PackageTags>
+        <PackageReleaseNotes>2.1.4 - Bump dependencies version. Update source repository reference.
         </PackageReleaseNotes>
         <PackageVersion>2.1.4</PackageVersion>
     </PropertyGroup>
