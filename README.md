@@ -3,14 +3,15 @@
 Welcome to the .Net SDK implementation for [FeatureHub.io](https://featurehub.io) - Open source Feature flags management, A/B testing and remote configuration platform.
 
 ## SDK features 
-Details about what general features are available in SDKs from FeatureHub are [available here](https://docs.featurehub.io/#sdks).
+Details about what general features are available in FeatureHub SDKs are [available here](https://docs.featurehub.io/#_sdks).
 
 ## Changelog
 
-2.1.3 - logging support (see below) and fixing of the backoff for the eventsource (it was randomly increasing the time, making features go out of date)
-2.0.0 - client side evaluation support for feature strategies
-1.1.0 - analytics support
-1.0.0 - initial functionality with near-realtime event updates, full feature repository, server side rollout strategies.
+- 2.1.4 - Bump dependencies version. Update source repository reference. 
+- 2.1.3 - logging support (see below) and fixing of the backoff for the eventsource (it was randomly increasing the time, making features go out of date)
+- 2.0.0 - client side evaluation support for feature strategies
+- 1.1.0 - analytics support
+- 1.0.0 - initial functionality with near-realtime event updates, full feature repository, server side rollout strategies.
 
 ## Using the EventSource SDK
 
@@ -35,7 +36,7 @@ config.Init(); // tell it to asynchronously connect and start listening
 
 You can optionally set an analytics provider on the config (see below).
 
-```
+```c#
 // this will set up a ClientContext - which is a bucket of information about this user
 // and then attempt to connect to the repository and retrieve your data. It will return once it
 // has received your data.  
@@ -216,8 +217,7 @@ public static class FeatureLogging
 }
 ```
 
-So a full diagnostic, as we have in our ASP.NET example in the [featurehub-examples](https://github.com/featurehub-io/featurehub-examples) 
-repository looks like this:
+So a full diagnostic, as we have in our ASP.NET example looks like this:
 
 ```c#
   FeatureLogging.DebugLogger += (sender, s) => Console.WriteLine("DEBUG: " + s + "\n"); 
