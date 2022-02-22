@@ -48,8 +48,7 @@ namespace IO.FeatureHub.SSE.Model
         /// <param name="attributes">attributes.</param>
         public RolloutStrategy(string id = default(string), string name = default(string), int percentage = default(int), List<string> percentageAttributes = default(List<string>), int colouring = default(int), string avatar = default(string), object value = default(object), List<RolloutStrategyAttribute> attributes = default(List<RolloutStrategyAttribute>))
         {
-            // to ensure "name" is required (not null)
-            this.Name = name ?? throw new ArgumentNullException("name is a required property for RolloutStrategy and cannot be null");
+            this.Name = name;
             this.Id = id;
             this.Percentage = percentage;
             this.PercentageAttributes = percentageAttributes;
@@ -69,7 +68,7 @@ namespace IO.FeatureHub.SSE.Model
         /// names are unique in a case insensitive fashion
         /// </summary>
         /// <value>names are unique in a case insensitive fashion</value>
-        [DataMember(Name = "name", IsRequired = true, EmitDefaultValue = false)]
+        [DataMember(Name = "name", IsRequired = false, EmitDefaultValue = false)]
         public string Name { get; set; }
 
         /// <summary>
