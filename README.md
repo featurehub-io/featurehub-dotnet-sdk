@@ -7,6 +7,7 @@ Details about what general features are available in FeatureHub SDKs are [availa
 
 ## Changelog
 
+- 2.1.5 - FeatureHub 1.5.6 is not returning the name of the feature and this is causing the 2.1.4 to version to break.
 - 2.1.4 - Bump dependencies version. Update source repository reference. 
 - 2.1.3 - logging support (see below) and fixing of the backoff for the eventsource (it was randomly increasing the time, making features go out of date)
 - 2.0.0 - client side evaluation support for feature strategies
