@@ -39,7 +39,7 @@ namespace IO.FeatureHub.SSE.Model
         /// Initializes a new instance of the <see cref="RolloutStrategy" /> class.
         /// </summary>
         /// <param name="id">id.</param>
-        /// <param name="name">names are unique in a case insensitive fashion (required).</param>
+        /// <param name="name">names are unique in a case insensitive fashion.</param>
         /// <param name="percentage">value between 0 and 1000000 - for four decimal places.</param>
         /// <param name="percentageAttributes">if you don&#39;t wish to apply percentage based on user id, you can use one or more attributes defined here.</param>
         /// <param name="colouring">the colour used to display the strategy in the UI. indexed table of background/foreground combos..</param>
