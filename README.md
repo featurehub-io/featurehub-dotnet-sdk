@@ -7,6 +7,8 @@ Details about what general features are available in FeatureHub SDKs are [availa
 
 ## Changelog
 
+- 2.2.0 - FeatureHub 1.5.9 support - supporting Fastly integration, server side polling period control, stale environments.
+ We have upgraded to the 6.0.1 OpenAPI compiler, but gone no further because it generates code that does not work.
 - 2.1.5 - FeatureHub 1.5.6 is not returning the name of the feature and this is causing the 2.1.4 to version to break.
 - 2.1.4 - Bump dependencies version. Update source repository reference. 
 - 2.1.3 - logging support (see below) and fixing of the backoff for the eventsource (it was randomly increasing the time, making features go out of date)
@@ -18,7 +20,7 @@ Details about what general features are available in FeatureHub SDKs are [availa
 
 Find and copy your API Key from the FeatureHub Admin Console on the API Keys page -
 you will use this in your code to configure feature updates for your environments.
-It should look similar to this: ```default/71ed3c04-122b-4312-9ea8-06b2b8d6ceac/fsTmCrcZZoGyl56kPHxfKAkbHrJ7xZMKO3dlBiab5IqUXjgKvqpjxYdI8zdXiJqYCpv92Jrki0jY5taE```.
+It should look similar to this: ```71ed3c04-122b-4312-9ea8-06b2b8d6ceac/fsTmCrcZZoGyl56kPHxfKAkbHrJ7xZMKO3dlBiab5IqUXjgKvqpjxYdI8zdXiJqYCpv92Jrki0jY5taE```.
 There are two options - a Server Evaluated API Key and a Client Evaluated API Key. More on this [here](https://docs.featurehub.io/#_client_and_server_api_keys)
 
 In case of single user, desktop or embedded applications, use a server evaluated API key. If you are writing a batch, server or otherwise multi-user application, use a client-evaluated API key. This SDK does not support Xamarin.

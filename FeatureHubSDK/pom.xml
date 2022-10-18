@@ -41,40 +41,12 @@
     <plugins>
       <!-- pull the defined API and unzip it -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>extract-sse-edge-components</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>io.featurehub.edge</groupId>
-                  <artifactId>sse-edge-api</artifactId>
-                  <version>1.4-SNAPSHOT</version>
-                  <classifier>api</classifier>
-                  <type>yaml</type>
-                  <outputDirectory>${project.basedir}/target</outputDirectory>
-                  <destFileName>sse.yaml</destFileName>
-                </artifactItem>
-              </artifactItems>
-              <overWriteReleases>true</overWriteReleases>
-              <overWriteSnapshots>true</overWriteSnapshots>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <artifactId>maven-clean-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
           <filesets>
             <fileset>
-              <directory>src/IO</directory>
+              <directory>src/IO.FeatureHub.SSE</directory>
               <includes>
                 <include>**/**</include>
               </includes>
@@ -103,10 +75,14 @@
         </configuration>
       </plugin>
 
+      <!-- 
+      options are located here:
+      https://github.com/OpenAPITools/openapi-generator/blob/master/docs/generators/csharp-netcore.md
+      -->
       <plugin>
         <groupId>org.openapitools</groupId>
         <artifactId>openapi-generator-maven-plugin</artifactId>
-        <version>5.2.1</version>
+        <version>6.0.1</version>
         <executions>
           <execution>
             <id>featurehub-api</id>
@@ -116,7 +92,7 @@
             <phase>generate-sources</phase>
             <configuration>
               <output>${project.basedir}</output>
-              <inputSpec>${project.basedir}/target/sse.yaml</inputSpec>
+              <inputSpec>http://api.dev.featurehub.io/edge/1.1.4.yaml</inputSpec>
               <generatorName>csharp-netcore</generatorName>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateModelDocumentation>false</generateModelDocumentation>

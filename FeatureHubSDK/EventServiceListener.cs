@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using IO.FeatureHub.SSE.Model;
 using LaunchDarkly.EventSource;
+using Newtonsoft.Json;
 
 namespace FeatureHubSDK
 {
@@ -28,12 +29,19 @@ namespace FeatureHubSDK
     public static EventHandler<String> ErrorLogger;
   }
 
+  class ConfigData
+  {
+    [JsonProperty("edge.stale")]
+    public Boolean stale { get; set; }
+  }
+
   public class EventServiceListener : IEdgeService
   {
     private EventSource _eventSource;
     private readonly IFeatureHubConfig _featureHost;
     private readonly IFeatureRepositoryContext _repository;
     private string _xFeatureHubHeader = null;
+    private bool _closed = false;
 
     public EventServiceListener(IFeatureRepositoryContext repository, IFeatureHubConfig config)
     {
@@ -47,6 +55,8 @@ namespace FeatureHubSDK
 
     public async Task ContextChange(string newHeader)
     {
+      if (_closed) return;
+      
       if (_featureHost.ServerEvaluation)
       {
         if (newHeader != _xFeatureHubHeader)
@@ -99,6 +109,8 @@ namespace FeatureHubSDK
 
     public void Init()
     {
+      if (_closed) return;
+      
       var config = new Configuration(uri: new UriBuilder(_featureHost.Url).Uri,
         backoffResetThreshold: TimeSpan.MaxValue,
         delayRetryDuration: TimeSpan.Zero,
@@ -149,6 +161,25 @@ namespace FeatureHubSDK
             }
 
             break;
+          case "config":
+            state = SSEResultState.Config;
+
+            if (args.Message.Data != null)
+            {
+              var configData = JsonConvert.DeserializeObject<ConfigData>(args.Message.Data);
+              if (configData.stale)
+              {
+                if (FeatureLogging.ErrorLogger != null)
+                {
+                  FeatureLogging.ErrorLogger(this,
+                    "featurehub: environment has gone stale, closing connection and won't reopen");
+                }
+
+                _closed = true;
+                _eventSource.Close();                
+              }
+            }
+            break;
           default:
             state = null;
             break;
@@ -161,7 +192,10 @@ namespace FeatureHubSDK
 
         if (state == null) return;
 
-        _repository.Notify(state.Value, args.Message.Data);
+        if (state != SSEResultState.Config)
+        {
+          _repository.Notify(state.Value, args.Message.Data);
+        }
 
         if (state == SSEResultState.Failure)
         {
