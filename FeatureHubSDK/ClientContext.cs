@@ -24,6 +24,8 @@ namespace FeatureHubSDK
     IClientContext Clear();
 
     string GetAttr(string key, string defaultValue);
+    
+    List<string> GetAttrs(string key);
 
     string DefaultPercentageKey { get; }
 
@@ -164,6 +166,16 @@ namespace FeatureHubSDK
       }
 
       return defaultValue;
+    }
+
+    public List<string> GetAttrs(string key)
+    {
+      if (_attributes.ContainsKey(key))
+      {
+        return _attributes[key];
+      }
+      
+      return new List<string>(0);
     }
 
 

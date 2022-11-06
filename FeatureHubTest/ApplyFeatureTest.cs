@@ -56,14 +56,14 @@ namespace FeatureHubTest
     public void NullContextDefaultValue()
     {
       // given: we have a rollout strategy that is percentage based
-      var rs = new RolloutStrategy("id", "name");
+      var rs = new FeatureRolloutStrategy("id");
       rs.Percentage = 21;
       rs.Value = "blue";
 
       // and: we have a context
       var cc = new TestClientContext().UserKey("mary@mary.com");
 
-      var val = _applyFeature.Apply(new List<RolloutStrategy> {rs}, "fred", new Guid(), null);
+      var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {rs}, "fred", Guid.NewGuid(), null);
 
       Assert.AreEqual(val.Matched, false);
     }
@@ -72,14 +72,14 @@ namespace FeatureHubTest
     public void MatchPercentageToCalculation(int underPercent, string expected, bool matched)
     {
       // given: we have a rollout strategy that is percentage based
-      var rs = new RolloutStrategy("id", "name");
+      var rs = new FeatureRolloutStrategy("id");
       rs.Percentage = underPercent;
       rs.Value = "blue";
 
       // and: we have a context
       var cc = new TestClientContext().UserKey("mary@mary.com");
 
-      var val = _applyFeature.Apply(new List<RolloutStrategy> {rs}, "fred", new Guid(), cc);
+      var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {rs}, "fred", Guid.NewGuid(), cc);
 
       Assert.AreEqual(expected, val.Value);
       Assert.AreEqual(matched, val.Matched);
@@ -99,7 +99,7 @@ namespace FeatureHubTest
       // and: we have a context
       var cc = new TestClientContext().UserKey("mary@mary.com");
 
-      var val = _applyFeature.Apply(new List<RolloutStrategy> {}, "fred", new Guid(), cc);
+      var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {}, "fred", Guid.NewGuid(), cc);
 
       Assert.AreEqual(expected, val.Value);
       Assert.AreEqual(matched, val.Matched);

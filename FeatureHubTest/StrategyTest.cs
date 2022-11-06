@@ -31,21 +31,17 @@ namespace FeatureHubTest
     public void BasicBooleanStrategy()
     {
       // given: we have a basic boolean feature
-      var feature = new FeatureState();
-      feature.Key = "bool1";
-      feature.Value = true;
-      feature._Version = 1;
-      feature.Type = FeatureValueType.BOOLEAN;
-      var strategy = new RolloutStrategy("id", "name");
-      strategy.Value = false;
-      var ruleset = new RolloutStrategyAttribute();
-      ruleset.Conditional = RolloutStrategyAttributeConditional.EQUALS;
-      ruleset.Type = RolloutStrategyFieldType.STRING;
-      ruleset.FieldName = GetEnumMemberValue(StrategyAttributeWellKnownNames.Country);
-      ruleset.Values = new List<object> {GetEnumMemberValue(StrategyAttributeCountryName.Turkey)};
-
-      strategy.Attributes = new List<RolloutStrategyAttribute> {ruleset};
-      feature.Strategies = new List<RolloutStrategy> {strategy};
+      var feature = new FeatureState(
+        id: Guid.NewGuid(),
+        key: "bool1", value: true, version: 1, type: FeatureValueType.BOOLEAN,
+          strategies: new List<FeatureRolloutStrategy>
+          {
+            new FeatureRolloutStrategy(id: "id", value: false, attributes: new List<FeatureRolloutStrategyAttribute>
+            {
+              new FeatureRolloutStrategyAttribute(conditional: RolloutStrategyAttributeConditional.EQUALS, type: RolloutStrategyFieldType.STRING,
+                fieldName: GetEnumMemberValue(StrategyAttributeWellKnownNames.Country), values: new List<object> {GetEnumMemberValue(StrategyAttributeCountryName.Turkey)})
+            })
+          });
 
       repo.Notify(new List<FeatureState>{feature});
 
@@ -61,32 +57,24 @@ namespace FeatureHubTest
     public void BasicNumberStrategy()
     {
       // given: we have a basic number feature with two custom strategies based on age
-      var feature = new FeatureState();
-      feature.Key = "num1";
-      feature.Value = 16;
-      feature._Version = 1;
-      feature.Type = FeatureValueType.NUMBER;
-      var over40Strategy = new RolloutStrategy("id", "name");
-      over40Strategy.Value = 6;
-      var ruleset1 = new RolloutStrategyAttribute();
-      ruleset1.Conditional = RolloutStrategyAttributeConditional.GREATEREQUALS;
-      ruleset1.Type = RolloutStrategyFieldType.NUMBER;
-      ruleset1.FieldName = "age";
-      ruleset1.Values = new List<object> {40};
-
-      over40Strategy.Attributes = new List<RolloutStrategyAttribute> {ruleset1};
-
-      var over20Strategy = new RolloutStrategy("id", "name");
-      over20Strategy.Value = 10;
-      var ruleset2 = new RolloutStrategyAttribute();
-      ruleset2.Conditional = RolloutStrategyAttributeConditional.GREATEREQUALS;
-      ruleset2.Type = RolloutStrategyFieldType.NUMBER;
-      ruleset2.FieldName = "age";
-      ruleset2.Values = new List<object> {20};
-      over20Strategy.Attributes = new List<RolloutStrategyAttribute> {ruleset2};
-
-      feature.Strategies = new List<RolloutStrategy> {over40Strategy, over20Strategy};
-
+      var feature = new FeatureState(
+        id: Guid.NewGuid(),
+        key: "num1", value: 16, version: 1, type: FeatureValueType.NUMBER,
+        strategies: new List<FeatureRolloutStrategy>
+        {
+          new FeatureRolloutStrategy(id: "over40", value: 6, attributes: new List<FeatureRolloutStrategyAttribute>
+          {
+            new FeatureRolloutStrategyAttribute(conditional: RolloutStrategyAttributeConditional.GREATEREQUALS, type: RolloutStrategyFieldType.NUMBER,
+              fieldName: "age", values: new List<object> {40})
+          }),
+          new FeatureRolloutStrategy(id: "over20", value: 10, attributes: new List<FeatureRolloutStrategyAttribute>
+          {
+            new FeatureRolloutStrategyAttribute(conditional: RolloutStrategyAttributeConditional.GREATEREQUALS, type: RolloutStrategyFieldType.NUMBER,
+              fieldName: "age", values: new List<object> {20})
+          }),
+          
+        });
+      
       // when: setup repo
       repo.Notify(new List<FeatureState>{feature});
 
@@ -100,35 +88,54 @@ namespace FeatureHubTest
       Assert.AreEqual(6, repo.GetFeature("num1").WithContext(age43).NumberValue);
     }
 
+    [Test]
+    public void NumberGroupStrategy()
+    {
+      // given: we have a grouped number feature with two custom strategies based on age
+      var feature = new FeatureState(
+        id: Guid.NewGuid(),
+        key: "num1", value: 16, version: 1, type: FeatureValueType.NUMBER,
+        strategies: new List<FeatureRolloutStrategy>
+        {
+          new FeatureRolloutStrategy(id: "contractId", value: 6, attributes: new List<FeatureRolloutStrategyAttribute>
+          {
+            new FeatureRolloutStrategyAttribute(conditional: RolloutStrategyAttributeConditional.EQUALS, type: RolloutStrategyFieldType.NUMBER,
+              fieldName: "contractId", values: new List<object> {40, 16, 23})
+          }),
+        });
+      
+      // when: setup repo
+      repo.Notify(new List<FeatureState>{feature});
+
+      var oneMatch = new TestClientContext().Attrs("contractId", new List<String> { "3", "40", "26" });
+      var noneMatch = new TestClientContext().Attrs("contractId", new List<String> { "3", "400", "26" });
+      
+      Assert.AreEqual(6, repo.GetFeature("num1").WithContext(oneMatch).NumberValue);
+      Assert.AreEqual(16, repo.GetFeature("num1").WithContext(noneMatch).NumberValue);
+    }
+
     private void StringTypeComparison(FeatureValueType ft)
     {
       // given: we have a basic string feature with two custom strategies based on age and platform
-      var feature = new FeatureState();
-      feature.Key = "s1";
-      feature.Value = "feature";
-      feature._Version = 1;
-      feature.Type = ft;
-      var notMobileStrategy = new RolloutStrategy("id", "not-mobile");
-      notMobileStrategy.Value = "not-mobile";
-      var ruleset1 = new RolloutStrategyAttribute();
-      ruleset1.Conditional = RolloutStrategyAttributeConditional.EXCLUDES;
-      ruleset1.Type = RolloutStrategyFieldType.STRING;
-      ruleset1.FieldName = GetEnumMemberValue(StrategyAttributeWellKnownNames.Platform);
-      ruleset1.Values = new List<object> {GetEnumMemberValue(StrategyAttributePlatformName.Android), GetEnumMemberValue(StrategyAttributePlatformName.Ios)};
-
-      notMobileStrategy.Attributes = new List<RolloutStrategyAttribute> {ruleset1};
-
-      var over20Strategy = new RolloutStrategy("id", "older-than-twenty");
-      over20Strategy.Value = "older-than-twenty";
-      var ruleset2 = new RolloutStrategyAttribute();
-      ruleset2.Conditional = RolloutStrategyAttributeConditional.GREATEREQUALS;
-      ruleset2.Type = RolloutStrategyFieldType.NUMBER;
-      ruleset2.FieldName = "age";
-      ruleset2.Values = new List<object> {20};
-      over20Strategy.Attributes = new List<RolloutStrategyAttribute> {ruleset2};
-
-      feature.Strategies = new List<RolloutStrategy> {notMobileStrategy, over20Strategy};
-
+      var feature = new FeatureState(
+        id: Guid.NewGuid(),
+        key: "s1", value: "feature", version: 1, type: ft,
+        strategies: new List<FeatureRolloutStrategy>
+        {
+          new FeatureRolloutStrategy(id: "notmobile", value: "not-mobile", attributes: new List<FeatureRolloutStrategyAttribute>
+          {
+            new FeatureRolloutStrategyAttribute(conditional: RolloutStrategyAttributeConditional.EXCLUDES, type: RolloutStrategyFieldType.STRING,
+              fieldName: GetEnumMemberValue(StrategyAttributeWellKnownNames.Platform), 
+              values: new List<object> {GetEnumMemberValue(StrategyAttributePlatformName.Android), GetEnumMemberValue(StrategyAttributePlatformName.Ios)})
+          }),
+          new FeatureRolloutStrategy(id: "old-than-twenty", value: "older-than-twenty", attributes: new List<FeatureRolloutStrategyAttribute>
+          {
+            new FeatureRolloutStrategyAttribute(conditional: RolloutStrategyAttributeConditional.GREATEREQUALS, type: RolloutStrategyFieldType.NUMBER,
+              fieldName: "age", values: new List<object> {20})
+          }),
+          
+        });
+      
       // when: setup repo
       repo.Notify(new List<FeatureState>{feature});
 

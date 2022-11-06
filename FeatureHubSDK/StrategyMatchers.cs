@@ -73,7 +73,7 @@ namespace FeatureHubSDK
       _matcherRepository = matcherRepository;
     }
 
-    public Applied Apply(List<RolloutStrategy> strategies, string key, Guid featureValueId,
+    public Applied Apply(List<FeatureRolloutStrategy> strategies, string key, Guid featureValueId,
       IClientContext context)
     {
       if (context != null && strategies != null && strategies.Count != 0)
@@ -144,28 +144,29 @@ namespace FeatureHubSDK
       return new Applied(false, null);
     }
 
-    protected bool MatchAttributes(IClientContext context, RolloutStrategy rsi)
+    protected bool MatchAttributes(IClientContext context, FeatureRolloutStrategy rsi)
     {
       foreach (var attr in rsi.Attributes)
       {
-        var suppliedValue = context.GetAttr(attr.FieldName, null);
+        var suppliedValue = context.GetAttrs(attr.FieldName);
+        var suppliedEmpty = !suppliedValue.Any();
 
-        if (suppliedValue == null && attr.FieldName.ToLower().Equals("now"))
+        if (suppliedEmpty && attr.FieldName.ToLower().Equals("now"))
         {
           switch (attr.Type)
           {
             case RolloutStrategyFieldType.DATE:
-              suppliedValue = LocalDatePattern.Iso.Format(LocalDate.FromDateTime(DateTime.Now));
+              suppliedValue = new List<string> { LocalDatePattern.Iso.Format(LocalDate.FromDateTime(DateTime.Now)) };
               break;
             case RolloutStrategyFieldType.DATETIME:
-              suppliedValue = LocalDateTimePattern.GeneralIso.Format(LocalDateTime.FromDateTime(DateTime.Now));
+              suppliedValue = new List<string> { LocalDateTimePattern.GeneralIso.Format(LocalDateTime.FromDateTime(DateTime.Now)) };
               break;
           }
         }
 
         object val = attr.Values;
 
-        if (val == null && suppliedValue == null)
+        if (val == null && suppliedEmpty)
         {
           if (attr.Conditional != RolloutStrategyAttributeConditional.EQUALS)
           {
@@ -175,12 +176,15 @@ namespace FeatureHubSDK
           continue; //skip
         }
 
-        if (val == null || suppliedValue == null)
+        if (val == null || suppliedEmpty)
         {
           return false;
         }
 
-        if (!_matcherRepository.FindMatcher(attr).Match(suppliedValue, attr))
+        var match = suppliedValue.Any(
+          sValue => _matcherRepository.FindMatcher(attr).Match(sValue, attr));
+
+        if (!match)
         {
           return false;
         }
@@ -202,17 +206,17 @@ namespace FeatureHubSDK
 
   public interface IStrategyMatcher
   {
-    bool Match(string suppliedValue, RolloutStrategyAttribute attr);
+    bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr);
   }
 
   public interface IMatcherRepository
   {
-    IStrategyMatcher FindMatcher(RolloutStrategyAttribute attr);
+    IStrategyMatcher FindMatcher(FeatureRolloutStrategyAttribute attr);
   }
 
   public class MatcherRegistry : IMatcherRepository
   {
-    public IStrategyMatcher FindMatcher(RolloutStrategyAttribute attr)
+    public IStrategyMatcher FindMatcher(FeatureRolloutStrategyAttribute attr)
     {
       switch (attr.Type)
       {
@@ -230,8 +234,6 @@ namespace FeatureHubSDK
           return new BooleanMatcher();
         case RolloutStrategyFieldType.IPADDRESS:
           return new IPNetworkMatcher();
-        case null:
-          return new FallthroughMatcher();
         default:
           return new FallthroughMatcher();
       }
@@ -239,7 +241,7 @@ namespace FeatureHubSDK
 
     private class FallthroughMatcher : IStrategyMatcher
     {
-      public bool Match(string suppliedValue, RolloutStrategyAttribute attr)
+      public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
       {
         return false;
       }
@@ -248,7 +250,7 @@ namespace FeatureHubSDK
 
   internal class BooleanMatcher : IStrategyMatcher
   {
-    public bool Match(string suppliedValue, RolloutStrategyAttribute attr)
+    public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
       var val = "true".Equals(suppliedValue);
 
@@ -273,7 +275,7 @@ namespace FeatureHubSDK
 
   internal class StringMatcher : IStrategyMatcher
   {
-    public bool Match(string suppliedValue, RolloutStrategyAttribute attr)
+    public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
       var vals = attr.Values.Where(v => v != null).Select(v => v.ToString()).ToList();
 
@@ -301,8 +303,6 @@ namespace FeatureHubSDK
           return !vals.Any(suppliedValue.Contains);
         case RolloutStrategyAttributeConditional.REGEX:
           return vals.Any(v => Regex.IsMatch(suppliedValue, v));
-        case null:
-          return false;
         default:
           return false;
       }
@@ -311,7 +311,7 @@ namespace FeatureHubSDK
 
   internal class DateMatcher : IStrategyMatcher
   {
-    public bool Match(string suppliedValue, RolloutStrategyAttribute attr)
+    public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
       var suppliedDate = LocalDate.FromDateTime(DateTime.Parse(suppliedValue));
       var vals = attr.Values.Where(v => v != null).Select(v => v.ToString()).ToList();
@@ -338,8 +338,6 @@ namespace FeatureHubSDK
           return !vals.Any(v => suppliedDate.Equals(LocalDate.FromDateTime(DateTime.Parse(v.ToString()))));
         case RolloutStrategyAttributeConditional.REGEX:
           return vals.Any(v => Regex.IsMatch(suppliedValue, v));
-        case null:
-          return false;
         default:
           return false;
       }
@@ -348,7 +346,7 @@ namespace FeatureHubSDK
 
   internal class DateTimeMatcher : IStrategyMatcher
   {
-    public bool Match(string suppliedValue, RolloutStrategyAttribute attr)
+    public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
       var suppliedDate = LocalDateTime.FromDateTime(DateTime.Parse(suppliedValue));
       var vals = attr.Values.Where(v => v != null).Select(v => v.ToString()).ToList();
@@ -375,8 +373,6 @@ namespace FeatureHubSDK
           return !vals.Any(v => suppliedDate.Equals(LocalDateTime.FromDateTime(DateTime.Parse(v.ToString()))));
         case RolloutStrategyAttributeConditional.REGEX:
           return vals.Any(v => Regex.IsMatch(suppliedValue, v));
-        case null:
-          return false;
         default:
           return false;
       }
@@ -385,12 +381,12 @@ namespace FeatureHubSDK
 
   internal class NumberMatcher : IStrategyMatcher
   {
-    private RolloutStrategyAttribute _attr;
+    private FeatureRolloutStrategyAttribute _attr;
 
     private IEnumerable<decimal> DVals =>
       _attr.Values.Where(v => v != null).Select(v => decimal.Parse(v.ToString())).ToList();
 
-    public bool Match(string suppliedValue, RolloutStrategyAttribute attr)
+    public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
       this._attr = attr;
       var dec = decimal.Parse(suppliedValue);
@@ -417,8 +413,6 @@ namespace FeatureHubSDK
           return !DVals.Any(v => dec.Equals(v));
         case RolloutStrategyAttributeConditional.REGEX:
           break;
-        case null:
-          return false;
         default:
           return false;
       }
@@ -429,7 +423,7 @@ namespace FeatureHubSDK
 
   internal class SemanticVersionMatcher : IStrategyMatcher
   {
-    public bool Match(string suppliedValue, RolloutStrategyAttribute attr)
+    public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
       var vals = attr.Values.Where(v => v != null).Select(v => new Version(v.ToString())).ToList();
       var version = new Version(suppliedValue);
@@ -456,8 +450,6 @@ namespace FeatureHubSDK
           return !vals.Any(v => version.Equals(v));
         case RolloutStrategyAttributeConditional.REGEX:
           break;
-        case null:
-          return false;
         default:
           return false;
       }
@@ -468,7 +460,7 @@ namespace FeatureHubSDK
 
   internal class IPNetworkMatcher : IStrategyMatcher
   {
-    public bool Match(string suppliedValue, RolloutStrategyAttribute attr)
+    public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
       var vals = attr.Values.Where(v => v != null).Select(v => new IPNetworkProxy(v.ToString())).ToList();
       var ip = new IPNetworkProxy(suppliedValue);
@@ -482,8 +474,6 @@ namespace FeatureHubSDK
         case RolloutStrategyAttributeConditional.EXCLUDES:
           return !vals.Any(v => v.Contains(ip));
         case RolloutStrategyAttributeConditional.REGEX:
-          return false;
-        case null:
           return false;
         default:
           return false;

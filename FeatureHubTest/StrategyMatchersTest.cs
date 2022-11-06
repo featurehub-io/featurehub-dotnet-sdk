@@ -19,7 +19,7 @@ namespace FeatureHubTest
     // need to include mocking library
     // public void MatcherTest()
     // {
-    //   var rsa = new RolloutStrategyAttribute();
+    //   var rsa = new FeatureRolloutStrategyAttribute();
     //   rsa.Conditional = RolloutStrategyAttributeConditional.LESS;
     //   rsa.Type = RolloutStrategyFieldType.STRING;
     //   rsa.Values = new List<object> {"a", "b"};
@@ -32,11 +32,9 @@ namespace FeatureHubTest
     public void StringMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new RolloutStrategyAttribute();
-      rsa.Conditional = conditional;
-      rsa.Type = RolloutStrategyFieldType.STRING;
-      rsa.Values = vals.Select(v => v as object).ToList();
-
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+        type: RolloutStrategyFieldType.STRING, values: vals.Select(v => v as object).ToList());
+      
       Assert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal, rsa), matches);
     }
 
@@ -89,10 +87,8 @@ namespace FeatureHubTest
     public void BooleanMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new RolloutStrategyAttribute();
-      rsa.Conditional = conditional;
-      rsa.Type = RolloutStrategyFieldType.BOOLEAN;
-      rsa.Values = vals.Select(v => v as object).ToList();
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+        type: RolloutStrategyFieldType.BOOLEAN, values: vals.Select(v => v as object).ToList());
 
       Assert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal?.ToString(), rsa), matches);
     }
@@ -125,10 +121,8 @@ namespace FeatureHubTest
       string suppliedVal,
       bool matches)
     {
-      var rsa = new RolloutStrategyAttribute();
-      rsa.Conditional = conditional;
-      rsa.Values = vals.Select(v => v as object).ToList();
-      rsa.Type = RolloutStrategyFieldType.SEMANTICVERSION;
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+        type: RolloutStrategyFieldType.SEMANTICVERSION, values: vals.Select(v => v as object).ToList());
 
       Assert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal, rsa), matches);
     }
@@ -174,10 +168,8 @@ namespace FeatureHubTest
     public void IPAddressMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new RolloutStrategyAttribute();
-      rsa.Conditional = conditional;
-      rsa.Values = vals.Select(v => v as object).ToList();
-      rsa.Type = RolloutStrategyFieldType.IPADDRESS;
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+        type: RolloutStrategyFieldType.IPADDRESS, values: vals.Select(v => v as object).ToList());
 
       Assert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
     }
@@ -219,10 +211,8 @@ namespace FeatureHubTest
     public void NumberMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new RolloutStrategyAttribute();
-      rsa.Conditional = conditional;
-      rsa.Values = vals.Select(v => v as object).ToList();
-      rsa.Type = RolloutStrategyFieldType.NUMBER;
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+        type: RolloutStrategyFieldType.NUMBER, values: vals.Select(v => v as object).ToList());
 
       Assert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
     }
@@ -258,10 +248,8 @@ namespace FeatureHubTest
     public void DateMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new RolloutStrategyAttribute();
-      rsa.Conditional = conditional;
-      rsa.Values = vals.Select(v => v as object).ToList();
-      rsa.Type = RolloutStrategyFieldType.DATE;
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+        type: RolloutStrategyFieldType.DATE, values: vals.Select(v => v as object).ToList());
 
       Assert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
     }
@@ -320,10 +308,8 @@ namespace FeatureHubTest
     public void DateTimeMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new RolloutStrategyAttribute();
-      rsa.Conditional = conditional;
-      rsa.Values = vals.Select(v => v as object).ToList();
-      rsa.Type = RolloutStrategyFieldType.DATETIME;
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+        type: RolloutStrategyFieldType.DATETIME, values: vals.Select(v => v as object).ToList());
 
       Assert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
     }

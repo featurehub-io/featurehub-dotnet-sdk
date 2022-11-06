@@ -19,8 +19,10 @@ namespace FeatureHubTest
 
     public static string EncodeFeatures(object value, int version = 1, FeatureValueType type = FeatureValueType.BOOLEAN)
     {
-      var feature = new FeatureState(id: new Guid(), key: "1", version: version, value: value, type: type);
-      return JsonConvert.SerializeObject(new List<FeatureState>(new FeatureState[] {feature}));
+      var feature = new FeatureState(id: Guid.NewGuid(), key: "1", version: version, value: value, type: type);
+      string val = JsonConvert.SerializeObject(new List<FeatureState>(new FeatureState[] {feature}));
+      
+      return val;
     }
 
     public static string EncodeFeatures(int version = 1, FeatureValueType type = FeatureValueType.BOOLEAN)
@@ -215,7 +217,7 @@ namespace FeatureHubTest
       Assert.AreEqual(2, hCount);
       Assert.IsNotNull(holder);
       Assert.AreEqual(true, holder.BooleanValue);
-      var feature = new FeatureState(id: new Guid(), key: "1", version: 4, value: false, type: FeatureValueType.BOOLEAN);
+      var feature = new FeatureState(id: Guid.NewGuid(), key: "1", version: 4, value: false, type: FeatureValueType.BOOLEAN);
       _repository.Notify(SSEResultState.Feature, JsonConvert.SerializeObject(feature));
       Assert.AreEqual(3, hCount);
       Assert.AreEqual(false, holder.BooleanValue);
@@ -252,7 +254,7 @@ namespace FeatureHubTest
     public void DeleteRemovesFeature()
     {
       _repository.Notify(SSEResultState.Features, EncodeFeatures());
-      var feature = new FeatureState(id: new Guid(), key: "1", version: 2, value: true, type: FeatureValueType.BOOLEAN);
+      var feature = new FeatureState(id: Guid.NewGuid(), key: "1", version: 2, value: true, type: FeatureValueType.BOOLEAN);
       Assert.AreEqual(1, _repository.FeatureState("1").Version);
       _repository.Notify(SSEResultState.DeleteFeature, JsonConvert.SerializeObject(feature));
       Assert.IsNull(_repository.FeatureState("1").Version);
