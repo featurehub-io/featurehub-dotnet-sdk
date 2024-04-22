@@ -37,6 +37,19 @@ namespace FeatureHubSDK
 
     void AddAnalyticCollector(IAnalyticsCollector collector);
   }
+  
+  public class FeatureHubKeyInvalidException : Exception
+  {
+    public FeatureHubKeyInvalidException(string message)
+      : base(message)
+    {
+    }
+
+    public FeatureHubKeyInvalidException(string message, Exception innerException)
+      : base(message, innerException)
+    {
+    }
+  }
 
   public class EdgeFeatureHubConfig : IFeatureHubConfig
   {
@@ -46,6 +59,11 @@ namespace FeatureHubSDK
     public EdgeFeatureHubConfig(string edgeUrl, string sdkKey)
     {
       _serverEvaluation = sdkKey != null && !sdkKey.Contains("*"); // two part keys are server evaluated
+
+      if (!sdkKey.Contains("/"))
+      {
+        throw new FeatureHubKeyInvalidException($"The SDK key `{sdkKey}` is invalid");
+      }
 
       if (edgeUrl.EndsWith("/"))
       {
