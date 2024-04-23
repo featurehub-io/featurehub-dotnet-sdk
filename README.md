@@ -7,6 +7,9 @@ Details about what general features are available in FeatureHub SDKs are [availa
 
 ## Changelog
 
+- 2.3.0 - Support for preventing badly formatted API keys from being passed in. Support for API keys and cause 4xx errors
+to stop polling. Support for overriding the number of backoff attempts made (`FEATUREHUB_BACKOFF_RETRY_LIMIT` - defaults to 100),
+and delay retry timeout (was zero, now 10s, controlled by `FEATUREHUB_DELAY_RETRY_MS`).
 - 2.2.0 - FeatureHub 1.5.9 support - supporting Fastly integration, server side polling period control, stale environments.
  We have upgraded to the 6.0.1 OpenAPI compiler, but gone no further because it generates code that does not work.
 - 2.1.5 - FeatureHub 1.5.6 is not returning the name of the feature and this is causing the 2.1.4 to version to break.

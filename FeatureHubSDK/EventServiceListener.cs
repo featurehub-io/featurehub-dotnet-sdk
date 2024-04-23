@@ -106,14 +106,19 @@ namespace FeatureHubSDK
 
       return headers;
     }
+    
+    private string DefaultEnvConfig(string envVar, string defaultValue)
+    {
+      return Environment.GetEnvironmentVariable(envVar) ?? defaultValue;
+    }
 
     public void Init()
     {
       if (_closed) return;
       
       var config = new Configuration(uri: new UriBuilder(_featureHost.Url).Uri,
-        backoffResetThreshold: TimeSpan.MaxValue,
-        delayRetryDuration: TimeSpan.Zero,
+        backoffResetThreshold: TimeSpan.FromSeconds(int.Parse(DefaultEnvConfig("FEATUREHUB_BACKOFF_RETRY_LIMIT", "100"))),
+        delayRetryDuration: TimeSpan.FromSeconds(int.Parse(DefaultEnvConfig("FEATUREHUB_DELAY_RETRY_MS", "10000"))),
         requestHeaders: _featureHost.ServerEvaluation ? BuildContextHeader() : null);
 
       if (FeatureLogging.InfoLogger != null)
@@ -122,6 +127,19 @@ namespace FeatureHubSDK
       }
 
       _eventSource = new EventSource(config);
+      _eventSource.Error += (sender, ex) =>
+      {
+        if (ex.Exception is EventSourceServiceUnsuccessfulResponseException result)
+        {
+          if (result.StatusCode != 503)
+          {
+            _repository.Notify(SSEResultState.Failure, null);
+            FeatureLogging.ErrorLogger(this, "Server issued a failure, stopping.");
+            _closed = true;
+            _eventSource.Close();
+          }
+        }
+      };
 
       // if (FeatureLogging.DebugLogger != null)
       // {
