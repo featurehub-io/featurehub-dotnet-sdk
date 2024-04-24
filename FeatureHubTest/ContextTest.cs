@@ -38,8 +38,9 @@ namespace FeatureHubTest
         closeCalled++;
       }
 
-      public void Poll()
+      public Task Poll()
       {
+        return Task.CompletedTask;
       }
     }
 

@@ -14,25 +14,27 @@ namespace FeatureHubSDK
 
     bool IsRequiresReplacementOnHeaderChange { get;  }
     void Close();
-    void Poll();
+    Task Poll();
   }
 
   public static class FeatureLogging
   {
     // Attach event handler to receive Trace level logs
-    public static EventHandler<String> TraceLogger;
+    public static EventHandler<string> TraceLogger = (sender, args) => { };
     // Attach event handler to receive Debug level logs
-    public static EventHandler<String> DebugLogger;
+    public static EventHandler<string> DebugLogger = (sender, args) => { };
     // Attach event handler to receive Info level logs
-    public static EventHandler<String> InfoLogger;
+    public static EventHandler<string> InfoLogger = (sender, args) => { };
+    // Attach event handler to receive Warn level logs
+    public static EventHandler<string> WarnLogger = (sender, args) => { };
     // Attach event handler to receive Error level logs
-    public static EventHandler<String> ErrorLogger;
+    public static EventHandler<string> ErrorLogger = (sender, args) => { };
   }
 
   class ConfigData
   {
     [JsonProperty("edge.stale")]
-    public Boolean stale { get; set; }
+    public Boolean Stale { get; set; }
   }
 
   public class EventServiceListener : IEdgeService
@@ -40,8 +42,8 @@ namespace FeatureHubSDK
     private EventSource _eventSource;
     private readonly IFeatureHubConfig _featureHost;
     private readonly IFeatureRepositoryContext _repository;
-    private string _xFeatureHubHeader = null;
-    private bool _closed = false;
+    private string _xFeatureHubHeader;
+    private bool _closed;
 
     public EventServiceListener(IFeatureRepositoryContext repository, IFeatureHubConfig config)
     {
@@ -66,21 +68,8 @@ namespace FeatureHubSDK
           if (_eventSource == null || _eventSource.ReadyState == ReadyState.Open || _eventSource.ReadyState == ReadyState.Connecting)
           {
             _eventSource?.Close();
-
-            var promise = new TaskCompletionSource<Readyness>();
-
-            EventHandler<Readyness> handler = (sender, r) =>
-            {
-              promise.TrySetResult(r);
-            };
-
-            _repository.ReadynessHandler += handler;
-
-            Init();
-
-            await promise.Task;
-
-            _repository.ReadynessHandler -= handler;
+            _eventSource = null;
+            await Poll();
           }
         }
       }
@@ -89,6 +78,9 @@ namespace FeatureHubSDK
         Init();
       }
     }
+    
+    
+    
 
     public bool ClientEvaluation => !_featureHost.ServerEvaluation;
 
@@ -117,8 +109,8 @@ namespace FeatureHubSDK
       if (_closed) return;
       
       var config = new Configuration(uri: new UriBuilder(_featureHost.Url).Uri,
-        backoffResetThreshold: TimeSpan.FromSeconds(int.Parse(DefaultEnvConfig("FEATUREHUB_BACKOFF_RETRY_LIMIT", "100"))),
-        delayRetryDuration: TimeSpan.FromSeconds(int.Parse(DefaultEnvConfig("FEATUREHUB_DELAY_RETRY_MS", "10000"))),
+        backoffResetThreshold: TimeSpan.FromMinutes(int.Parse(DefaultEnvConfig("FEATUREHUB_BACKOFF_RESET_THRESHOLD", "1"))),
+        delayRetryDuration: TimeSpan.FromMilliseconds(int.Parse(DefaultEnvConfig("FEATUREHUB_DELAY_RETRY_MS", "10000"))),
         requestHeaders: _featureHost.ServerEvaluation ? BuildContextHeader() : null);
 
       if (FeatureLogging.InfoLogger != null)
@@ -129,26 +121,15 @@ namespace FeatureHubSDK
       _eventSource = new EventSource(config);
       _eventSource.Error += (sender, ex) =>
       {
-        if (ex.Exception is EventSourceServiceUnsuccessfulResponseException result)
-        {
-          if (result.StatusCode != 503)
-          {
-            _repository.Notify(SSEResultState.Failure, null);
-            FeatureLogging.ErrorLogger(this, "Server issued a failure, stopping.");
-            _closed = true;
-            _eventSource.Close();
-          }
-        }
+        if (!(ex.Exception is EventSourceServiceUnsuccessfulResponseException result)) return;
+        if (result.StatusCode == 503) return;
+        
+        _repository.Notify(SSEResultState.Failure, null);
+        FeatureLogging.ErrorLogger(this, "Server issued a failure, stopping.");
+        _closed = true;
+        _eventSource.Close();
       };
-
-      // if (FeatureLogging.DebugLogger != null)
-      // {
-      //   _eventSource.Closed += (sender, args) =>
-      //   {
-      //     FeatureLogging.DebugLogger(this, "source closed");
-      //   };
-      // }
-
+      
       _eventSource.MessageReceived += (sender, args) =>
       {
         SSEResultState? state;
@@ -185,7 +166,7 @@ namespace FeatureHubSDK
             if (args.Message.Data != null)
             {
               var configData = JsonConvert.DeserializeObject<ConfigData>(args.Message.Data);
-              if (configData.stale)
+              if (configData.Stale)
               {
                 if (FeatureLogging.ErrorLogger != null)
                 {
@@ -204,9 +185,7 @@ namespace FeatureHubSDK
         }
 
         if (FeatureLogging.TraceLogger != null)
-        {
-          FeatureLogging.TraceLogger(this , $"featurehub: The state was {state} with value {args.Message.Data}");
-        }
+          FeatureLogging.TraceLogger(this, $"featurehub: The state was {state} with value {args.Message.Data}");
 
         if (state == null) return;
 
@@ -234,11 +213,24 @@ namespace FeatureHubSDK
       _eventSource.Close();
     }
 
-    public void Poll()
+    public async Task Poll()
     {
       if (_eventSource == null)
       {
+        var promise = new TaskCompletionSource<Readyness>();
+
+        EventHandler<Readyness> handler = (sender, r) =>
+        {
+          promise.TrySetResult(r);
+        };
+
+        _repository.ReadynessHandler += handler;
+
         Init();
+
+        await promise.Task;
+
+        _repository.ReadynessHandler -= handler;
       }
     }
   }

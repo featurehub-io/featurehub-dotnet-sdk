@@ -16,9 +16,9 @@
         <RepositoryUrl>https://github.com/featurehub-io/featurehub-dotnet-sdk</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageTags>FeatureFlags FeatureToggles SDK Flags Toggles RemoteConfig</PackageTags>
-        <PackageReleaseNotes>2.3.0 - check valid keys and stop calling server on failure.</PackageReleaseNotes>
-        <Version>2.3.0</Version>
-        <PackageVersion>2.3.0</PackageVersion>
+        <PackageReleaseNotes>2.4.0 - new polling API, fixe issues with 2.3.0.</PackageReleaseNotes>
+        <Version>2.4.0</Version>
+        <PackageVersion>2.4.0</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>

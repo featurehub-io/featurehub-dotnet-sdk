@@ -1,13 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
-using System.Threading.Tasks;
-using System.Transactions;
-using System.Web;
+using Common.Logging;
 using IO.FeatureHub.SSE.Model;
 using Newtonsoft.Json;
-using Common.Logging; // because dependent library does
+
+// because dependent library does
 
 namespace FeatureHubSDK
 {
@@ -252,6 +251,7 @@ namespace FeatureHubSDK
     bool ServerSideEvaluation { set; get; }
     void Notify(SSEResultState state, string data);
     void NotReady();
+    void UpdateFeatures(IEnumerable<FeatureState> states);
   }
 
   public abstract class AbstractFeatureHubRepository : IFeatureHubRepository
@@ -325,7 +325,7 @@ namespace FeatureHubSDK
       }
     }
 
-    public void Notify(IEnumerable<FeatureState> features)
+    public void UpdateFeatures(IEnumerable<FeatureState> features)
     {
       var updated = false;
       foreach (var featureState in features)
@@ -374,7 +374,7 @@ namespace FeatureHubSDK
         case SSEResultState.Features:
           if (data != null)
           {
-            Notify(JsonConvert.DeserializeObject<List<FeatureState>>(data));
+            UpdateFeatures(JsonConvert.DeserializeObject<List<FeatureState>>(data));
           }
 
           break;

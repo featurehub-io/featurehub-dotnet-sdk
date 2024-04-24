@@ -17,13 +17,23 @@ namespace ConsoleAppExample
       MainApp().Wait();
     }
 
-    async static Task MainApp()
+    static async Task MainApp()
     {
       Console.WriteLine("Hello World!");
 
-      var config = new EdgeFeatureHubConfig("http://localhost:8064",
-        "default/b63faed0-1a66-48a6-8679-e362d1d33d7d/QgoWPhyDisWwHY5heuVzXbB41xqXwB*fL7QfLvLTb6OA00Cx8t1");
-      config.Init();
+      FeatureLogging.TraceLogger += (sender, s) => Console.WriteLine(s); 
+      FeatureLogging.ErrorLogger += (sender, s) => Console.WriteLine(s); 
+      FeatureLogging.DebugLogger += (sender, s) => Console.WriteLine(s); 
+      FeatureLogging.InfoLogger += (sender, s) => Console.WriteLine(s);
+
+      // var serverEvalKey = "d8cdd2f2-6003-4136-ad99-ee05730dfd97/YPSbDzRdrepVoTHUSm0IU8Da0hjJmZYxBG03jCEK";
+      // var clientEvalKey = "d8cdd2f2-6003-4136-ad99-ee05730dfd97/gC3QHHb6mFQfNSerIItsCUUGZJL8aK*YyIiRr6cn5i5vN7eGtRA"; 
+      // var config = new EdgeFeatureHubConfig("http://localhost:8903",
+      //   serverEvalKey).UsePolling(10); // every 10 seconds
+      var config = new EdgeFeatureHubConfig(); // use environment variables
+      Console.WriteLine("Waiting for state to arrive");
+      await config.Init();
+      Console.WriteLine($"State should have arrived {config.Repository.Readyness}");
 
       Console.WriteLine($"Server evaluated {config.ServerEvaluation}");
 

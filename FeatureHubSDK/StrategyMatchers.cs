@@ -30,12 +30,7 @@ namespace FeatureHubSDK
     {
       _hashAlgorithm = MurmurHash.Create32();
     }
-
-    public PercentageMurmur3Calculator(uint seed)
-    {
-      _hashAlgorithm = MurmurHash.Create32(seed: seed);
-    }
-
+    
     public int DetermineClientPercentage(string percentageText, Guid featureId)
     {
       var hashCode = _hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(percentageText + featureId));
