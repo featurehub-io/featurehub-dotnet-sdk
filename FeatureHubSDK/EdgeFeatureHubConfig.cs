@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace FeatureHubSDK
 {
@@ -18,14 +19,30 @@ namespace FeatureHubSDK
   public interface IFeatureHubConfig
   {
 
+    /// <summary>
+    /// This is the fully constructed EventSource url
+    /// </summary>
     string Url { get; }
+    /// <summary>
+    ///  this is the URL of the GET edit service
+    /// </summary>
+    string EdgeUrl { get;  }
+    List<string> SdkKeys { get;  }
+    
     bool ServerEvaluation { get; }
+
+    /// <summary>
+    /// Tells the client to use Polling. Can also be assumed if FEATUREHUB_POLL_TIMEOUT env var is set
+    /// </summary>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
+    IFeatureHubConfig UsePolling(int timeout = 360);
 
     /*
      * Initialise the configuration. This will kick off the event source to connect and attempt to start
      * pushing data into the FeatureHub repository for use in contexts.
      */
-    void Init();
+    Task Init();
 
     IFeatureRepositoryContext Repository { get; set; }
     IEdgeService EdgeService { get; set; }
@@ -55,15 +72,24 @@ namespace FeatureHubSDK
   {
     private readonly string _url;
     private readonly bool _serverEvaluation;
+    private readonly string _edgeUrl;
+    private readonly List<string> _sdkKeys = new List<string>();
 
     public EdgeFeatureHubConfig(string edgeUrl, string sdkKey)
     {
-      _serverEvaluation = sdkKey != null && !sdkKey.Contains("*"); // two part keys are server evaluated
+      if (edgeUrl == null || sdkKey == null)
+      {
+        throw new FeatureHubKeyInvalidException($"The edge url or sdk key are null.");
+      }
+      
+      _serverEvaluation = !sdkKey.Contains("*"); // two part keys are server evaluated
 
       if (!sdkKey.Contains("/"))
       {
         throw new FeatureHubKeyInvalidException($"The SDK key `{sdkKey}` is invalid");
       }
+      
+      _sdkKeys.Add(sdkKey);
 
       if (edgeUrl.EndsWith("/"))
       {
@@ -75,12 +101,26 @@ namespace FeatureHubSDK
         edgeUrl = edgeUrl.Substring(0, edgeUrl.Length - "/features".Length);
       }
 
+      _edgeUrl = edgeUrl; // the API client automatically adds the /features, etc on
+
       _url = edgeUrl + "/features/" + sdkKey;
     }
 
-    public void Init()
+    /// <summary>
+    /// Use this constructor if you set the environment variables.
+    /// </summary>
+    public EdgeFeatureHubConfig() : this(Environment.GetEnvironmentVariable("FEATUREHUB_EDGE_URL"),
+      Environment.GetEnvironmentVariable("FEATUREHUB_API_KEY"))
     {
-      EdgeService.Poll();
+      
+    } 
+
+    public string EdgeUrl => _edgeUrl;
+    public List<string> SdkKeys => _sdkKeys;
+
+    public async Task Init()
+    {
+      await EdgeService.Poll();
     }
 
     public bool ServerEvaluation => _serverEvaluation;
@@ -93,7 +133,16 @@ namespace FeatureHubSDK
       {
         if (_edgeService == null)
         {
-          _edgeService = FeatureHubConfig.defaultEdgeProvider(this.Repository, this);
+          var pollTimeoutDefault = Environment.GetEnvironmentVariable("FEATUREHUB_POLL_TIMEOUT");
+          if (pollTimeoutDefault != null)
+          {
+            _edgeService = new EdgeClientPoll(Repository, this,
+              int.Parse(pollTimeoutDefault));
+          }
+          else
+          {
+            _edgeService = FeatureHubConfig.defaultEdgeProvider(this.Repository, this);            
+          }
         }
 
         return _edgeService;
@@ -102,6 +151,12 @@ namespace FeatureHubSDK
       {
         _edgeService = value;
       }
+    }
+
+    public IFeatureHubConfig UsePolling(int timeout = 360)
+    {
+      _edgeService = new EdgeClientPoll(Repository, this, timeout);
+      return this;
     }
 
     private IFeatureRepositoryContext _repository;
@@ -132,7 +187,14 @@ namespace FeatureHubSDK
 
       if (edgeServiceSource == null)
       {
-        edgeServiceSource = (repo, config) => FeatureHubConfig.defaultEdgeProvider(repo, config);
+        if (_edgeService != null)
+        {
+          edgeServiceSource = (repo, config) => _edgeService;
+        }
+        else 
+        {
+          edgeServiceSource = (repo, config) => FeatureHubConfig.defaultEdgeProvider(repo, config);
+        }
       }
 
       if (_serverEvaluation)

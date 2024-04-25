@@ -7,9 +7,13 @@ Details about what general features are available in FeatureHub SDKs are [availa
 
 ## Changelog
 
+- 2.4.0
+  * fixed backoff delay in SSE
+  * added support for polling API
+  * added support for configuration using environment variables
 - 2.3.0 - Support for preventing badly formatted API keys from being passed in. Support for API keys and cause 4xx errors
 to stop polling. Support for overriding the number of backoff attempts made (`FEATUREHUB_BACKOFF_RETRY_LIMIT` - defaults to 100),
-and delay retry timeout (was zero, now 10s, controlled by `FEATUREHUB_DELAY_RETRY_MS`).
+and delay retry timeout (was zero, now 10s, controlled by `FEATUREHUB_DELAY_RETRY_MS`). [DO NOT USE THIS VERSION]
 - 2.2.0 - FeatureHub 1.5.9 support - supporting Fastly integration, server side polling period control, stale environments.
  We have upgraded to the 6.0.1 OpenAPI compiler, but gone no further because it generates code that does not work.
 - 2.1.5 - FeatureHub 1.5.6 is not returning the name of the feature and this is causing the 2.1.4 to version to break.
@@ -19,7 +23,22 @@ and delay retry timeout (was zero, now 10s, controlled by `FEATUREHUB_DELAY_RETR
 - 1.1.0 - analytics support
 - 1.0.0 - initial functionality with near-realtime event updates, full feature repository, server side rollout strategies.
 
-## Using the EventSource SDK
+## Connection choices
+
+There are two connection choices in the SDK:
+
+- realtime updates - if you have servers and applications that require updates in realtime, 
+ we recommend you use the default connectivity this SDK provides, which is the event source.
+- timeout based polling - if you have a requirement only to check features periodically, say once
+every 3 minutes (or more), then you can use the Polling SDK. It operates by triggering on the same
+`Init` method as the EventSource, but every time you evaluate a feature it will check if the timeout
+has expired and if so, it will request an updated set of features in the background.
+
+In all cases, you can synchronously wait for your features using either polling or the event source,
+by just using an `await` when you use `Init` or `NewContext`. They will wait for a response to occur
+whether it is success or failure. 
+
+### Using the EventSource SDK
 
 Find and copy your API Key from the FeatureHub Admin Console on the API Keys page -
 you will use this in your code to configure feature updates for your environments.
@@ -65,6 +84,18 @@ There are many more convenience methods on the `IClientContext`, including:
     - IsSet - does this feature have a value?
     - LogAnalyticEvent - logs an analytics event if you have set up an analytics provider.
 
+### Using Polling
+
+You can use polling if you set the following environment variable: `FEATUREHUB_POLL_TIMEOUT` or
+by calling `UsePolling(<timeout-in-seconds>)` on the `config`. 
+
+### Configuring using Environment Variables
+
+You can have the FeatureHub client automatically pick up the server configuration from two 
+environment variables - `FEATUREHUB_EDGE_URL` provides the URL and `FEATUREHUB_API_KEY` provides
+the key that you are using.
+
+Then you can just use `new EdgeFeatureHubConfig()`.
 
 ### ASP.NET 
 

@@ -226,7 +226,16 @@ namespace FeatureHubSDK
       _weCreatedSources = false;
     }
 
-    public override IFeature this[string name] => _repository.GetFeature(name);
+    public override IFeature this[string name]
+    {
+      get
+      {
+        // we tell edge to poll if it hasn't already, it also lets the timeout go do an update in the background
+        _currentEdgeService?.Poll();
+
+        return _repository.GetFeature(name);
+      }
+    }
 
     public override async Task<IClientContext> Build()
     {
@@ -278,7 +287,16 @@ namespace FeatureHubSDK
       _weCreatedSources = false;
     }
 
-    public override IFeature this[string name] => _repository.GetFeature(name).WithContext(this);
+    public override IFeature this[string name]
+    {
+      get
+      {
+        // we tell edge to poll if it hasn't already, it also lets the timeout go do an update in the background
+        _edgeService?.Poll();
+        
+        return _repository.GetFeature(name).WithContext(this);
+      }
+    }
 
 #pragma warning disable 1998
     public override async Task<IClientContext> Build()
