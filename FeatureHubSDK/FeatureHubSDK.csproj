@@ -16,15 +16,15 @@
         <RepositoryUrl>https://github.com/featurehub-io/featurehub-dotnet-sdk</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageTags>FeatureFlags FeatureToggles SDK Flags Toggles RemoteConfig</PackageTags>
-        <PackageReleaseNotes>2.4.0 - new polling API, fixe issues with 2.3.0.</PackageReleaseNotes>
-        <Version>2.4.0</Version>
-        <PackageVersion>2.4.0</PackageVersion>
+        <PackageReleaseNotes>2.5.0 - Security update for EventSource library.</PackageReleaseNotes>
+        <Version>2.5.0</Version>
+        <PackageVersion>2.5.0</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="IPNetwork2" Version="2.5.240" />
       <PackageReference Include="JsonSubTypes" Version="1.9.0" />
-      <PackageReference Include="LaunchDarkly.EventSource" Version="3.3.2" />
+      <PackageReference Include="LaunchDarkly.EventSource" Version="4.2.0" />
       <PackageReference Include="murmurhash" Version="1.0.3" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
       <PackageReference Include="NodaTime" Version="3.0.5" />

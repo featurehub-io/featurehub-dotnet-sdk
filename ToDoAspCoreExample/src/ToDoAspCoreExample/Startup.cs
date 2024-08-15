@@ -49,10 +49,16 @@ namespace ToDoAspCoreExample
         {
             IFeatureHubConfig config = new EdgeFeatureHubConfig(Configuration["FeatureHub:Host"], Configuration["FeatureHub:ApiKey"]);
 
+            config.Repository.ReadynessHandler += (sender, readiness) =>
+            {
+                Console.WriteLine($"Readyness is $readiness");
+            };
+
             FeatureLogging.DebugLogger += (sender, s) => Console.WriteLine("DEBUG: " + s + "\n");
             FeatureLogging.TraceLogger += (sender, s) => Console.WriteLine("TRACE: " + s + "\n");
             FeatureLogging.InfoLogger += (sender, s) => Console.WriteLine("INFO: " + s + "\n");
             FeatureLogging.ErrorLogger += (sender, s) => Console.WriteLine("ERROR: " + s + "\n");
+            FeatureLogging.ExceptionLogger += (sender, s) => Console.WriteLine("ERROR: " + s.Message + "\n" + s.Exception );
 
             services.Add(ServiceDescriptor.Singleton(typeof(IFeatureHubConfig), config));
 

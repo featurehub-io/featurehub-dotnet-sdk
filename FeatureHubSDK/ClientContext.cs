@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using System.Web;
-using Common.Logging;
 using IO.FeatureHub.SSE.Model;
 
 namespace FeatureHubSDK
@@ -57,7 +56,6 @@ namespace FeatureHubSDK
 
     public abstract class BaseClientContext : IClientContext
   {
-    private static readonly ILog Log = LogManager.GetLogger<BaseClientContext>();
     protected readonly Dictionary<string, List<string>> _attributes = new Dictionary<string,List<string>>();
     protected readonly IFeatureRepositoryContext _repository;
     protected readonly IFeatureHubConfig _config;
@@ -77,8 +75,6 @@ namespace FeatureHubSDK
         {
           other = new Dictionary<string, string>();
         }
-
-        other[GoogleConstants.Cid] = user;
       }
 
       _repository.LogAnalyticEvent(action, other);

@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Common.Logging;
 using IO.FeatureHub.SSE.Model;
 using Newtonsoft.Json;
 
@@ -98,7 +96,6 @@ namespace FeatureHubSDK
 
   internal class FeatureStateBaseHolder : IFeature
   {
-    private static readonly ILog Log = LogManager.GetLogger<FeatureStateBaseHolder>();
     private FeatureState _feature;
     private readonly ApplyFeature _applyFeature;
 
@@ -219,7 +216,7 @@ namespace FeatureHubSDK
           }
           catch (Exception e)
           {
-            Log.Error($"Failed to process update for feature {Key}", e);
+            FeatureLogging.ErrorLogger(this, $"Failed to process update for feature {Key} {e.Message}");
           }
         }
       }
@@ -276,7 +273,6 @@ namespace FeatureHubSDK
 
   public class FeatureHubRepository : AbstractFeatureHubRepository, IFeatureRepositoryContext
   {
-    private static readonly ILog log = LogManager.GetLogger<FeatureHubRepository>();
     private readonly Dictionary<string, FeatureStateBaseHolder> _features =
       new Dictionary<string, FeatureStateBaseHolder>();
 
@@ -308,7 +304,7 @@ namespace FeatureHubSDK
       }
       catch (Exception e)
       {
-        log.Error($"Failed to indicate readyness change to {_readyness}", e);
+        FeatureLogging.ExceptionLogger(this,new ExceptionEvent($"Failed to indicate readyness change to {_readyness}", e));
       }
     }
 
@@ -321,7 +317,7 @@ namespace FeatureHubSDK
       }
       catch (Exception e)
       {
-        log.Error("Failed to indicate trigger new feature change.", e);
+        FeatureLogging.ExceptionLogger(this,new ExceptionEvent("Failed to indicate trigger new feature change.", e));
       }
     }
 
@@ -431,7 +427,7 @@ namespace FeatureHubSDK
         }
         catch (Exception e)
         {
-          log.Error("Failed to log analytic event", e);
+          FeatureLogging.ExceptionLogger(this,new ExceptionEvent("Failed to log analytic event", e));
         }
       }
 
@@ -456,8 +452,10 @@ namespace FeatureHubSDK
       else if (holder.Version != null)
       {
         if (holder.Version > fs._Version || (
-          holder.Version == fs._Version && !FeatureStateBaseHolder.ValueChanged(holder.Value, fs.Value)))
-        return false;
+              holder.Version == fs._Version && !FeatureStateBaseHolder.ValueChanged(holder.Value, fs.Value)))
+        {
+          return false;
+        }
       }
 
       holder.FeatureState = fs;

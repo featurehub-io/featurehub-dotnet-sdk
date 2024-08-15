@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using IO.FeatureHub.SSE.Model;
 using LaunchDarkly.EventSource;
+using LaunchDarkly.Logging;
 using Newtonsoft.Json;
 
 namespace FeatureHubSDK
@@ -17,6 +18,19 @@ namespace FeatureHubSDK
     Task Poll();
   }
 
+  public class ExceptionEvent
+  {
+    public readonly String Message;
+    public readonly Exception Exception;
+
+    public ExceptionEvent(string message, Exception exception)
+    {
+      this.Message = message;
+      this.Exception = exception;
+    }
+  }
+    
+
   public static class FeatureLogging
   {
     // Attach event handler to receive Trace level logs
@@ -29,6 +43,7 @@ namespace FeatureHubSDK
     public static EventHandler<string> WarnLogger = (sender, args) => { };
     // Attach event handler to receive Error level logs
     public static EventHandler<string> ErrorLogger = (sender, args) => { };
+    public static EventHandler<ExceptionEvent> ExceptionLogger = (sender, args) => { };
   }
 
   class ConfigData
@@ -107,11 +122,14 @@ namespace FeatureHubSDK
     public void Init()
     {
       if (_closed) return;
-      
-      var config = new Configuration(uri: new UriBuilder(_featureHost.Url).Uri,
-        backoffResetThreshold: TimeSpan.FromMinutes(int.Parse(DefaultEnvConfig("FEATUREHUB_BACKOFF_RESET_THRESHOLD", "1"))),
-        delayRetryDuration: TimeSpan.FromMilliseconds(int.Parse(DefaultEnvConfig("FEATUREHUB_DELAY_RETRY_MS", "10000"))),
-        requestHeaders: _featureHost.ServerEvaluation ? BuildContextHeader() : null);
+
+      var config = Configuration.Builder(uri: new UriBuilder(_featureHost.Url).Uri)
+        .BackoffResetThreshold(
+          TimeSpan.FromMinutes(int.Parse(DefaultEnvConfig("FEATUREHUB_BACKOFF_RESET_THRESHOLD", "1"))))
+        .RequestHeaders(_featureHost.ServerEvaluation ? BuildContextHeader() : null)
+        .InitialRetryDelay(TimeSpan.FromMilliseconds(int.Parse(DefaultEnvConfig("FEATUREHUB_DELAY_RETRY_MS", "10000"))))
+        .Build();
+        
 
       if (FeatureLogging.InfoLogger != null)
       {
@@ -133,6 +151,7 @@ namespace FeatureHubSDK
       _eventSource.MessageReceived += (sender, args) =>
       {
         SSEResultState? state;
+        FeatureLogging.TraceLogger(this,$"received ${args.EventName} : ${args.Message.Data}");
         switch (args.EventName)
         {
           case "features":
@@ -198,7 +217,7 @@ namespace FeatureHubSDK
         {
           if (FeatureLogging.ErrorLogger != null)
           {
-            FeatureLogging.ErrorLogger(this, "featurehub: received a failure so closing");
+            FeatureLogging.ErrorLogger(this, "featurehub: received a failure so closing and not restarting");
           }
 
           _eventSource.Close();

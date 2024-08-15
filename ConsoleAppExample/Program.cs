@@ -25,6 +25,7 @@ namespace ConsoleAppExample
       FeatureLogging.ErrorLogger += (sender, s) => Console.WriteLine(s); 
       FeatureLogging.DebugLogger += (sender, s) => Console.WriteLine(s); 
       FeatureLogging.InfoLogger += (sender, s) => Console.WriteLine(s);
+      FeatureLogging.ExceptionLogger += (sender, s) => Console.WriteLine(s.Message + s.Exception);
 
       // var serverEvalKey = "d8cdd2f2-6003-4136-ad99-ee05730dfd97/YPSbDzRdrepVoTHUSm0IU8Da0hjJmZYxBG03jCEK";
       // var clientEvalKey = "d8cdd2f2-6003-4136-ad99-ee05730dfd97/gC3QHHb6mFQfNSerIItsCUUGZJL8aK*YyIiRr6cn5i5vN7eGtRA"; 

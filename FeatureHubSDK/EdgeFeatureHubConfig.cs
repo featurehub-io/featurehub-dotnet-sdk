@@ -84,7 +84,7 @@ namespace FeatureHubSDK
       
       _serverEvaluation = !sdkKey.Contains("*"); // two part keys are server evaluated
 
-      if (!sdkKey.Contains("/"))
+      if (!sdkKey.Contains("/") || sdkKey.StartsWith("\""))
       {
         throw new FeatureHubKeyInvalidException($"The SDK key `{sdkKey}` is invalid");
       }
@@ -136,11 +136,13 @@ namespace FeatureHubSDK
           var pollTimeoutDefault = Environment.GetEnvironmentVariable("FEATUREHUB_POLL_TIMEOUT");
           if (pollTimeoutDefault != null)
           {
+            FeatureLogging.TraceLogger(this, $"using a poll timeout of $pollTimeoutDefault");
             _edgeService = new EdgeClientPoll(Repository, this,
               int.Parse(pollTimeoutDefault));
           }
           else
           {
+            FeatureLogging.TraceLogger(this, $"connecting via SSE");
             _edgeService = FeatureHubConfig.defaultEdgeProvider(this.Repository, this);            
           }
         }
