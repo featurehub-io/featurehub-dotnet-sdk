@@ -16,9 +16,9 @@
         <RepositoryUrl>https://github.com/featurehub-io/featurehub-dotnet-sdk</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageTags>FeatureFlags FeatureToggles SDK Flags Toggles RemoteConfig</PackageTags>
-        <PackageReleaseNotes>2.5.0 - EventSource library dependency update.</PackageReleaseNotes>
-        <Version>2.5.0</Version>
-        <PackageVersion>2.5.0</PackageVersion>
+        <PackageReleaseNotes>2.5.1 - EventSource library dependency update.</PackageReleaseNotes>
+        <Version>2.5.1</Version>
+        <PackageVersion>2.5.1</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>

@@ -6,6 +6,9 @@ Welcome to the .Net SDK implementation for [FeatureHub.io](https://featurehub.io
 Details about what general features are available in FeatureHub SDKs are [available here](https://docs.featurehub.io/#_sdks).
 
 ## Changelog
+- 2.5.1
+  * Add support for a concurrent dictionary for features. This prevents features which are requested before the Repository is ready from
+    clashing in a concurrent situation.
 - 2.5.0
   * Update dependency - EventSource library to version 4.2
   * Remove Google Listener as it is for the old standard which expired mid-2023. There is currently no replacement for it until the new usage API comes in.
