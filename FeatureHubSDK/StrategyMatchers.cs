@@ -7,12 +7,10 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
 using Murmur;
 using NodaTime;
 using NodaTime.Text;
-using Version = SemVer.Version;
 
 namespace FeatureHubSDK
 {
@@ -23,7 +21,7 @@ namespace FeatureHubSDK
 
   public class PercentageMurmur3Calculator : IPercentageCalculator, IDisposable
   {
-    public static int MAX_PERCENTAGE = 1000000;
+    private static int MAX_PERCENTAGE = 1000000;
     private readonly HashAlgorithm _hashAlgorithm;
 
     public PercentageMurmur3Calculator()
@@ -52,8 +50,8 @@ namespace FeatureHubSDK
 
     public Applied(bool matched, object value)
     {
-      this.Matched = matched;
-      this.Value = value;
+      Matched = matched;
+      Value = value;
     }
   }
 
@@ -103,7 +101,7 @@ namespace FeatureHubSDK
             int useBasePercentage = (rsi.Attributes == null || rsi.Attributes.Count == 0) ? basePercentageVal : 0;
             // if the percentage is lower than the user's key +
             // id of feature value then apply it
-            if (percentage <= (useBasePercentage + rsi.Percentage))
+            if (percentage <= useBasePercentage + rsi.Percentage)
             {
               if (rsi.Attributes != null && rsi.Attributes.Count != 0)
               {
@@ -121,7 +119,7 @@ namespace FeatureHubSDK
               // this was only a percentage and had no other attributes
             if (rsi.Attributes == null || rsi.Attributes.Count == 0)
             {
-              basePercentage[percentageKey] = basePercentage[percentageKey] + rsi.Percentage;
+              basePercentage[percentageKey] += rsi.Percentage;
             }
           }
 
@@ -256,7 +254,7 @@ namespace FeatureHubSDK
 
       if (attr.Conditional == RolloutStrategyAttributeConditional.EQUALS)
       {
-        return val == (attr.Values[0] is bool ? ((bool) attr.Values[0]) : bool.Parse(attr.Values[0].ToString()));
+        return val == (attr.Values[0] is bool ? (bool) attr.Values[0] : bool.Parse(attr.Values[0].ToString()));
       }
 
       if (attr.Conditional == RolloutStrategyAttributeConditional.NOTEQUALS)
@@ -383,7 +381,7 @@ namespace FeatureHubSDK
 
     public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
-      this._attr = attr;
+      _attr = attr;
       var dec = decimal.Parse(suppliedValue);
 
       switch (attr.Conditional)
@@ -420,8 +418,8 @@ namespace FeatureHubSDK
   {
     public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
-      var vals = attr.Values.Where(v => v != null).Select(v => new Version(v.ToString())).ToList();
-      var version = new Version(suppliedValue);
+      var vals = attr.Values.Where(v => v != null).Select(v => new SemanticVersioning.Version(v.ToString())).ToList();
+      var version = new SemanticVersioning.Version(suppliedValue);
 
       switch (attr.Conditional)
       {
@@ -479,7 +477,7 @@ namespace FeatureHubSDK
   internal class IPNetworkProxy
   {
     private IPAddress _address;
-    private IPNetwork _network;
+    private IPNetwork2 _network;
     private bool _isAddress;
 
     public IPNetworkProxy(string addr)
@@ -488,7 +486,7 @@ namespace FeatureHubSDK
       {
         // it is a CIDR
         _isAddress = false;
-        _network = IPNetwork.Parse(addr);
+        _network = IPNetwork2.Parse(addr);
       }
       else
       {
