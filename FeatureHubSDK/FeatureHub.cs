@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using IO.FeatureHub.SSE.Model;
@@ -273,8 +274,8 @@ namespace FeatureHubSDK
 
   public class FeatureHubRepository : AbstractFeatureHubRepository, IFeatureRepositoryContext
   {
-    private readonly Dictionary<string, FeatureStateBaseHolder> _features =
-      new Dictionary<string, FeatureStateBaseHolder>();
+    private readonly ConcurrentDictionary<string, FeatureStateBaseHolder> _features =
+      new ConcurrentDictionary<string, FeatureStateBaseHolder>();
 
     private Readyness _readyness = Readyness.NotReady;
     public override event EventHandler<Readyness> ReadynessHandler;
@@ -404,9 +405,9 @@ namespace FeatureHubSDK
 
     private void DeleteFeature(FeatureState fs)
     {
-      if (_features.Remove(fs.Key))
+      if (_features.TryRemove(fs.Key, out var removing))
       {
-        TriggerNewUpdate();
+        TriggerNewUpdate();        
       }
     }
 
@@ -465,7 +466,7 @@ namespace FeatureHubSDK
       }
       else
       {
-        _features.Add(fs.Key, holder);
+        _features.TryAdd(fs.Key, holder);
       }
 
       return true;
@@ -475,7 +476,7 @@ namespace FeatureHubSDK
     {
       if (!_features.ContainsKey(key))
       {
-        _features.Add(key, new FeatureStateBaseHolder(null, _applyFeature));
+        _features.TryAdd(key, new FeatureStateBaseHolder(null, _applyFeature));
       }
 
       return _features[key];
