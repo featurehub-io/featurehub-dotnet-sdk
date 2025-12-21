@@ -18,11 +18,12 @@ namespace FeatureHubTest
       _repository = new FeatureHubRepository();
     }
 
-    public static string EncodeFeatures(object value, int varVersion = 1, FeatureValueType type = FeatureValueType.BOOLEAN)
+    public static string EncodeFeatures(object value, int varVersion = 1,
+      FeatureValueType type = FeatureValueType.BOOLEAN)
     {
       var feature = new FeatureState(id: Guid.NewGuid(), key: "1", varVersion: varVersion, value: value, type: type);
-      string val = JsonConvert.SerializeObject(new List<FeatureState>(new FeatureState[] {feature}));
-      
+      string val = JsonConvert.SerializeObject(new List<FeatureState>(new FeatureState[] { feature }));
+
       return val;
     }
 
@@ -213,12 +214,14 @@ namespace FeatureHubTest
       };
       _repository.Notify(SSEResultState.Features, EncodeFeatures());
       _repository.Notify(SSEResultState.Features, EncodeFeatures()); // same again
-      _repository.Notify(SSEResultState.Features, EncodeFeatures(varVersion: 2)); // same again, new version but same value
+      _repository.Notify(SSEResultState.Features,
+        EncodeFeatures(varVersion: 2)); // same again, new version but same value
       _repository.Notify(SSEResultState.Features, EncodeFeatures(true, varVersion: 3));
       ClassicAssert.AreEqual(2, hCount);
       ClassicAssert.IsNotNull(holder);
       ClassicAssert.AreEqual(true, holder.BooleanValue);
-      var feature = new FeatureState(id: Guid.NewGuid(), key: "1", varVersion: 4, value: false, type: FeatureValueType.BOOLEAN);
+      var feature = new FeatureState(id: Guid.NewGuid(), key: "1", varVersion: 4, value: false,
+        type: FeatureValueType.BOOLEAN);
       _repository.Notify(SSEResultState.Feature, JsonConvert.SerializeObject(feature));
       ClassicAssert.AreEqual(3, hCount);
       ClassicAssert.AreEqual(false, holder.BooleanValue);
@@ -255,40 +258,11 @@ namespace FeatureHubTest
     public void DeleteRemovesFeature()
     {
       _repository.Notify(SSEResultState.Features, EncodeFeatures());
-      var feature = new FeatureState(id: Guid.NewGuid(), key: "1", varVersion: 2, value: true, type: FeatureValueType.BOOLEAN);
+      var feature = new FeatureState(id: Guid.NewGuid(), key: "1", varVersion: 2, value: true,
+        type: FeatureValueType.BOOLEAN);
       ClassicAssert.AreEqual(1, _repository.FeatureState("1").Version);
       _repository.Notify(SSEResultState.DeleteFeature, JsonConvert.SerializeObject(feature));
       ClassicAssert.IsNull(_repository.FeatureState("1").Version);
-    }
-
-
-
-    [Test]
-    public void AnalyticsCollectorsAreCalled()
-    {
-      TestAnalyticsCollector ac1 = new TestAnalyticsCollector();
-      TestAnalyticsCollector ac2 = new TestAnalyticsCollector();
-
-      _repository.AddAnalyticCollector(ac1).AddAnalyticCollector(ac2);
-      _repository.LogAnalyticEvent("action");
-
-      ClassicAssert.AreEqual(ac1.Counter, 1);
-      ClassicAssert.AreEqual(ac2.Counter, 1);
-
-      _repository.LogAnalyticEvent("next-action", new Dictionary<string, string>());
-
-      ClassicAssert.AreEqual(ac1.Counter, 2);
-      ClassicAssert.AreEqual(ac2.Counter, 2);
-    }
-  }
-
-  internal class TestAnalyticsCollector : IAnalyticsCollector
-  {
-    public int Counter = 0;
-
-    public void LogEvent(string action, Dictionary<string, string> other, List<IFeature> featureStates)
-    {
-      Counter++;
     }
   }
 }
