@@ -2,6 +2,7 @@
 using System;
 using FeatureHubSDK;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace FeatureHubTest
 {
@@ -11,12 +12,12 @@ namespace FeatureHubTest
     public void EnsureConfigCorrectlyDeterminesUrl()
     {
       var cfg = new EdgeFeatureHubConfig("http://localhost:80/", "id/123*123");
-      Assert.IsTrue(!cfg.ServerEvaluation);
-      Assert.AreEqual("http://localhost:80/features/id/123*123", cfg.Url);
+      ClassicAssert.IsTrue(!cfg.ServerEvaluation);
+      ClassicAssert.AreEqual("http://localhost:80/features/id/123*123", cfg.Url);
 
       cfg = new EdgeFeatureHubConfig("http://localhost:80", "id/123");
-      Assert.IsTrue(cfg.ServerEvaluation);
-      Assert.AreEqual("http://localhost:80/features/id/123", cfg.Url);
+      ClassicAssert.IsTrue(cfg.ServerEvaluation);
+      ClassicAssert.AreEqual("http://localhost:80/features/id/123", cfg.Url);
     }
 
     [Test]
@@ -25,8 +26,8 @@ namespace FeatureHubTest
       Environment.SetEnvironmentVariable("FEATUREHUB_API_KEY", "id/123");
       Environment.SetEnvironmentVariable("FEATUREHUB_EDGE_URL", "http://localhost");
       var cfg = new EdgeFeatureHubConfig();
-      Assert.AreEqual(cfg.SdkKeys.ToArray(), new string[] {"id/123"});
-      Assert.AreEqual(cfg.EdgeUrl, "http://localhost");
+      ClassicAssert.AreEqual(cfg.SdkKeys.ToArray(), new string[] {"id/123"});
+      ClassicAssert.AreEqual(cfg.EdgeUrl, "http://localhost");
     }
 
     [TearDown]
@@ -41,7 +42,7 @@ namespace FeatureHubTest
     [Test]
     public void InvalidKeyStructureFails()
     {
-      Assert.Throws<FeatureHubSDK.FeatureHubKeyInvalidException>(() => 
+      ClassicAssert.Throws<FeatureHubSDK.FeatureHubKeyInvalidException>(() => 
         new EdgeFeatureHubConfig("http://localhost:80/", "123*123"));
     } 
   }

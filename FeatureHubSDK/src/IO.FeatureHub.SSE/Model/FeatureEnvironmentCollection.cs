@@ -28,7 +28,7 @@ namespace IO.FeatureHub.SSE.Model
     /// This represents a collection of features as per a request from a GET api. GET&#39;s can request multiple API Keys at the same time.
     /// </summary>
     [DataContract(Name = "FeatureEnvironmentCollection")]
-    public partial class FeatureEnvironmentCollection : IEquatable<FeatureEnvironmentCollection>
+    public partial class FeatureEnvironmentCollection
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="FeatureEnvironmentCollection" /> class.
@@ -40,7 +40,7 @@ namespace IO.FeatureHub.SSE.Model
         /// </summary>
         /// <param name="id">id (required).</param>
         /// <param name="features">features.</param>
-        public FeatureEnvironmentCollection(Guid id = default(Guid), List<FeatureState> features = default(List<FeatureState>))
+        public FeatureEnvironmentCollection(Guid id = default, List<FeatureState> features = default)
         {
             this.Id = id;
             this.Features = features;
@@ -49,7 +49,7 @@ namespace IO.FeatureHub.SSE.Model
         /// <summary>
         /// Gets or Sets Id
         /// </summary>
-        [DataMember(Name = "id", IsRequired = true, EmitDefaultValue = false)]
+        [DataMember(Name = "id", IsRequired = true, EmitDefaultValue = true)]
         public Guid Id { get; set; }
 
         /// <summary>
@@ -79,62 +79,6 @@ namespace IO.FeatureHub.SSE.Model
         public virtual string ToJson()
         {
             return Newtonsoft.Json.JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented);
-        }
-
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="input">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object input)
-        {
-            return this.Equals(input as FeatureEnvironmentCollection);
-        }
-
-        /// <summary>
-        /// Returns true if FeatureEnvironmentCollection instances are equal
-        /// </summary>
-        /// <param name="input">Instance of FeatureEnvironmentCollection to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(FeatureEnvironmentCollection input)
-        {
-            if (input == null)
-            {
-                return false;
-            }
-            return 
-                (
-                    this.Id == input.Id ||
-                    (this.Id != null &&
-                    this.Id.Equals(input.Id))
-                ) && 
-                (
-                    this.Features == input.Features ||
-                    this.Features != null &&
-                    input.Features != null &&
-                    this.Features.SequenceEqual(input.Features)
-                );
-        }
-
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                int hashCode = 41;
-                if (this.Id != null)
-                {
-                    hashCode = (hashCode * 59) + this.Id.GetHashCode();
-                }
-                if (this.Features != null)
-                {
-                    hashCode = (hashCode * 59) + this.Features.GetHashCode();
-                }
-                return hashCode;
-            }
         }
 
     }

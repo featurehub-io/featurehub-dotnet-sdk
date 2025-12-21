@@ -28,7 +28,7 @@ namespace IO.FeatureHub.SSE.Model
     /// This is the model for the rollout strategy as required by Dacha and Edge
     /// </summary>
     [DataContract(Name = "FeatureRolloutStrategy")]
-    public partial class FeatureRolloutStrategy : IEquatable<FeatureRolloutStrategy>
+    public partial class FeatureRolloutStrategy
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="FeatureRolloutStrategy" /> class.
@@ -43,7 +43,7 @@ namespace IO.FeatureHub.SSE.Model
         /// <param name="percentageAttributes">if you don&#39;t wish to apply percentage based on user id, you can use one or more attributes defined here.</param>
         /// <param name="value">when we attach the RolloutStrategy for Dacha or SSE this lets us push the value out. Only visible in SDK and SSE Edge..</param>
         /// <param name="attributes">attributes.</param>
-        public FeatureRolloutStrategy(string id = default(string), int percentage = default(int), List<string> percentageAttributes = default(List<string>), Object value = default(Object), List<FeatureRolloutStrategyAttribute> attributes = default(List<FeatureRolloutStrategyAttribute>))
+        public FeatureRolloutStrategy(string id = default, int percentage = default, List<string> percentageAttributes = default, Object value = default, List<FeatureRolloutStrategyAttribute> attributes = default)
         {
             // to ensure "id" is required (not null)
             if (id == null)
@@ -60,7 +60,7 @@ namespace IO.FeatureHub.SSE.Model
         /// <summary>
         /// Gets or Sets Id
         /// </summary>
-        [DataMember(Name = "id", IsRequired = true, EmitDefaultValue = false)]
+        [DataMember(Name = "id", IsRequired = true, EmitDefaultValue = true)]
         public string Id { get; set; }
 
         /// <summary>
@@ -114,86 +114,6 @@ namespace IO.FeatureHub.SSE.Model
         public virtual string ToJson()
         {
             return Newtonsoft.Json.JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented);
-        }
-
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="input">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object input)
-        {
-            return this.Equals(input as FeatureRolloutStrategy);
-        }
-
-        /// <summary>
-        /// Returns true if FeatureRolloutStrategy instances are equal
-        /// </summary>
-        /// <param name="input">Instance of FeatureRolloutStrategy to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(FeatureRolloutStrategy input)
-        {
-            if (input == null)
-            {
-                return false;
-            }
-            return 
-                (
-                    this.Id == input.Id ||
-                    (this.Id != null &&
-                    this.Id.Equals(input.Id))
-                ) && 
-                (
-                    this.Percentage == input.Percentage ||
-                    this.Percentage.Equals(input.Percentage)
-                ) && 
-                (
-                    this.PercentageAttributes == input.PercentageAttributes ||
-                    this.PercentageAttributes != null &&
-                    input.PercentageAttributes != null &&
-                    this.PercentageAttributes.SequenceEqual(input.PercentageAttributes)
-                ) && 
-                (
-                    this.Value == input.Value ||
-                    (this.Value != null &&
-                    this.Value.Equals(input.Value))
-                ) && 
-                (
-                    this.Attributes == input.Attributes ||
-                    this.Attributes != null &&
-                    input.Attributes != null &&
-                    this.Attributes.SequenceEqual(input.Attributes)
-                );
-        }
-
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                int hashCode = 41;
-                if (this.Id != null)
-                {
-                    hashCode = (hashCode * 59) + this.Id.GetHashCode();
-                }
-                hashCode = (hashCode * 59) + this.Percentage.GetHashCode();
-                if (this.PercentageAttributes != null)
-                {
-                    hashCode = (hashCode * 59) + this.PercentageAttributes.GetHashCode();
-                }
-                if (this.Value != null)
-                {
-                    hashCode = (hashCode * 59) + this.Value.GetHashCode();
-                }
-                if (this.Attributes != null)
-                {
-                    hashCode = (hashCode * 59) + this.Attributes.GetHashCode();
-                }
-                return hashCode;
-            }
         }
 
     }

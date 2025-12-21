@@ -28,7 +28,7 @@ namespace IO.FeatureHub.SSE.Model
     /// BaseRolloutStrategyAttribute
     /// </summary>
     [DataContract(Name = "BaseRolloutStrategyAttribute")]
-    public partial class BaseRolloutStrategyAttribute : IEquatable<BaseRolloutStrategyAttribute>
+    public partial class BaseRolloutStrategyAttribute
     {
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace IO.FeatureHub.SSE.Model
         /// <param name="fieldName">fieldName.</param>
         /// <param name="values">the value(s) associated with this rule.</param>
         /// <param name="type">type.</param>
-        public BaseRolloutStrategyAttribute(RolloutStrategyAttributeConditional? conditional = default(RolloutStrategyAttributeConditional?), string fieldName = default(string), List<Object> values = default(List<Object>), RolloutStrategyFieldType? type = default(RolloutStrategyFieldType?))
+        public BaseRolloutStrategyAttribute(RolloutStrategyAttributeConditional? conditional = default, string fieldName = default, List<Object> values = default, RolloutStrategyFieldType? type = default)
         {
             this.Conditional = conditional;
             this.FieldName = fieldName;
@@ -93,72 +93,6 @@ namespace IO.FeatureHub.SSE.Model
         public virtual string ToJson()
         {
             return Newtonsoft.Json.JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented);
-        }
-
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="input">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object input)
-        {
-            return this.Equals(input as BaseRolloutStrategyAttribute);
-        }
-
-        /// <summary>
-        /// Returns true if BaseRolloutStrategyAttribute instances are equal
-        /// </summary>
-        /// <param name="input">Instance of BaseRolloutStrategyAttribute to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(BaseRolloutStrategyAttribute input)
-        {
-            if (input == null)
-            {
-                return false;
-            }
-            return 
-                (
-                    this.Conditional == input.Conditional ||
-                    this.Conditional.Equals(input.Conditional)
-                ) && 
-                (
-                    this.FieldName == input.FieldName ||
-                    (this.FieldName != null &&
-                    this.FieldName.Equals(input.FieldName))
-                ) && 
-                (
-                    this.Values == input.Values ||
-                    this.Values != null &&
-                    input.Values != null &&
-                    this.Values.SequenceEqual(input.Values)
-                ) && 
-                (
-                    this.Type == input.Type ||
-                    this.Type.Equals(input.Type)
-                );
-        }
-
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                int hashCode = 41;
-                hashCode = (hashCode * 59) + this.Conditional.GetHashCode();
-                if (this.FieldName != null)
-                {
-                    hashCode = (hashCode * 59) + this.FieldName.GetHashCode();
-                }
-                if (this.Values != null)
-                {
-                    hashCode = (hashCode * 59) + this.Values.GetHashCode();
-                }
-                hashCode = (hashCode * 59) + this.Type.GetHashCode();
-                return hashCode;
-            }
         }
 
     }

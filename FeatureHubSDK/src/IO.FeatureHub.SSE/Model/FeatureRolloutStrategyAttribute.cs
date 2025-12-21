@@ -28,19 +28,19 @@ namespace IO.FeatureHub.SSE.Model
     /// FeatureRolloutStrategyAttribute
     /// </summary>
     [DataContract(Name = "FeatureRolloutStrategyAttribute")]
-    public partial class FeatureRolloutStrategyAttribute : IEquatable<FeatureRolloutStrategyAttribute>
+    public partial class FeatureRolloutStrategyAttribute
     {
 
         /// <summary>
         /// Gets or Sets Conditional
         /// </summary>
-        [DataMember(Name = "conditional", IsRequired = true, EmitDefaultValue = false)]
+        [DataMember(Name = "conditional", IsRequired = true, EmitDefaultValue = true)]
         public RolloutStrategyAttributeConditional Conditional { get; set; }
 
         /// <summary>
         /// Gets or Sets Type
         /// </summary>
-        [DataMember(Name = "type", IsRequired = true, EmitDefaultValue = false)]
+        [DataMember(Name = "type", IsRequired = true, EmitDefaultValue = true)]
         public RolloutStrategyFieldType Type { get; set; }
         /// <summary>
         /// Initializes a new instance of the <see cref="FeatureRolloutStrategyAttribute" /> class.
@@ -54,7 +54,7 @@ namespace IO.FeatureHub.SSE.Model
         /// <param name="fieldName">fieldName (required).</param>
         /// <param name="values">the value(s) associated with this rule.</param>
         /// <param name="type">type (required).</param>
-        public FeatureRolloutStrategyAttribute(RolloutStrategyAttributeConditional conditional = default(RolloutStrategyAttributeConditional), string fieldName = default(string), List<Object> values = default(List<Object>), RolloutStrategyFieldType type = default(RolloutStrategyFieldType))
+        public FeatureRolloutStrategyAttribute(RolloutStrategyAttributeConditional conditional = default, string fieldName = default, List<Object> values = default, RolloutStrategyFieldType type = default)
         {
             this.Conditional = conditional;
             // to ensure "fieldName" is required (not null)
@@ -70,7 +70,7 @@ namespace IO.FeatureHub.SSE.Model
         /// <summary>
         /// Gets or Sets FieldName
         /// </summary>
-        [DataMember(Name = "fieldName", IsRequired = true, EmitDefaultValue = false)]
+        [DataMember(Name = "fieldName", IsRequired = true, EmitDefaultValue = true)]
         public string FieldName { get; set; }
 
         /// <summary>
@@ -103,72 +103,6 @@ namespace IO.FeatureHub.SSE.Model
         public virtual string ToJson()
         {
             return Newtonsoft.Json.JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented);
-        }
-
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="input">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object input)
-        {
-            return this.Equals(input as FeatureRolloutStrategyAttribute);
-        }
-
-        /// <summary>
-        /// Returns true if FeatureRolloutStrategyAttribute instances are equal
-        /// </summary>
-        /// <param name="input">Instance of FeatureRolloutStrategyAttribute to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(FeatureRolloutStrategyAttribute input)
-        {
-            if (input == null)
-            {
-                return false;
-            }
-            return 
-                (
-                    this.Conditional == input.Conditional ||
-                    this.Conditional.Equals(input.Conditional)
-                ) && 
-                (
-                    this.FieldName == input.FieldName ||
-                    (this.FieldName != null &&
-                    this.FieldName.Equals(input.FieldName))
-                ) && 
-                (
-                    this.Values == input.Values ||
-                    this.Values != null &&
-                    input.Values != null &&
-                    this.Values.SequenceEqual(input.Values)
-                ) && 
-                (
-                    this.Type == input.Type ||
-                    this.Type.Equals(input.Type)
-                );
-        }
-
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                int hashCode = 41;
-                hashCode = (hashCode * 59) + this.Conditional.GetHashCode();
-                if (this.FieldName != null)
-                {
-                    hashCode = (hashCode * 59) + this.FieldName.GetHashCode();
-                }
-                if (this.Values != null)
-                {
-                    hashCode = (hashCode * 59) + this.Values.GetHashCode();
-                }
-                hashCode = (hashCode * 59) + this.Type.GetHashCode();
-                return hashCode;
-            }
         }
 
     }

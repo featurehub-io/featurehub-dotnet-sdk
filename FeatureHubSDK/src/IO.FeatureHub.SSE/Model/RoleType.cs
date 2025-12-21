@@ -53,7 +53,6 @@ namespace IO.FeatureHub.SSE.Model
         /// </summary>
         [EnumMember(Value = "CHANGE_VALUE")]
         CHANGEVALUE = 4
-
     }
 
 }

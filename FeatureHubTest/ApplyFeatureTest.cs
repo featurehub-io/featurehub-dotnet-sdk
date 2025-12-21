@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
+
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace FeatureHubTest
 {
@@ -65,7 +67,7 @@ namespace FeatureHubTest
 
       var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {rs}, "fred", Guid.NewGuid(), null);
 
-      Assert.AreEqual(val.Matched, false);
+      ClassicAssert.AreEqual(val.Matched, false);
     }
 
     [Test, TestCaseSource("BasicPercentProvider")]
@@ -81,8 +83,8 @@ namespace FeatureHubTest
 
       var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {rs}, "fred", Guid.NewGuid(), cc);
 
-      Assert.AreEqual(expected, val.Value);
-      Assert.AreEqual(matched, val.Matched);
+      ClassicAssert.AreEqual(expected, val.Value);
+      ClassicAssert.AreEqual(matched, val.Matched);
     }
 
     public static IEnumerable<TestCaseData> BasicPercentProvider()
@@ -101,8 +103,8 @@ namespace FeatureHubTest
 
       var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {}, "fred", Guid.NewGuid(), cc);
 
-      Assert.AreEqual(expected, val.Value);
-      Assert.AreEqual(matched, val.Matched);
+      ClassicAssert.AreEqual(expected, val.Value);
+      ClassicAssert.AreEqual(matched, val.Matched);
     }
 
     public static IEnumerable<TestCaseData> NoStrategyPercentProvider()

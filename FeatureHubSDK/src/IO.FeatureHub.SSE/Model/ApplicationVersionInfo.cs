@@ -28,7 +28,7 @@ namespace IO.FeatureHub.SSE.Model
     /// ApplicationVersionInfo
     /// </summary>
     [DataContract(Name = "ApplicationVersionInfo")]
-    public partial class ApplicationVersionInfo : IEquatable<ApplicationVersionInfo>
+    public partial class ApplicationVersionInfo
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationVersionInfo" /> class.
@@ -39,8 +39,8 @@ namespace IO.FeatureHub.SSE.Model
         /// Initializes a new instance of the <see cref="ApplicationVersionInfo" /> class.
         /// </summary>
         /// <param name="name">name (required).</param>
-        /// <param name="version">version (required).</param>
-        public ApplicationVersionInfo(string name = default(string), string version = default(string))
+        /// <param name="varVersion">varVersion (required).</param>
+        public ApplicationVersionInfo(string name = default, string varVersion = default)
         {
             // to ensure "name" is required (not null)
             if (name == null)
@@ -48,25 +48,25 @@ namespace IO.FeatureHub.SSE.Model
                 throw new ArgumentNullException("name is a required property for ApplicationVersionInfo and cannot be null");
             }
             this.Name = name;
-            // to ensure "version" is required (not null)
-            if (version == null)
+            // to ensure "varVersion" is required (not null)
+            if (varVersion == null)
             {
-                throw new ArgumentNullException("version is a required property for ApplicationVersionInfo and cannot be null");
+                throw new ArgumentNullException("varVersion is a required property for ApplicationVersionInfo and cannot be null");
             }
-            this._Version = version;
+            this.VarVersion = varVersion;
         }
 
         /// <summary>
         /// Gets or Sets Name
         /// </summary>
-        [DataMember(Name = "name", IsRequired = true, EmitDefaultValue = false)]
+        [DataMember(Name = "name", IsRequired = true, EmitDefaultValue = true)]
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or Sets _Version
+        /// Gets or Sets VarVersion
         /// </summary>
-        [DataMember(Name = "version", IsRequired = true, EmitDefaultValue = false)]
-        public string _Version { get; set; }
+        [DataMember(Name = "version", IsRequired = true, EmitDefaultValue = true)]
+        public string VarVersion { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
@@ -77,7 +77,7 @@ namespace IO.FeatureHub.SSE.Model
             StringBuilder sb = new StringBuilder();
             sb.Append("class ApplicationVersionInfo {\n");
             sb.Append("  Name: ").Append(Name).Append("\n");
-            sb.Append("  _Version: ").Append(_Version).Append("\n");
+            sb.Append("  VarVersion: ").Append(VarVersion).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -89,61 +89,6 @@ namespace IO.FeatureHub.SSE.Model
         public virtual string ToJson()
         {
             return Newtonsoft.Json.JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented);
-        }
-
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="input">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object input)
-        {
-            return this.Equals(input as ApplicationVersionInfo);
-        }
-
-        /// <summary>
-        /// Returns true if ApplicationVersionInfo instances are equal
-        /// </summary>
-        /// <param name="input">Instance of ApplicationVersionInfo to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(ApplicationVersionInfo input)
-        {
-            if (input == null)
-            {
-                return false;
-            }
-            return 
-                (
-                    this.Name == input.Name ||
-                    (this.Name != null &&
-                    this.Name.Equals(input.Name))
-                ) && 
-                (
-                    this._Version == input._Version ||
-                    (this._Version != null &&
-                    this._Version.Equals(input._Version))
-                );
-        }
-
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                int hashCode = 41;
-                if (this.Name != null)
-                {
-                    hashCode = (hashCode * 59) + this.Name.GetHashCode();
-                }
-                if (this._Version != null)
-                {
-                    hashCode = (hashCode * 59) + this._Version.GetHashCode();
-                }
-                return hashCode;
-            }
         }
 
     }

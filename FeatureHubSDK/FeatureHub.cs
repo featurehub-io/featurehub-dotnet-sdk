@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using IO.FeatureHub.SSE.Model;
 using Newtonsoft.Json;
 
@@ -24,12 +23,7 @@ namespace FeatureHubSDK
     /// </summary>
     Failed
   }
-
-  public interface IAnalyticsCollector
-  {
-    void LogEvent(string action, Dictionary<string, string> other, List<IFeature> featureStates);
-  }
-
+  
   public interface IFeature
   {
     /// <summary>
@@ -197,7 +191,7 @@ namespace FeatureHubSDK
 
     public bool IsSet => GetValue(_feature?.Type) != null;
 
-    public long? Version => _feature?._Version;
+    public long? Version => _feature?.VarVersion;
 
     public FeatureState FeatureState
     {
@@ -239,8 +233,6 @@ namespace FeatureHubSDK
     event EventHandler<Readyness> ReadynessHandler;
     event EventHandler<IFeatureHubRepository> NewFeatureHandler;
     Readyness Readyness { get; }
-    IFeatureHubRepository LogAnalyticEvent(string action, Dictionary<string, string> other = null, IClientContext ctx = null);
-    IFeatureHubRepository AddAnalyticCollector(IAnalyticsCollector collector);
     bool Exists(string key);
   }
 
@@ -266,8 +258,6 @@ namespace FeatureHubSDK
     public abstract event EventHandler<Readyness> ReadynessHandler;
     public abstract event EventHandler<IFeatureHubRepository> NewFeatureHandler;
     public abstract Readyness Readyness { get; }
-    public abstract IFeatureHubRepository LogAnalyticEvent(string action, Dictionary<string, string> other = null, IClientContext ctx = null);
-    public abstract IFeatureHubRepository AddAnalyticCollector(IAnalyticsCollector collector);
     public abstract bool Exists(string key);
   }
 
@@ -280,7 +270,6 @@ namespace FeatureHubSDK
     private Readyness _readyness = Readyness.NotReady;
     public override event EventHandler<Readyness> ReadynessHandler;
     public override event EventHandler<IFeatureHubRepository> NewFeatureHandler;
-    private IList<IAnalyticsCollector> _analyticsCollectors = new List<IAnalyticsCollector>();
     private readonly ApplyFeature _applyFeature;
     private bool _serverSideEvaluation;
 
@@ -405,41 +394,12 @@ namespace FeatureHubSDK
 
     private void DeleteFeature(FeatureState fs)
     {
-      if (_features.TryRemove(fs.Key, out var removing))
+      if (_features.TryRemove(fs.Key, out var _))
       {
         TriggerNewUpdate();        
       }
     }
 
-    public override IFeatureHubRepository LogAnalyticEvent(string action, Dictionary<string, string> other = null, IClientContext ctx = null)
-    {
-      // take a snapshot copy
-      var featureCopies =
-         _features.Values
-           .Where((f) => f.IsSet)
-           .Select(f => ctx != null ? f.WithContext(ctx) : f)
-           .Select(f => ((FeatureStateBaseHolder)f).Copy()).ToList();
-
-      foreach (var analyticsCollector in _analyticsCollectors)
-      {
-        try
-        {
-          analyticsCollector.LogEvent(action, other, featureCopies);
-        }
-        catch (Exception e)
-        {
-          FeatureLogging.ExceptionLogger(this,new ExceptionEvent("Failed to log analytic event", e));
-        }
-      }
-
-      return this;
-    }
-
-    public override IFeatureHubRepository AddAnalyticCollector(IAnalyticsCollector collector)
-    {
-      _analyticsCollectors.Add(collector);
-      return this;
-    }
 
     // update the feature if its version is greater than the version we currently store
     private bool FeatureUpdate(FeatureState fs)
@@ -452,8 +412,8 @@ namespace FeatureHubSDK
       }
       else if (holder.Version != null)
       {
-        if (holder.Version > fs._Version || (
-              holder.Version == fs._Version && !FeatureStateBaseHolder.ValueChanged(holder.Value, fs.Value)))
+        if (holder.Version > fs.VarVersion || (
+              holder.Version == fs.VarVersion && !FeatureStateBaseHolder.ValueChanged(holder.Value, fs.Value)))
         {
           return false;
         }

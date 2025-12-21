@@ -95,7 +95,6 @@ namespace IO.FeatureHub.SSE.Model
         /// </summary>
         [EnumMember(Value = "REGEX")]
         REGEX = 11
-
     }
 
 }

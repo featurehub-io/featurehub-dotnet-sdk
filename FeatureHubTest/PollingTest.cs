@@ -9,6 +9,7 @@ using IO.FeatureHub.SSE.Client;
 using IO.FeatureHub.SSE.Model;
 using Moq;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace FeatureHubTest
 {
@@ -30,9 +31,9 @@ namespace FeatureHubTest
         public void CacheControlContainsNewTimeout()
         {
             poll.DecodeCacheControl(new List<string>(new string[] {"bark, max-age=21, woof"}));
-            Assert.AreEqual(21, poll.TimeoutSeconds);
+            ClassicAssert.AreEqual(21, poll.TimeoutSeconds);
             poll.DecodeCacheControl(new List<string>(new string[] {"no-store, no-age, bark, bark, bark"}));
-            Assert.AreEqual(21, poll.TimeoutSeconds);
+            ClassicAssert.AreEqual(21, poll.TimeoutSeconds);
         }
 
         [Test]
@@ -42,10 +43,10 @@ namespace FeatureHubTest
                 new Multimap<string, string>(),
                 new List<FeatureEnvironmentCollection>());
             poll.CheckForEtag(response);
-            Assert.IsNull(poll.Etag);
+            ClassicAssert.IsNull(poll.Etag);
             response.Headers["ETag"] = new List<string>(new[] {"123445"});
             poll.CheckForEtag(response);
-            Assert.AreEqual(poll.Etag, "123445");
+            ClassicAssert.AreEqual(poll.Etag, "123445");
         }
 
         [Test]
@@ -55,9 +56,9 @@ namespace FeatureHubTest
                 new Multimap<string, string>(),
                 new List<FeatureEnvironmentCollection>());
             
-            Assert.IsFalse(poll.Stopped);
+            ClassicAssert.IsFalse(poll.Stopped);
             poll.DecodeResponse(response);
-            Assert.IsTrue(poll.Stopped);
+            ClassicAssert.IsTrue(poll.Stopped);
             
             repository.Verify(foo => foo.UpdateFeatures(It.IsAny<IEnumerable<FeatureState>>()));
         }
@@ -70,7 +71,7 @@ namespace FeatureHubTest
                 new List<FeatureEnvironmentCollection>());
             
             poll.DecodeResponse(response);
-            Assert.IsTrue(poll.DeadConnection);
+            ClassicAssert.IsTrue(poll.DeadConnection);
         }
         
         [Test]
@@ -81,7 +82,7 @@ namespace FeatureHubTest
                 new List<FeatureEnvironmentCollection>());
             
             poll.DecodeResponse(response);
-            Assert.IsTrue(poll.DeadConnection);
+            ClassicAssert.IsTrue(poll.DeadConnection);
         }
         
         [Test]
@@ -92,18 +93,18 @@ namespace FeatureHubTest
                 new List<FeatureEnvironmentCollection>());
             
             poll.DecodeResponse(response);
-            Assert.IsTrue(poll.DeadConnection);
+            ClassicAssert.IsTrue(poll.DeadConnection);
         }
 
         [Test]
         public void ApiKey503()
         {
-            Assert.IsTrue(poll.CacheTimeout.CompareTo(DateTime.Now) < 0);
+            ClassicAssert.IsTrue(poll.CacheTimeout.CompareTo(DateTime.Now) < 0);
             var response = new ApiResponse<List<FeatureEnvironmentCollection>>((HttpStatusCode)503,
                 new Multimap<string, string>(),
                 new List<FeatureEnvironmentCollection>());
             poll.DecodeResponse(response);
-            Assert.IsTrue(poll.CacheTimeout.CompareTo(DateTime.Now) > 0);
+            ClassicAssert.IsTrue(poll.CacheTimeout.CompareTo(DateTime.Now) > 0);
         }
 
         [Test]
@@ -142,7 +143,7 @@ namespace FeatureHubTest
                 ).Result).Throws(new ApiException(404, "bad call"));
             poll.SideloadApi(mockApi.Object);
             await poll.Poll();
-            Assert.IsTrue(poll.DeadConnection);
+            ClassicAssert.IsTrue(poll.DeadConnection);
             repository.Verify(foo => foo.Notify(SSEResultState.Failure, null));
         }
     }

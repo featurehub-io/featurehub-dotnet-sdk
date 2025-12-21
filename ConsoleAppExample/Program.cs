@@ -61,16 +61,7 @@ namespace ConsoleAppExample
       {
         Console.WriteLine($"New features");
       };
-
-      // fh.AddAnalyticCollector(new GoogleAnalyticsCollector("UA-example", "1234-5678-abcd-abcd",
-      //   new GoogleAnalyticsHttpClient()));
-
-      // do
-      // {
-      //   fh.LogAnalyticEvent("c-sharp-console");
-      //   Console.Write("Press a Key");
-      // } while (Console.ReadLine() != "x");
-
+      
 
       Console.WriteLine("Context initialized, waiting for readyness - Press a key when readyness appears");
       Console.ReadKey();

@@ -65,7 +65,6 @@ namespace IO.FeatureHub.SSE.Model
         /// </summary>
         [EnumMember(Value = "version")]
         Version = 6
-
     }
 
 }

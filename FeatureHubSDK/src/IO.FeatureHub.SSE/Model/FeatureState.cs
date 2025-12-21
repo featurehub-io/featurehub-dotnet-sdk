@@ -28,7 +28,7 @@ namespace IO.FeatureHub.SSE.Model
     /// FeatureState
     /// </summary>
     [DataContract(Name = "FeatureState")]
-    public partial class FeatureState : IEquatable<FeatureState>
+    public partial class FeatureState
     {
 
         /// <summary>
@@ -47,12 +47,12 @@ namespace IO.FeatureHub.SSE.Model
         /// <param name="id">id (required).</param>
         /// <param name="key">key (required).</param>
         /// <param name="l">Is this feature locked. Usually this doesn&#39;t matter because the value is the value, but for FeatureInterceptors it can matter..</param>
-        /// <param name="version">The version of the feature, this allows features to change values and it means we don&#39;t trigger events.</param>
+        /// <param name="varVersion">The version of the feature, this allows features to change values and it means we don&#39;t trigger events.</param>
         /// <param name="type">type.</param>
         /// <param name="value">the current value.</param>
         /// <param name="environmentId">This field is filled in from the client side in the GET api as the GET api is able to request multiple environments. It is never passed from the server, as an array of feature states is wrapped in an environment..</param>
         /// <param name="strategies">strategies.</param>
-        public FeatureState(Guid id = default(Guid), string key = default(string), bool l = default(bool), long version = default(long), FeatureValueType? type = default(FeatureValueType?), Object value = default(Object), Guid environmentId = default(Guid), List<FeatureRolloutStrategy> strategies = default(List<FeatureRolloutStrategy>))
+        public FeatureState(Guid id = default, string key = default, bool l = default, long varVersion = default, FeatureValueType? type = default, Object value = default, Guid environmentId = default, List<FeatureRolloutStrategy> strategies = default)
         {
             this.Id = id;
             // to ensure "key" is required (not null)
@@ -62,7 +62,7 @@ namespace IO.FeatureHub.SSE.Model
             }
             this.Key = key;
             this.L = l;
-            this._Version = version;
+            this.VarVersion = varVersion;
             this.Type = type;
             this.Value = value;
             this.EnvironmentId = environmentId;
@@ -72,13 +72,13 @@ namespace IO.FeatureHub.SSE.Model
         /// <summary>
         /// Gets or Sets Id
         /// </summary>
-        [DataMember(Name = "id", IsRequired = true, EmitDefaultValue = false)]
+        [DataMember(Name = "id", IsRequired = true, EmitDefaultValue = true)]
         public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or Sets Key
         /// </summary>
-        [DataMember(Name = "key", IsRequired = true, EmitDefaultValue = false)]
+        [DataMember(Name = "key", IsRequired = true, EmitDefaultValue = true)]
         public string Key { get; set; }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace IO.FeatureHub.SSE.Model
         /// </summary>
         /// <value>The version of the feature, this allows features to change values and it means we don&#39;t trigger events</value>
         [DataMember(Name = "version", EmitDefaultValue = false)]
-        public long _Version { get; set; }
+        public long VarVersion { get; set; }
 
         /// <summary>
         /// the current value
@@ -126,7 +126,7 @@ namespace IO.FeatureHub.SSE.Model
             sb.Append("  Id: ").Append(Id).Append("\n");
             sb.Append("  Key: ").Append(Key).Append("\n");
             sb.Append("  L: ").Append(L).Append("\n");
-            sb.Append("  _Version: ").Append(_Version).Append("\n");
+            sb.Append("  VarVersion: ").Append(VarVersion).Append("\n");
             sb.Append("  Type: ").Append(Type).Append("\n");
             sb.Append("  Value: ").Append(Value).Append("\n");
             sb.Append("  EnvironmentId: ").Append(EnvironmentId).Append("\n");
@@ -142,104 +142,6 @@ namespace IO.FeatureHub.SSE.Model
         public virtual string ToJson()
         {
             return Newtonsoft.Json.JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented);
-        }
-
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="input">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object input)
-        {
-            return this.Equals(input as FeatureState);
-        }
-
-        /// <summary>
-        /// Returns true if FeatureState instances are equal
-        /// </summary>
-        /// <param name="input">Instance of FeatureState to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(FeatureState input)
-        {
-            if (input == null)
-            {
-                return false;
-            }
-            return 
-                (
-                    this.Id == input.Id ||
-                    (this.Id != null &&
-                    this.Id.Equals(input.Id))
-                ) && 
-                (
-                    this.Key == input.Key ||
-                    (this.Key != null &&
-                    this.Key.Equals(input.Key))
-                ) && 
-                (
-                    this.L == input.L ||
-                    this.L.Equals(input.L)
-                ) && 
-                (
-                    this._Version == input._Version ||
-                    this._Version.Equals(input._Version)
-                ) && 
-                (
-                    this.Type == input.Type ||
-                    this.Type.Equals(input.Type)
-                ) && 
-                (
-                    this.Value == input.Value ||
-                    (this.Value != null &&
-                    this.Value.Equals(input.Value))
-                ) && 
-                (
-                    this.EnvironmentId == input.EnvironmentId ||
-                    (this.EnvironmentId != null &&
-                    this.EnvironmentId.Equals(input.EnvironmentId))
-                ) && 
-                (
-                    this.Strategies == input.Strategies ||
-                    this.Strategies != null &&
-                    input.Strategies != null &&
-                    this.Strategies.SequenceEqual(input.Strategies)
-                );
-        }
-
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                int hashCode = 41;
-                if (this.Id != null)
-                {
-                    hashCode = (hashCode * 59) + this.Id.GetHashCode();
-                }
-                if (this.Key != null)
-                {
-                    hashCode = (hashCode * 59) + this.Key.GetHashCode();
-                }
-                hashCode = (hashCode * 59) + this.L.GetHashCode();
-                hashCode = (hashCode * 59) + this._Version.GetHashCode();
-                hashCode = (hashCode * 59) + this.Type.GetHashCode();
-                if (this.Value != null)
-                {
-                    hashCode = (hashCode * 59) + this.Value.GetHashCode();
-                }
-                if (this.EnvironmentId != null)
-                {
-                    hashCode = (hashCode * 59) + this.EnvironmentId.GetHashCode();
-                }
-                if (this.Strategies != null)
-                {
-                    hashCode = (hashCode * 59) + this.Strategies.GetHashCode();
-                }
-                return hashCode;
-            }
         }
 
     }
