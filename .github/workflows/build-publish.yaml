@@ -1,6 +1,8 @@
 name: publish to nuget
 on:
-  workflow_dispatch:
+  push:
+    tags: ['*']
+    
 jobs:
   publish:
     name: build, pack & publish
@@ -14,10 +16,9 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
-      - name: Install dependencies
-        run: dotnet restore
       - name: Pack
-        run: dotnet pack --configuration Release --no-restore
+        working-directory: FeatureHubSDK
+        run: dotnet pack /p:PackageVersion=$Tag /p:PackageReleaseNotes="$Tag - EventSource library dependency update." --configuration Release
       # Use the ambient GitHub token to login to NuGet and retrieve an API key
       - name: NuGet login (OIDC → temp API key)
         uses: NuGet/login@v1
@@ -27,8 +28,9 @@ jobs:
           user: ${{ secrets.NUGET_USER }}
       - name: push to NuGet
         shell: pwsh
+        working-directory: FeatureHubSDK
         run: |            
-            dotnet nuget push FeatureHubSDK/FeatureHubSDK.csproj `
+            dotnet nuget push FeatureHubSDK.csproj `
               --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" `
               --source https://api.nuget.org/v3/index.json
                   

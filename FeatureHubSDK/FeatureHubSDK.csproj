@@ -5,7 +5,6 @@
         <Authors>FeatureHub IO</Authors>
         <Copyright>MIT</Copyright>
         <PackageProjectUrl>https://github.com/featurehub-io/featurehub</PackageProjectUrl>
-        <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
         <PackageLicense>MIT</PackageLicense>
         <PackageId>FeatureHub.SDK</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>

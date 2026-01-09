@@ -5,7 +5,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 
-IFeatureHubConfig config = new EdgeFeatureHubConfig(builder.Configuration["FeatureHub:Host"], builder.Configuration["FeatureHub:ApiKey"]);
+IFeatureHubConfig config = new EdgeFeatureHubConfig(
+    Environment.GetEnvironmentVariable("FEATUREHUB_EDGE_URL") ?? builder.Configuration["FeatureHub:Host"], 
+    Environment.GetEnvironmentVariable("FEATUREHUB_CLIENT_API_KEY") ?? builder.Configuration["FeatureHub:ApiKey"]);
 
 config.Repository.ReadynessHandler += (sender, readiness) =>
 {
@@ -27,6 +29,7 @@ builder.Services.AddSingleton<ITodoServiceRepository, TodoServiceInMemoryReposit
 ;
 // add in the featurehub config
 builder.Services.AddSingleton(config);
+
 // add in the controllers which use the featurehub and todo config
 builder.Services.AddControllers();
 
