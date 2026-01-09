@@ -18,7 +18,7 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Pack
         working-directory: FeatureHubSDK
-        run: dotnet pack /p:PackageVersion=$Tag /p:PackageReleaseNotes="$Tag - EventSource library dependency update." --configuration Release
+        run: dotnet pack /p:PackageVersion=${{ github.ref_name }} /p:PackageReleaseNotes="${{ github.ref_name }} - EventSource library dependency update." --configuration Release
       # Use the ambient GitHub token to login to NuGet and retrieve an API key
       - name: NuGet login (OIDC → temp API key)
         uses: NuGet/login@v1
