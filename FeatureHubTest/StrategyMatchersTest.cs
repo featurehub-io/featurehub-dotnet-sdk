@@ -3,6 +3,7 @@ using System.Linq;
 using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace FeatureHubTest
 {
@@ -35,7 +36,7 @@ namespace FeatureHubTest
       var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
         type: RolloutStrategyFieldType.STRING, values: vals.Select(v => v as object).ToList());
       
-      Assert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal, rsa), matches);
+      ClassicAssert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal, rsa), matches);
     }
 
     public static IEnumerable<TestCaseData> StringMatcherProvider()
@@ -90,7 +91,7 @@ namespace FeatureHubTest
       var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
         type: RolloutStrategyFieldType.BOOLEAN, values: vals.Select(v => v as object).ToList());
 
-      Assert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal?.ToString(), rsa), matches);
+      ClassicAssert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal?.ToString(), rsa), matches);
     }
 
     public static IEnumerable<TestCaseData> BooleanMatcherProvider()
@@ -124,7 +125,7 @@ namespace FeatureHubTest
       var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
         type: RolloutStrategyFieldType.SEMANTICVERSION, values: vals.Select(v => v as object).ToList());
 
-      Assert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal, rsa), matches);
+      ClassicAssert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal, rsa), matches);
     }
 
     public static IEnumerable<TestCaseData> SemanticVersionMatcherProvider()
@@ -171,7 +172,7 @@ namespace FeatureHubTest
       var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
         type: RolloutStrategyFieldType.IPADDRESS, values: vals.Select(v => v as object).ToList());
 
-      Assert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
+      ClassicAssert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
     }
 
     public static IEnumerable<TestCaseData> IPAddressMatcherProvider()
@@ -214,7 +215,7 @@ namespace FeatureHubTest
       var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
         type: RolloutStrategyFieldType.NUMBER, values: vals.Select(v => v as object).ToList());
 
-      Assert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
+      ClassicAssert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
     }
 
     public static IEnumerable<TestCaseData> NumberMatcherProvider()
@@ -251,7 +252,7 @@ namespace FeatureHubTest
       var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
         type: RolloutStrategyFieldType.DATE, values: vals.Select(v => v as object).ToList());
 
-      Assert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
+      ClassicAssert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
     }
 
     public static IEnumerable<TestCaseData> DateMatcherProvider()
@@ -311,7 +312,7 @@ namespace FeatureHubTest
       var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
         type: RolloutStrategyFieldType.DATETIME, values: vals.Select(v => v as object).ToList());
 
-      Assert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
+      ClassicAssert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
     }
 
     public static IEnumerable<TestCaseData> DateTimeMatcherProvider()

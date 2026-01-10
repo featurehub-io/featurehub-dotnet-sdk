@@ -21,11 +21,11 @@ namespace IO.FeatureHub.SSE.Client
         /// <summary>
         /// Retry policy
         /// </summary>
-        public static Policy<IRestResponse> RetryPolicy { get; set; }
+        public static ISyncPolicy<RestResponse> RetryPolicy { get; set; }
 
         /// <summary>
         /// Async retry policy
         /// </summary>
-        public static AsyncPolicy<IRestResponse> AsyncRetryPolicy { get; set; }
+        public static IAsyncPolicy<RestResponse> AsyncRetryPolicy { get; set; }
     }
 }

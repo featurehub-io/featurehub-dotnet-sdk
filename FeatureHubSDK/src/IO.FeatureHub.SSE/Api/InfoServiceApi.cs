@@ -66,7 +66,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of ApplicationVersionInfo</returns>
-        System.Threading.Tasks.Task<ApplicationVersionInfo> GetInfoVersionAsync(int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<ApplicationVersionInfo> GetInfoVersionAsync(int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 
@@ -78,7 +78,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of ApiResponse (ApplicationVersionInfo)</returns>
-        System.Threading.Tasks.Task<ApiResponse<ApplicationVersionInfo>> GetInfoVersionWithHttpInfoAsync(int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<ApiResponse<ApplicationVersionInfo>> GetInfoVersionWithHttpInfoAsync(int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default);
         #endregion Asynchronous Operations
     }
 
@@ -230,6 +230,7 @@ namespace IO.FeatureHub.SSE.Api
             };
 
             var localVarContentType = IO.FeatureHub.SSE.Client.ClientUtils.SelectHeaderContentType(_contentTypes);
+            var localVarMultipartFormData = localVarContentType == "multipart/form-data";
             if (localVarContentType != null)
             {
                 localVarRequestOptions.HeaderParameters.Add("Content-Type", localVarContentType);
@@ -267,7 +268,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of ApplicationVersionInfo</returns>
-        public async System.Threading.Tasks.Task<ApplicationVersionInfo> GetInfoVersionAsync(int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<ApplicationVersionInfo> GetInfoVersionAsync(int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default)
         {
             IO.FeatureHub.SSE.Client.ApiResponse<ApplicationVersionInfo> localVarResponse = await GetInfoVersionWithHttpInfoAsync(operationIndex, cancellationToken).ConfigureAwait(false);
             return localVarResponse.Data;
@@ -280,7 +281,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of ApiResponse (ApplicationVersionInfo)</returns>
-        public async System.Threading.Tasks.Task<IO.FeatureHub.SSE.Client.ApiResponse<ApplicationVersionInfo>> GetInfoVersionWithHttpInfoAsync(int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<IO.FeatureHub.SSE.Client.ApiResponse<ApplicationVersionInfo>> GetInfoVersionWithHttpInfoAsync(int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default)
         {
 
             IO.FeatureHub.SSE.Client.RequestOptions localVarRequestOptions = new IO.FeatureHub.SSE.Client.RequestOptions();

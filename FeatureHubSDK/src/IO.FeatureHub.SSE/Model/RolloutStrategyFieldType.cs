@@ -71,7 +71,6 @@ namespace IO.FeatureHub.SSE.Model
         /// </summary>
         [EnumMember(Value = "IP_ADDRESS")]
         IPADDRESS = 7
-
     }
 
 }

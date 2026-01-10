@@ -49,8 +49,6 @@ namespace FeatureHubSDK
     IEdgeService EdgeService { get; }
     IFeatureHubRepository Repository { get; }
 
-    IFeatureHubRepository LogAnalyticEvent(string action, string user = null, Dictionary<string, string> other = null);
-
     void Close();
   }
 
@@ -61,26 +59,7 @@ namespace FeatureHubSDK
     protected readonly IFeatureHubConfig _config;
 
     public IFeatureHubRepository Repository => _repository;
-
-    public IFeatureHubRepository LogAnalyticEvent(string action, string user = null, Dictionary<string, string> other = null)
-    {
-      if (user == null)
-      {
-        user = GetAttr("userkey", null);
-      }
-
-      if (user != null)
-      {
-        if (other == null)
-        {
-          other = new Dictionary<string, string>();
-        }
-      }
-
-      _repository.LogAnalyticEvent(action, other);
-
-      return _repository;
-    }
+    
 
     public abstract void Close();
 

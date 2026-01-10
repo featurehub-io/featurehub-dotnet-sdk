@@ -37,7 +37,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="contextSha">A SHA of the context in string form designed to break any cache if the client changes context. It is not used by the server in any way, but if Fastly support is turned on it must be present. (optional)</param>
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <returns>List&lt;FeatureEnvironmentCollection&gt;</returns>
-        List<FeatureEnvironmentCollection> GetFeatureStates(List<string> apiKey, string contextSha = default(string), int operationIndex = 0);
+        List<FeatureEnvironmentCollection> GetFeatureStates(List<string> apiKey, string contextSha = default, int operationIndex = 0);
 
         /// <summary>
         /// 
@@ -50,7 +50,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="contextSha">A SHA of the context in string form designed to break any cache if the client changes context. It is not used by the server in any way, but if Fastly support is turned on it must be present. (optional)</param>
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <returns>ApiResponse of List&lt;FeatureEnvironmentCollection&gt;</returns>
-        ApiResponse<List<FeatureEnvironmentCollection>> GetFeatureStatesWithHttpInfo(List<string> apiKey, string contextSha = default(string), int operationIndex = 0);
+        ApiResponse<List<FeatureEnvironmentCollection>> GetFeatureStatesWithHttpInfo(List<string> apiKey, string contextSha = default, int operationIndex = 0);
         /// <summary>
         /// 
         /// </summary>
@@ -99,7 +99,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of List&lt;FeatureEnvironmentCollection&gt;</returns>
-        System.Threading.Tasks.Task<List<FeatureEnvironmentCollection>> GetFeatureStatesAsync(List<string> apiKey, string contextSha = default(string), int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<List<FeatureEnvironmentCollection>> GetFeatureStatesAsync(List<string> apiKey, string contextSha = default, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 
@@ -113,7 +113,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of ApiResponse (List&lt;FeatureEnvironmentCollection&gt;)</returns>
-        System.Threading.Tasks.Task<ApiResponse<List<FeatureEnvironmentCollection>>> GetFeatureStatesWithHttpInfoAsync(List<string> apiKey, string contextSha = default(string), int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<ApiResponse<List<FeatureEnvironmentCollection>>> GetFeatureStatesWithHttpInfoAsync(List<string> apiKey, string contextSha = default, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default);
         /// <summary>
         /// 
         /// </summary>
@@ -127,7 +127,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of void</returns>
-        System.Threading.Tasks.Task SetFeatureStateAsync(string sdkUrl, string featureKey, FeatureStateUpdate featureStateUpdate, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task SetFeatureStateAsync(string sdkUrl, string featureKey, FeatureStateUpdate featureStateUpdate, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 
@@ -142,7 +142,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of ApiResponse</returns>
-        System.Threading.Tasks.Task<ApiResponse<Object>> SetFeatureStateWithHttpInfoAsync(string sdkUrl, string featureKey, FeatureStateUpdate featureStateUpdate, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<ApiResponse<Object>> SetFeatureStateWithHttpInfoAsync(string sdkUrl, string featureKey, FeatureStateUpdate featureStateUpdate, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default);
         #endregion Asynchronous Operations
     }
 
@@ -271,7 +271,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="contextSha">A SHA of the context in string form designed to break any cache if the client changes context. It is not used by the server in any way, but if Fastly support is turned on it must be present. (optional)</param>
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <returns>List&lt;FeatureEnvironmentCollection&gt;</returns>
-        public List<FeatureEnvironmentCollection> GetFeatureStates(List<string> apiKey, string contextSha = default(string), int operationIndex = 0)
+        public List<FeatureEnvironmentCollection> GetFeatureStates(List<string> apiKey, string contextSha = default, int operationIndex = 0)
         {
             IO.FeatureHub.SSE.Client.ApiResponse<List<FeatureEnvironmentCollection>> localVarResponse = GetFeatureStatesWithHttpInfo(apiKey, contextSha);
             return localVarResponse.Data;
@@ -285,7 +285,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="contextSha">A SHA of the context in string form designed to break any cache if the client changes context. It is not used by the server in any way, but if Fastly support is turned on it must be present. (optional)</param>
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <returns>ApiResponse of List&lt;FeatureEnvironmentCollection&gt;</returns>
-        public IO.FeatureHub.SSE.Client.ApiResponse<List<FeatureEnvironmentCollection>> GetFeatureStatesWithHttpInfo(List<string> apiKey, string contextSha = default(string), int operationIndex = 0)
+        public IO.FeatureHub.SSE.Client.ApiResponse<List<FeatureEnvironmentCollection>> GetFeatureStatesWithHttpInfo(List<string> apiKey, string contextSha = default, int operationIndex = 0)
         {
             // verify the required parameter 'apiKey' is set
             if (apiKey == null)
@@ -304,6 +304,7 @@ namespace IO.FeatureHub.SSE.Api
             };
 
             var localVarContentType = IO.FeatureHub.SSE.Client.ClientUtils.SelectHeaderContentType(_contentTypes);
+            var localVarMultipartFormData = localVarContentType == "multipart/form-data";
             if (localVarContentType != null)
             {
                 localVarRequestOptions.HeaderParameters.Add("Content-Type", localVarContentType);
@@ -348,7 +349,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of List&lt;FeatureEnvironmentCollection&gt;</returns>
-        public async System.Threading.Tasks.Task<List<FeatureEnvironmentCollection>> GetFeatureStatesAsync(List<string> apiKey, string contextSha = default(string), int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<List<FeatureEnvironmentCollection>> GetFeatureStatesAsync(List<string> apiKey, string contextSha = default, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default)
         {
             IO.FeatureHub.SSE.Client.ApiResponse<List<FeatureEnvironmentCollection>> localVarResponse = await GetFeatureStatesWithHttpInfoAsync(apiKey, contextSha, operationIndex, cancellationToken).ConfigureAwait(false);
             return localVarResponse.Data;
@@ -363,7 +364,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of ApiResponse (List&lt;FeatureEnvironmentCollection&gt;)</returns>
-        public async System.Threading.Tasks.Task<IO.FeatureHub.SSE.Client.ApiResponse<List<FeatureEnvironmentCollection>>> GetFeatureStatesWithHttpInfoAsync(List<string> apiKey, string contextSha = default(string), int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<IO.FeatureHub.SSE.Client.ApiResponse<List<FeatureEnvironmentCollection>>> GetFeatureStatesWithHttpInfoAsync(List<string> apiKey, string contextSha = default, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default)
         {
             // verify the required parameter 'apiKey' is set
             if (apiKey == null)
@@ -473,6 +474,7 @@ namespace IO.FeatureHub.SSE.Api
             };
 
             var localVarContentType = IO.FeatureHub.SSE.Client.ClientUtils.SelectHeaderContentType(_contentTypes);
+            var localVarMultipartFormData = localVarContentType == "multipart/form-data";
             if (localVarContentType != null)
             {
                 localVarRequestOptions.HeaderParameters.Add("Content-Type", localVarContentType);
@@ -516,7 +518,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of void</returns>
-        public async System.Threading.Tasks.Task SetFeatureStateAsync(string sdkUrl, string featureKey, FeatureStateUpdate featureStateUpdate, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task SetFeatureStateAsync(string sdkUrl, string featureKey, FeatureStateUpdate featureStateUpdate, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default)
         {
             await SetFeatureStateWithHttpInfoAsync(sdkUrl, featureKey, featureStateUpdate, operationIndex, cancellationToken).ConfigureAwait(false);
         }
@@ -531,7 +533,7 @@ namespace IO.FeatureHub.SSE.Api
         /// <param name="operationIndex">Index associated with the operation.</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns>Task of ApiResponse</returns>
-        public async System.Threading.Tasks.Task<IO.FeatureHub.SSE.Client.ApiResponse<Object>> SetFeatureStateWithHttpInfoAsync(string sdkUrl, string featureKey, FeatureStateUpdate featureStateUpdate, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<IO.FeatureHub.SSE.Client.ApiResponse<Object>> SetFeatureStateWithHttpInfoAsync(string sdkUrl, string featureKey, FeatureStateUpdate featureStateUpdate, int operationIndex = 0, System.Threading.CancellationToken cancellationToken = default)
         {
             // verify the required parameter 'sdkUrl' is set
             if (sdkUrl == null)

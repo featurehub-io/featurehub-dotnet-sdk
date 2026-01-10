@@ -78,7 +78,6 @@ namespace IO.FeatureHub.SSE.Model
         /// </summary>
         [EnumMember(Value = "error")]
         Error = 8
-
     }
 
 }

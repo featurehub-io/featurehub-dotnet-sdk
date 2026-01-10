@@ -1,16 +1,18 @@
-FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+
 ARG Version
-WORKDIR /app
-ADD . /app
-RUN dotnet restore FeatureHubSDK.sln
-RUN dotnet publish  -c Release -o out
-RUN dotnet test
-RUN cd FeatureHubSDK && dotnet build /p:PackageVersion=$Version -c Release --no-restore && \
-     dotnet pack /p:PackageVersion=$Version -c Release --no-restore --no-build -o /sln/artifacts
-ENTRYPOINT ["dotnet", "nuget", "push", "/sln/artifacts/*.nupkg"]
-CMD ["--source", "https://api.nuget.org/v3/index.json"]
 
-# build with  docker build --build-arg Version=2.1.0 -t featurehub-dotnet-sdk .
-# examine with: docker run --rm -it --entrypoint "/bin/sh" featurehub-dotnet-sdk -c /bin/bash
-# deploy with docker run --rm  featurehub-dotnet-sdk --source https://api.nuget.org/v3/index.json --api-key MY-SECRET-KEY
+WORKDIR /FeatureHubSDK
+COPY FeatureHubSDK/ /FeatureHubSDK/
+COPY README.md /
+RUN cd /FeatureHubSDK && \
+     ls -la && dotnet build FeatureHubSDK.csproj
 
+WORKDIR /web
+COPY ToDoWebApi/ /web/
+ENV ASPNETCORE_URLS=http://localhost:8099
+ENV ASPNETCORE_ENVIRONMENT=Development
+RUN cd /web && \
+    dotnet build ToDoWebApi.csproj 
+     
+CMD ["dotnet", "run", "ToDoWebApi.csproj"]

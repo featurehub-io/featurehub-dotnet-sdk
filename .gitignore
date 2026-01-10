@@ -1,2 +1,7 @@
 .idea
 FeatureHubSDK.sln.DotSettings.user
+ToDoWebApi/bin
+ToDoWebApi/obj
+FeatureHubSDK/.openapi-generator
+FeatureHubSDK/api
+

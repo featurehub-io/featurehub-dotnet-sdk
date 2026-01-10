@@ -28,19 +28,19 @@ namespace IO.FeatureHub.SSE.Model
     /// FeatureStateUpdate
     /// </summary>
     [DataContract(Name = "FeatureStateUpdate")]
-    public partial class FeatureStateUpdate : IEquatable<FeatureStateUpdate>
+    public partial class FeatureStateUpdate
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="FeatureStateUpdate" /> class.
         /// </summary>
         /// <param name="value">the new value.</param>
         /// <param name="updateValue">indicates whether you are trying to update the value, as value can be null.</param>
-        /// <param name="_lock">set only if you wish to lock or unlock, otherwise null.</param>
-        public FeatureStateUpdate(Object value = default(Object), bool updateValue = default(bool), bool _lock = default(bool))
+        /// <param name="varLock">set only if you wish to lock or unlock, otherwise null.</param>
+        public FeatureStateUpdate(Object value = default, bool updateValue = default, bool varLock = default)
         {
             this.Value = value;
             this.UpdateValue = updateValue;
-            this.Lock = _lock;
+            this.Lock = varLock;
         }
 
         /// <summary>
@@ -86,62 +86,6 @@ namespace IO.FeatureHub.SSE.Model
         public virtual string ToJson()
         {
             return Newtonsoft.Json.JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented);
-        }
-
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="input">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object input)
-        {
-            return this.Equals(input as FeatureStateUpdate);
-        }
-
-        /// <summary>
-        /// Returns true if FeatureStateUpdate instances are equal
-        /// </summary>
-        /// <param name="input">Instance of FeatureStateUpdate to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(FeatureStateUpdate input)
-        {
-            if (input == null)
-            {
-                return false;
-            }
-            return 
-                (
-                    this.Value == input.Value ||
-                    (this.Value != null &&
-                    this.Value.Equals(input.Value))
-                ) && 
-                (
-                    this.UpdateValue == input.UpdateValue ||
-                    this.UpdateValue.Equals(input.UpdateValue)
-                ) && 
-                (
-                    this.Lock == input.Lock ||
-                    this.Lock.Equals(input.Lock)
-                );
-        }
-
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                int hashCode = 41;
-                if (this.Value != null)
-                {
-                    hashCode = (hashCode * 59) + this.Value.GetHashCode();
-                }
-                hashCode = (hashCode * 59) + this.UpdateValue.GetHashCode();
-                hashCode = (hashCode * 59) + this.Lock.GetHashCode();
-                return hashCode;
-            }
         }
 
     }

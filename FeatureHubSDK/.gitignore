@@ -360,9 +360,3 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-
-IO.FeatureHub.SSE.sln
-appveyor.yml
-git_push.sh
-README.md
-.openapi-generator/

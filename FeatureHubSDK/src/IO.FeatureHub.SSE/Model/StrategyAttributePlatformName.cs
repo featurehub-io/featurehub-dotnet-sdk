@@ -59,7 +59,6 @@ namespace IO.FeatureHub.SSE.Model
         /// </summary>
         [EnumMember(Value = "ios")]
         Ios = 5
-
     }
 
 }

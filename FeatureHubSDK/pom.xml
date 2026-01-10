@@ -82,7 +82,7 @@
       <plugin>
         <groupId>org.openapitools</groupId>
         <artifactId>openapi-generator-maven-plugin</artifactId>
-        <version>6.0.1</version>
+        <version>7.17.0</version>
         <executions>
           <execution>
             <id>featurehub-api</id>
@@ -93,7 +93,8 @@
             <configuration>
               <output>${project.basedir}</output>
               <inputSpec>http://api.dev.featurehub.io/edge/1.1.4.yaml</inputSpec>
-              <generatorName>csharp-netcore</generatorName>
+              <library>restsharp</library>
+              <generatorName>csharp</generatorName>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateModelDocumentation>false</generateModelDocumentation>
               <generateApiTests>false</generateApiTests>

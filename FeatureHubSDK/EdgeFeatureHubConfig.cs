@@ -51,8 +51,6 @@ namespace FeatureHubSDK
 
     // is the system ready? use this in your liveness/health check
     Readyness Readyness { get; }
-
-    void AddAnalyticCollector(IAnalyticsCollector collector);
   }
   
   public class FeatureHubKeyInvalidException : Exception
@@ -208,12 +206,7 @@ namespace FeatureHubSDK
     }
 
     public Readyness Readyness => Repository.Readyness;
-
-    public void AddAnalyticCollector(IAnalyticsCollector collector)
-    {
-      Repository.AddAnalyticCollector(collector);
-    }
-
+    
     public string Url => _url;
   }
 }
