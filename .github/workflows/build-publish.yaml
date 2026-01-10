@@ -16,6 +16,12 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
+      - name: Restore
+        working-directory: FeatureHubSDK
+        run: dotnet restore
+      - name: Build  
+        working-directory: FeatureHubSDK
+        run: dotnet build /p:PackageVersion=${{ github.ref_name }} /p:PackageReleaseNotes="${{ github.ref_name }} - EventSource library dependency update." --configuration Release
       - name: Pack
         working-directory: FeatureHubSDK
         run: dotnet pack /p:PackageVersion=${{ github.ref_name }} /p:PackageReleaseNotes="${{ github.ref_name }} - EventSource library dependency update." --configuration Release
