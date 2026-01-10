@@ -36,7 +36,7 @@ jobs:
         shell: pwsh
         working-directory: FeatureHubSDK
         run: |            
-            dotnet nuget push FeatureHubSDK.csproj `
+            dotnet nuget push bin/Release/FeatureHub.SDK.${{ github.ref_name }}.nupkg `
               --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" `
               --source https://api.nuget.org/v3/index.json
                   
