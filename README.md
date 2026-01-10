@@ -6,6 +6,12 @@ Welcome to the .Net SDK implementation for [FeatureHub.io](https://featurehub.io
 Details about what general features are available in FeatureHub SDKs are [available here](https://docs.featurehub.io/#_sdks).
 
 ## Changelog
+- 3.0.1 
+  * Documentation updates 
+- 3.0.0
+  * Updated for .NET 8+
+  * Updated library support
+  * Updated examples to match latest style
 - 2.5.1
   * Add support for a concurrent dictionary for features. This prevents features which are requested before the Repository is ready from
     clashing in a concurrent situation.
