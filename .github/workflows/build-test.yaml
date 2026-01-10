@@ -16,6 +16,15 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+      - name: Restore
+        working-directory: FeatureHubSDK
+        run: dotnet restore
+      - name: Build
+        working-directory: FeatureHubSDK
+        run: dotnet build /p:PackageVersion=1.0.0 /p:PackageReleaseNotes="1.0.0 - EventSource library dependency update." --configuration Release
+      - name: Pack
+        working-directory: FeatureHubSDK
+        run: dotnet pack /p:PackageVersion=1.0.0 /p:PackageReleaseNotes="1.0.0 - EventSource library dependency update." --configuration Release
       - name: Install dependencies
         run: dotnet restore
       - name: Pack
