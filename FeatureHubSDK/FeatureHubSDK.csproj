@@ -5,11 +5,13 @@
         <Authors>FeatureHub IO</Authors>
         <Copyright>MIT</Copyright>
         <PackageProjectUrl>https://github.com/featurehub-io/featurehub</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageLicense>MIT</PackageLicense>
         <PackageId>FeatureHub.SDK</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageIconUrl>https://docs.featurehub.io/favicon.ico</PackageIconUrl>
         <PackageIcon>FeatureHub-icon.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <Description>.Net SDK implementation for FeatureHub.io - Open source Feature flags management, A/B testing and remote configuration platform.</Description>
         <RepositoryUrl>https://github.com/featurehub-io/featurehub-dotnet-sdk</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
