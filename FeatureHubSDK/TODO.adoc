@@ -1,0 +1,5 @@
+= Thoughts which may need investigation
+
+- [ ] Feature Value Interceptors are not in
+- [ ] interceptor that reads from a file (yaml)
+- [ ] Convert function in Usage needs to be replaceable

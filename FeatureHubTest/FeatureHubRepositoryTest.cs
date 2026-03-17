@@ -72,7 +72,7 @@ namespace FeatureHubTest
     public void ReadynessWhenFeaturesAppear()
     {
       var found = false;
-      _repository.ReadynessHandler += (sender, readyness) => { found = true; };
+      _repository.ReadinessHandler += (sender, readyness) => { found = true; };
       _repository.Notify(SSEResultState.Features, EncodeFeatures());
       ClassicAssert.AreEqual(true, found);
     }
@@ -81,8 +81,8 @@ namespace FeatureHubTest
     public void ExplodeWhenReadynessDoesntFailTest()
     {
       var found = false;
-      _repository.ReadynessHandler += (sender, readyness) => throw new Exception();
-      _repository.ReadynessHandler += (sender, readyness) => { found = true; };
+      _repository.ReadinessHandler += (sender, readyness) => throw new Exception();
+      _repository.ReadinessHandler += (sender, readyness) => { found = true; };
       _repository.Notify(SSEResultState.Features, EncodeFeatures());
       ClassicAssert.AreEqual(false, found);
     }
@@ -111,18 +111,18 @@ namespace FeatureHubTest
     public void ByeTurnsOffReadyness()
     {
       _repository.Notify(SSEResultState.Features, EncodeFeatures());
-      ClassicAssert.AreEqual(Readyness.Ready, _repository.Readyness);
+      ClassicAssert.AreEqual(Readiness.Ready, _repository.Readiness);
       _repository.Notify(SSEResultState.Bye, null);
-      ClassicAssert.AreEqual(Readyness.NotReady, _repository.Readyness);
+      ClassicAssert.AreEqual(Readiness.NotReady, _repository.Readiness);
     }
 
     [Test]
     public void WhenTheStreamHasFailedReadynessShouldFail()
     {
-      var state = Readyness.Ready;
-      _repository.ReadynessHandler += (sender, readyness) => { state = readyness; };
+      var state = Readiness.Ready;
+      _repository.ReadinessHandler += (sender, readyness) => { state = readyness; };
       _repository.Notify(SSEResultState.Failure, null);
-      ClassicAssert.AreEqual(Readyness.Failed, state);
+      ClassicAssert.AreEqual(Readiness.Failed, state);
     }
 
     [Test]

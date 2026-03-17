@@ -52,7 +52,7 @@ namespace ConsoleAppExample
         Console.WriteLine("Using client side validation");
       }
 
-      fh.ReadynessHandler += (sender, readyness) =>
+      fh.ReadinessHandler += (sender, readyness) =>
       {
         Console.WriteLine($"Readyness is {readyness}");
       };
@@ -75,7 +75,7 @@ namespace ConsoleAppExample
         .Build();
 
 
-      if (fh.Readyness == Readyness.Ready)
+      if (fh.Readyness == Readiness.Ready)
       {
         Console.Write("Press a key (changed context)");
 

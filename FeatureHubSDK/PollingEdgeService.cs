@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -16,7 +16,7 @@ using IO.FeatureHub.SSE.Model;
  */
 namespace FeatureHubSDK
 {
-    public class EdgeClientPoll : IEdgeService
+    public class PollingEdgeService : IEdgeService
     {
         private readonly IFeatureRepositoryContext _repositoryContext;
         private readonly IFeatureHubConfig _config;
@@ -40,7 +40,8 @@ namespace FeatureHubSDK
         private DateTime _cacheTimeout;
         private string _oldHeader;
 
-        public EdgeClientPoll(IFeatureRepositoryContext repositoryContext, IFeatureHubConfig config, int timeout = 360)
+        public PollingEdgeService(IFeatureRepositoryContext repositoryContext, IFeatureHubConfig config,
+            int timeout = 360)
         {
             _repositoryContext = repositoryContext;
             _config = config;
@@ -50,14 +51,14 @@ namespace FeatureHubSDK
             {
                 FeatureLogging.InfoLogger(this, $"[featurehub] using polling, timeout is {timeout}s");
             }
-            
+
             _configuration = new Configuration
             {
                 BasePath = config.EdgeUrl
             };
-            
+
             ReloadApi();
-            
+
             // ensure we poll straight away
             _cacheTimeout = DateTime.Now.Subtract(TimeSpan.FromSeconds(1));
         }
@@ -95,7 +96,7 @@ namespace FeatureHubSDK
                 }
 
                 _configuration.DefaultHeaders.Remove("if-none-match");
-                
+
                 ReloadApi();
 
                 _oldHeader = header;
@@ -104,16 +105,17 @@ namespace FeatureHubSDK
                 await Poll();
             }
         }
-        
+
         public static string Sha256(string shaString)
         {
-            var crypt = new System.Security.Cryptography.SHA256Managed();
+            var crypt = new SHA256Managed();
             var hash = new StringBuilder();
             byte[] crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(shaString));
             foreach (byte theByte in crypto)
             {
                 hash.Append(theByte.ToString("x2"));
             }
+
             return hash.ToString();
         }
 
@@ -160,7 +162,7 @@ namespace FeatureHubSDK
                 }
             }
         }
-        
+
         public void DecodeResponse(ApiResponse<List<FeatureEnvironmentCollection>> response)
         {
             var statusCodeAsInt = (int)response.StatusCode;
@@ -189,6 +191,7 @@ namespace FeatureHubSDK
                     {
                         FeatureLogging.TraceLogger(this, "[featurehub] received 304, no state updates");
                     }
+
                     break;
                 }
                 case 400:
@@ -200,7 +203,7 @@ namespace FeatureHubSDK
                     FeatureLogging.WarnLogger(this, $"featurehub: unexpected result from server: {statusCodeAsInt}");
                     break;
             }
-            
+
             RefreshCacheTimeout();
         }
 
@@ -217,7 +220,7 @@ namespace FeatureHubSDK
         private void ApiKeyInvalid()
         {
             FeatureLogging.ErrorLogger(this, "featurehub: there is a problem with the API key or configuration");
-            _repositoryContext.Notify(SSEResultState.Failure, null);
+            _repositoryContext.Notify(SSEResultState.Failure, null, _config.EnvironmentId);
             _deadConnection = true;
         }
 
@@ -256,7 +259,7 @@ namespace FeatureHubSDK
                         {
                             if (FeatureLogging.InfoLogger != null)
                                 FeatureLogging.InfoLogger(this, $"Server requested cache age to change to {cacheAge}s");
-                            
+
                             _timeoutInSeconds = cacheAge;
                         }
                     }
@@ -289,7 +292,10 @@ namespace FeatureHubSDK
 
         public bool IsRequiresReplacementOnHeaderChange => false;
         public int TimeoutSeconds => _timeoutInSeconds;
-        public string Etag => _configuration.DefaultHeaders.ContainsKey("if-none-match") ? _configuration.DefaultHeaders["if-none-match"] : null;
+
+        public string Etag => _configuration.DefaultHeaders.ContainsKey("if-none-match")
+            ? _configuration.DefaultHeaders["if-none-match"]
+            : null;
 
         public bool Stopped => _stopped;
 

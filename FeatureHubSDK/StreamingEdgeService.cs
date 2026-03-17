@@ -52,18 +52,18 @@ namespace FeatureHubSDK
     public Boolean Stale { get; set; }
   }
 
-  public class EventServiceListener : IEdgeService
+  public class StreamingEdgeService : IEdgeService
   {
     private EventSource _eventSource;
-    private readonly IFeatureHubConfig _featureHost;
+    private readonly IFeatureHubConfig _config;
     private readonly IFeatureRepositoryContext _repository;
     private string _xFeatureHubHeader;
     private bool _closed;
 
-    public EventServiceListener(IFeatureRepositoryContext repository, IFeatureHubConfig config)
+    public StreamingEdgeService(IFeatureRepositoryContext repository, IFeatureHubConfig config)
     {
       _repository = repository;
-      _featureHost = config;
+      _config = config;
 
       // tell the repository about how evaluation works
       // this means features don't need to know about the IEdgeService
@@ -74,7 +74,7 @@ namespace FeatureHubSDK
     {
       if (_closed) return;
       
-      if (_featureHost.ServerEvaluation)
+      if (_config.ServerEvaluation)
       {
         if (newHeader != _xFeatureHubHeader)
         {
@@ -97,7 +97,7 @@ namespace FeatureHubSDK
     
     
 
-    public bool ClientEvaluation => !_featureHost.ServerEvaluation;
+    public bool ClientEvaluation => !_config.ServerEvaluation;
 
     // "close" works on this events source and doesn't hang
     public bool IsRequiresReplacementOnHeaderChange => false;
@@ -106,7 +106,7 @@ namespace FeatureHubSDK
     {
       var headers = new Dictionary<string, string>();
 
-      if (_featureHost.ServerEvaluation && _xFeatureHubHeader != null)
+      if (_config.ServerEvaluation && _xFeatureHubHeader != null)
       {
         headers.Add("x-featurehub", _xFeatureHubHeader);
       }
@@ -123,17 +123,17 @@ namespace FeatureHubSDK
     {
       if (_closed) return;
 
-      var config = Configuration.Builder(uri: new UriBuilder(_featureHost.Url).Uri)
+      var config = Configuration.Builder(uri: new UriBuilder(_config.Url).Uri)
         .BackoffResetThreshold(
           TimeSpan.FromMinutes(int.Parse(DefaultEnvConfig("FEATUREHUB_BACKOFF_RESET_THRESHOLD", "1"))))
-        .RequestHeaders(_featureHost.ServerEvaluation ? BuildContextHeader() : null)
+        .RequestHeaders(_config.ServerEvaluation ? BuildContextHeader() : null)
         .InitialRetryDelay(TimeSpan.FromMilliseconds(int.Parse(DefaultEnvConfig("FEATUREHUB_DELAY_RETRY_MS", "10000"))))
         .Build();
         
 
       if (FeatureLogging.InfoLogger != null)
       {
-        FeatureLogging.InfoLogger(this, $"Opening connection to ${_featureHost.Url}");
+        FeatureLogging.InfoLogger(this, $"Opening connection to ${_config.Url}");
       }
 
       _eventSource = new EventSource(config);
@@ -142,7 +142,7 @@ namespace FeatureHubSDK
         if (!(ex.Exception is EventSourceServiceUnsuccessfulResponseException result)) return;
         if (result.StatusCode == 503) return;
         
-        _repository.Notify(SSEResultState.Failure, null);
+        _repository.Notify(SSEResultState.Failure, null, _config.EnvironmentId);
         FeatureLogging.ErrorLogger(this, "Server issued a failure, stopping.");
         _closed = true;
         _eventSource.Close();
@@ -210,7 +210,7 @@ namespace FeatureHubSDK
 
         if (state != SSEResultState.Config)
         {
-          _repository.Notify(state.Value, args.Message.Data);
+          _repository.Notify(state.Value, args.Message.Data, _config.EnvironmentId);
         }
 
         if (state == SSEResultState.Failure)
@@ -236,20 +236,20 @@ namespace FeatureHubSDK
     {
       if (_eventSource == null)
       {
-        var promise = new TaskCompletionSource<Readyness>();
+        var promise = new TaskCompletionSource<Readiness>();
 
-        EventHandler<Readyness> handler = (sender, r) =>
+        EventHandler<Readiness> handler = (sender, r) =>
         {
           promise.TrySetResult(r);
         };
 
-        _repository.ReadynessHandler += handler;
+        _repository.ReadinessHandler += handler;
 
         Init();
 
         await promise.Task;
 
-        _repository.ReadynessHandler -= handler;
+        _repository.ReadinessHandler -= handler;
       }
     }
   }

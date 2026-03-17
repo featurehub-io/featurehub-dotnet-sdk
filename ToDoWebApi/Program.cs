@@ -9,7 +9,7 @@ IFeatureHubConfig config = new EdgeFeatureHubConfig(
     Environment.GetEnvironmentVariable("FEATUREHUB_EDGE_URL") ?? builder.Configuration["FeatureHub:Host"], 
     Environment.GetEnvironmentVariable("FEATUREHUB_CLIENT_API_KEY") ?? builder.Configuration["FeatureHub:ApiKey"]);
 
-config.Repository.ReadynessHandler += (sender, readiness) =>
+config.Repository.ReadinessHandler += (sender, readiness) =>
 {
     Console.WriteLine($"Readyness is $readiness");
 };
