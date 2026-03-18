@@ -204,6 +204,78 @@ You can also use `featureHubRepository.ClientContext.Clear()` to empty your cont
 In all cases, you need to call `Build()` to re-trigger passing of the new attributes to the server for recalculation.
 
 
+### Feature Value Interceptors
+
+Feature value interceptors let you override feature values locally — useful for local development,
+testing, or emergency kill-switches — without changing anything in the FeatureHub Admin Console.
+
+Interceptors implement `IFeatureValueInterceptor` and are registered on the repository:
+
+```c#
+public interface IFeatureValueInterceptor
+{
+    // When true, this interceptor is called even for locked features.
+    bool AllowLockOverride { get; }
+    // Return (true, value) to override, or (false, null) to pass through.
+    (bool, object?) GetValue(string key, FeatureState? featureState);
+}
+```
+
+```c#
+// register
+config.AddFeatureValueInterceptor(myInterceptor);
+```
+
+#### LocalYamlValueInterceptor
+
+`LocalYamlValueInterceptor` reads overrides from a YAML file with a single `flagValues` map.
+Values are typed automatically from their YAML representation:
+
+| YAML value | Inferred type | C# value |
+|---|---|---|
+| `true` / `false` (unquoted) | `BOOLEAN` | `bool` |
+| `42` / `3.14` (unquoted) | `NUMBER` | `double` |
+| `hello` / `"quoted string"` | `STRING` | `string` |
+| nested map or sequence | `JSON` | JSON `string` |
+
+Example YAML file (`local-overrides.yaml`):
+
+```yaml
+flagValues:
+  dark-mode: true
+  max-retries: 5
+  welcome-message: "Hello, developer!"
+  feature-config:
+    timeout: 30
+    enabled: true
+```
+
+Wire it up at startup:
+
+```c#
+var interceptor = new LocalYamlValueInterceptor("local-overrides.yaml");
+config.Repository.AddFeatureValueInterceptor(interceptor);
+```
+
+The file is read once at construction time. If the file does not exist the interceptor silently
+passes all lookups through. Locked features are **not** overridden (`AllowLockOverride` is `false`).
+
+#### Writing a custom interceptor
+
+```c#
+public class MyInterceptor : IFeatureValueInterceptor
+{
+    public bool AllowLockOverride => false;
+
+    public (bool, object?) GetValue(string key, FeatureState? featureState)
+    {
+        if (key == "maintenance-mode")
+            return (true, true); // always on locally
+        return (false, null);    // let FeatureHub decide everything else
+    }
+}
+```
+
 ### Logging
 
 This library doesn't "use" any of the various .NET logging systems, it simply exposes a static logger class, and
