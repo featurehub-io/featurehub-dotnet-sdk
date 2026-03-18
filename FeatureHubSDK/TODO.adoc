@@ -1,5 +1,30 @@
 = Thoughts which may need investigation
 
-- [ ] Feature Value Interceptors are not in
-- [ ] interceptor that reads from a file (yaml)
-- [ ] Convert function in Usage needs to be replaceable
+- [X] Feature Value Interceptors are not in
+- [X] interceptor that reads from a file (yaml)
+- [X] Convert function in Usage needs to be replaceable
+
+[options="header"]
+|===================================
+||Java^1^|Javascript^2^|Go|Dart^3^|C#^4^|Python|Ruby|Swift
+|Streaming API feature updates (SSE) |Y|Y|Y|Y|Y|Y|Y|N
+|REST API by timer polling (GET feature updates )|Y|Y|N|Y|N|Y|Y|N
+|REST API by usage/timeout (GET feature updates )|N|Y|N|N|N|Y|Y|Y
+|REST API one-off GET requests support |Y|Y|N|Y|N|Y|N|Y
+|Test API (PUT requests to update feature values) |Y|Y|N|Y|Y|N|N|N
+|Rollout Strategies - Server Evaluated|Y|Y|N|Y|Y|Y|Y|Y
+|Rollout Strategies - Client Evaluated|Y|Y|Y|N|Y|Y|Y|N
+|Background Start|Y|Y|Y|Y|Y|Y|Y|Y
+|Block until Start|N|N|Y|N|N|N|N|N
+|Readiness Listeners|Y|Y|Y|Y|Y|N|N|N
+|Feature Listeners|Y|Y|Y|Y|Y|N|N|N
+|Feature Listener Removal|N|Y|Y|Y|Y|N|N|N
+|Usage Support|Y|N|N|N|N|N|N|N
+|OpenTelemetry Usage Support|Y|N|N|N|N|N|N|N
+|Twilio Segment (tm) Usage Support|Y|N|N|N|N|N|N|N
+|Feature Overrides|N|Y|N|N|N|Y|N|N
+|Fastly Polling Support|Y|Y|N|Y|N|Y|Y|Y
+|Fastly SSE Support|Y|Y|Y|Y|Y|Y|Y|N
+|Catch & Release|N|Y|N|Y|N|N|N|N
+|Feature Interceptors|Y|Y|N|Y|N|Y|Y|Y
+|===================================

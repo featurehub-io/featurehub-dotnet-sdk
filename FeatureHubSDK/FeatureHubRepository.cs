@@ -136,6 +136,7 @@ namespace FeatureHubSDK
           if (data != null)
           {
             var features = JsonConvert.DeserializeObject<List<FeatureState>>(data);
+            if (features == null) return;
             foreach (var featureState in features)
             {
               featureState.EnvironmentId = EnvironmentId;
@@ -148,6 +149,7 @@ namespace FeatureHubSDK
           if (data != null)
           {
             var fu = JsonConvert.DeserializeObject<FeatureState>(data);
+            if (fu == null) return;
             fu.EnvironmentId = EnvironmentId;
             if (FeatureUpdate(fu))
             {
@@ -160,6 +162,7 @@ namespace FeatureHubSDK
           if (data != null)
           {
             var fu = JsonConvert.DeserializeObject<FeatureState>(data);
+            if (fu == null) return;
             fu.EnvironmentId = EnvironmentId;
             DeleteFeature(fu);
           }

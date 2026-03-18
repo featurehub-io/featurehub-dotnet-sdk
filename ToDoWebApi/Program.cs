@@ -1,4 +1,10 @@
+using dotenv.net;
 using FeatureHubSDK;
+
+if (File.Exists("sample.env"))
+{
+    DotEnv.Load(new DotEnvOptions(envFilePaths: ["sample.env"]));
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,13 +17,15 @@ IFeatureHubConfig config = new EdgeFeatureHubConfig(
 
 config.Repository.ReadinessHandler += (sender, readiness) =>
 {
-    Console.WriteLine($"Readyness is $readiness");
+    Console.WriteLine($"Readyness is {readiness}");
 };
 
-FeatureLogging.DebugLogger += (sender, s) => Console.WriteLine("DEBUG: " + s + "\n");
-FeatureLogging.TraceLogger += (sender, s) => Console.WriteLine("TRACE: " + s + "\n");
-FeatureLogging.InfoLogger += (sender, s) => Console.WriteLine("INFO: " + s + "\n");
-FeatureLogging.ErrorLogger += (sender, s) => Console.WriteLine("ERROR: " + s + "\n");
+var Timestamp = () => DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+
+FeatureLogging.DebugLogger += (sender, s) => Console.WriteLine($"DEBUG - {Timestamp()} - {s}");
+FeatureLogging.TraceLogger += (sender, s) => Console.WriteLine($"TRACE - {Timestamp()} - {s}");
+FeatureLogging.InfoLogger += (sender, s) => Console.WriteLine($"INFO - {Timestamp()} - {s}");
+FeatureLogging.ErrorLogger += (sender, s) => Console.WriteLine($"ERROR - {Timestamp()} - {s}");
 FeatureLogging.ExceptionLogger += (sender, s) => Console.WriteLine("ERROR: " + s.Message + "\n" + s.Exception );
 
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using IO.FeatureHub.SSE.Model;
 using LaunchDarkly.EventSource;
-using LaunchDarkly.Logging;
 using Newtonsoft.Json;
 
 namespace FeatureHubSDK
@@ -58,6 +57,7 @@ namespace FeatureHubSDK
     private readonly IFeatureRepositoryContext _repository;
     private string _xFeatureHubHeader;
     private bool _closed;
+    public EventHandler<ConfigurationBuilder> ConfigModificationHook = delegate { };
 
     public StreamingEdgeService(IFeatureRepositoryContext repository, IFeatureHubConfig config)
     {
@@ -116,13 +116,17 @@ namespace FeatureHubSDK
     {
       if (_closed) return;
 
-      var config = Configuration.Builder(uri: new UriBuilder(_config.Url).Uri)
+      var configBuilder = Configuration.Builder(uri: new UriBuilder(_config.Url).Uri)
         .BackoffResetThreshold(
           TimeSpan.FromMinutes(int.Parse(DefaultEnvConfig("FEATUREHUB_BACKOFF_RESET_THRESHOLD", "1"))))
         .RequestHeaders(_config.ServerEvaluation ? BuildContextHeader() : null)
-        .InitialRetryDelay(TimeSpan.FromMilliseconds(int.Parse(DefaultEnvConfig("FEATUREHUB_DELAY_RETRY_MS", "10000"))))
-        .Build();
+        .MaxRetryDelay(TimeSpan.FromMilliseconds(int.Parse(DefaultEnvConfig("FEATUREHUB_MAX_DELAY_RETRY_MS", "20000"))))
+        .InitialRetryDelay(TimeSpan.FromMilliseconds(int.Parse(DefaultEnvConfig("FEATUREHUB_DELAY_RETRY_MS", "500"))));
+      
+      // in case the user wants to modify the config
+      ConfigModificationHook(this, configBuilder);
         
+      var config = configBuilder.Build();        
 
       if (FeatureLogging.InfoLogger != null)
       {
@@ -144,7 +148,7 @@ namespace FeatureHubSDK
       _eventSource.MessageReceived += (sender, args) =>
       {
         SSEResultState? state;
-        FeatureLogging.TraceLogger(this,$"received ${args.EventName} : ${args.Message.Data}");
+        FeatureLogging.TraceLogger(this,$"received {args.EventName} : {args.Message.Data}");
         switch (args.EventName)
         {
           case "features":
@@ -191,7 +195,11 @@ namespace FeatureHubSDK
               }
             }
             break;
+          case "ack":
+            state = null;
+            break;
           default:
+            FeatureLogging.ErrorLogger(this, $"featurehub: received unknown event {args.EventName}");
             state = null;
             break;
         }
