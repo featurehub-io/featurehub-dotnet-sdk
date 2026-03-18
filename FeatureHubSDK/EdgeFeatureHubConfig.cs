@@ -185,9 +185,8 @@ namespace FeatureHubSDK
         {
           case EdgeType.ActiveRest:
           case EdgeType.PassiveRest:
-            FeatureLogging.TraceLogger(this, $"using a poll timeout of $_timeout");
-            _edgeService = new PollingEdgeService(Repository, this,
-              _timeout);
+            FeatureLogging.TraceLogger(this, $"using a poll timeout of {_timeout}s ({_edgeType})");
+            _edgeService = new PollingEdgeService(Repository, this, _timeout, _edgeType);
             break;
           case EdgeType.Streaming:
             FeatureLogging.TraceLogger(this, $"connecting via SSE");

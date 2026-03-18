@@ -4,15 +4,18 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using IO.FeatureHub.SSE.Api;
 using IO.FeatureHub.SSE.Client;
 using IO.FeatureHub.SSE.Model;
 
 /*
- * The purpose of this set of functionality is to allow the system to poll rather that use event streaming. It's
- * default behaviour is to poll after an expiry timeout if a request is made for feature values. It will not poll if
- * that does not happen.
+ * The purpose of this set of functionality is to allow the system to poll rather that use event streaming.
+ *
+ * PassiveRest (default): polls only when a feature is evaluated and the cache has expired.
+ * ActiveRest: polls immediately on first call, then schedules a recurring one-shot timer after
+ *             each HTTP response so that features stay fresh regardless of evaluation activity.
  */
 namespace FeatureHubSDK
 {
@@ -20,6 +23,7 @@ namespace FeatureHubSDK
     {
         private readonly IFeatureRepositoryContext _repositoryContext;
         private readonly IFeatureHubConfig _config;
+        private readonly EdgeType _edgeType;
 
         /// <summary>
         /// This represents the user having closed the connection or receipt of a 236 from the server
@@ -37,19 +41,28 @@ namespace FeatureHubSDK
         private string _contextSha = "0";
         private bool _headerChanged;
         private bool _busy;
+
+        // PassiveRest: poll only when this timestamp has passed
         private DateTime _cacheTimeout;
+
+        // ActiveRest: one-shot timer that triggers the next poll
+        private Timer _pollTimer;
+        private volatile bool _timerActive;
+
         private string _oldHeader;
 
         public PollingEdgeService(IFeatureRepositoryContext repositoryContext, IFeatureHubConfig config,
-            int timeout = 360)
+            int timeout = 360, EdgeType edgeType = EdgeType.PassiveRest)
         {
             _repositoryContext = repositoryContext;
             _config = config;
             _timeoutInSeconds = timeout;
+            _edgeType = edgeType;
 
             if (FeatureLogging.InfoLogger != null)
             {
-                FeatureLogging.InfoLogger(this, $"[featurehub] using polling, timeout is {timeout}s");
+                FeatureLogging.InfoLogger(this,
+                    $"[featurehub] using {edgeType} polling, timeout is {timeout}s");
             }
 
             _configuration = new Configuration
@@ -59,7 +72,7 @@ namespace FeatureHubSDK
 
             ReloadApi();
 
-            // ensure we poll straight away
+            // ensure we poll straight away on the first call
             _cacheTimeout = DateTime.Now.Subtract(TimeSpan.FromSeconds(1));
         }
 
@@ -72,7 +85,6 @@ namespace FeatureHubSDK
         /// <summary>
         /// testing method, do not use
         /// </summary>
-        /// <param name="api"></param>
         public void SideloadApi(IFeatureServiceApi api)
         {
             _api = api;
@@ -122,13 +134,31 @@ namespace FeatureHubSDK
         public async Task Poll()
         {
             if (_deadConnection || _stopped) return;
-            var breakCache = _timeoutInSeconds == 0 || _headerChanged || (_cacheTimeout.CompareTo(DateTime.Now) < 0);
 
-            // we can only actually ask for state if we aren't already asking, we aren't stopped => it is time to break the cache
-            var ask = !_busy && !_stopped && breakCache;
+            bool shouldPoll;
+            if (_edgeType == EdgeType.ActiveRest)
+            {
+                // While the timer is ticking, suppress external Poll() calls so we don't
+                // double-fetch. Always allow a poll when the context header has changed.
+                shouldPoll = !_timerActive || _headerChanged;
+            }
+            else
+            {
+                // PassiveRest: honour the cache expiry window
+                shouldPoll = _timeoutInSeconds == 0 || _headerChanged ||
+                             (_cacheTimeout.CompareTo(DateTime.Now) < 0);
+            }
+
+            var ask = !_busy && !_stopped && shouldPoll;
 
             if (ask)
             {
+                // Cancel any pending timer so it cannot fire concurrently with the HTTP call.
+                // StartActiveTimer() will arm a fresh one once the call completes.
+                _pollTimer?.Dispose();
+                _pollTimer = null;
+                _timerActive = false;
+
                 try
                 {
                     if (FeatureLogging.TraceLogger != null)
@@ -137,7 +167,6 @@ namespace FeatureHubSDK
                         FeatureLogging.TraceLogger(this,
                             $"featurehub: polling for {_configuration.BasePath} with keys {keys}");
                     }
-
 
                     _busy = true;
                     _headerChanged = false;
@@ -159,8 +188,31 @@ namespace FeatureHubSDK
                 finally
                 {
                     _busy = false;
+
+                    // For ActiveRest, schedule the next poll via a one-shot timer so we keep
+                    // fetching even when no feature is being evaluated.
+                    if (_edgeType == EdgeType.ActiveRest && !_deadConnection && !_stopped)
+                    {
+                        StartActiveTimer();
+                    }
                 }
             }
+        }
+
+        /// <summary>
+        /// Starts (or restarts) the one-shot timer used in ActiveRest mode.
+        /// When the timer fires it clears itself and triggers the next Poll().
+        /// </summary>
+        private void StartActiveTimer()
+        {
+            _pollTimer?.Dispose();
+            _timerActive = true;
+            _pollTimer = new Timer(state =>
+            {
+                _timerActive = false;
+                // Fire-and-forget: the timer callback is synchronous but Poll is async.
+                _ = Poll();
+            }, null, _timeoutInSeconds * 1000, Timeout.Infinite);
         }
 
         public void DecodeResponse(ApiResponse<List<FeatureEnvironmentCollection>> response)
@@ -243,7 +295,6 @@ namespace FeatureHubSDK
         /// <summary>
         /// This allows the server to override the polling interval
         /// </summary>
-        /// <param name="cacheControlHeader"></param>
         public void DecodeCacheControl(IList<string> cacheControlHeader)
         {
             var reg = new Regex("max-age=(\\d+)", RegexOptions.IgnoreCase);
@@ -287,7 +338,6 @@ namespace FeatureHubSDK
             _repositoryContext.UpdateFeatures(states);
         }
 
-
         public bool ClientEvaluation => !_config.ServerEvaluation;
 
         public int TimeoutSeconds => _timeoutInSeconds;
@@ -302,9 +352,17 @@ namespace FeatureHubSDK
 
         public DateTime CacheTimeout => _cacheTimeout;
 
+        /// <summary>
+        /// True while the ActiveRest timer is scheduled and has not yet fired.
+        /// </summary>
+        public bool TimerActive => _timerActive;
+
         public void Close()
         {
             _stopped = true;
+            _pollTimer?.Dispose();
+            _pollTimer = null;
+            _timerActive = false;
         }
     }
 }
