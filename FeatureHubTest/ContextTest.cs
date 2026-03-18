@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
 using NUnit.Framework;
-using NUnit.Framework.Legacy;
 
 namespace FeatureHubTest
 {
@@ -62,35 +61,35 @@ namespace FeatureHubTest
         .SessionKey("session-key")
         .Build();
 
-      ClassicAssert.AreEqual(_repository, ctx.Repository);
-      ClassicAssert.AreEqual("Istanbul City", ctx.GetAttr("city", "here"));
-      ClassicAssert.AreEqual("here", ctx.GetAttr("city-scape", "here"));
+      Assert.That(ctx.Repository, Is.EqualTo(_repository));
+      Assert.That(ctx.GetAttr("city", "here"), Is.EqualTo("Istanbul City"));
+      Assert.That(ctx.GetAttr("city-scape", "here"), Is.EqualTo("here"));
 
-      ClassicAssert.AreEqual(
-        "city=Istanbul+City,country=turkey,device=mobile,family=Bambam%2cDJ+Elif,platform=ios,session=session-key,userkey=tv-show,version=6.2.3", edgeStub.header);
+      Assert.That(edgeStub.header, Is.EqualTo(
+        "city=Istanbul+City,country=turkey,device=mobile,family=Bambam%2cDJ+Elif,platform=ios,session=session-key,userkey=tv-show,version=6.2.3"));
 
-      ClassicAssert.NotNull(ctx.ToString());
+      Assert.That(ctx.ToString(), Is.Not.Null);
 
-      ClassicAssert.NotNull(ctx["fred"]);
+      Assert.That(ctx["fred"], Is.Not.Null);
 
       await ctx.Clear().Build();
-      ClassicAssert.AreEqual("", edgeStub.header);
+      Assert.That(edgeStub.header, Is.EqualTo(""));
     }
-    
+
     [Test]
     async public Task EnabledFlagWorksIsTrueOnlyOnTrue()
     {
       var ctx = new ClientEvalFeatureContext(_repository, null);
-      ClassicAssert.AreEqual(false, ctx.IsSet("1"));
-      ClassicAssert.AreEqual(false, ctx.IsEnabled("1"));
+      Assert.That(ctx.IsSet("1"), Is.EqualTo(false));
+      Assert.That(ctx.IsEnabled("1"), Is.EqualTo(false));
       Guid id = Guid.NewGuid();
-      _repository.Notify(SSEResultState.Features, 
+      _repository.Notify(SSEResultState.Features,
         _encodeUtils.EncodeFeatures(true, 2, FeatureValueType.BOOLEAN), id);
-      ClassicAssert.AreEqual(true, ctx.IsEnabled("1"));
+      Assert.That(ctx.IsEnabled("1"), Is.EqualTo(true));
       _repository.Notify(SSEResultState.Features, _encodeUtils.EncodeFeatures(false, 3, FeatureValueType.BOOLEAN), id);
-      ClassicAssert.AreEqual(false, ctx.IsEnabled("1"));
-      ClassicAssert.AreEqual(true, ctx.IsSet("1"));
-      
+      Assert.That(ctx.IsEnabled("1"), Is.EqualTo(false));
+      Assert.That(ctx.IsSet("1"), Is.EqualTo(true));
+
       await ctx.Build();
       ctx.Close();
     }

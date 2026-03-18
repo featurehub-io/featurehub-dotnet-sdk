@@ -4,7 +4,6 @@ using System.Runtime.Serialization;
 using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
 using NUnit.Framework;
-using NUnit.Framework.Legacy;
 
 namespace FeatureHubTest
 {
@@ -50,9 +49,9 @@ namespace FeatureHubTest
       var matchCC = TestClientContext.Create().Country(StrategyAttributeCountryName.Turkey);
       var unmatchCC = TestClientContext.Create().Country(StrategyAttributeCountryName.NewZealand);
 
-      ClassicAssert.AreEqual(false, repo.GetFeature("bool1").WithContext(matchCC).BooleanValue);
-      ClassicAssert.AreEqual(true, repo.GetFeature("bool1").WithContext(unmatchCC).BooleanValue);
-      ClassicAssert.AreEqual(true, repo.GetFeature("bool1").BooleanValue);
+      Assert.That(repo.GetFeature("bool1").WithContext(matchCC).BooleanValue, Is.EqualTo(false));
+      Assert.That(repo.GetFeature("bool1").WithContext(unmatchCC).BooleanValue, Is.EqualTo(true));
+      Assert.That(repo.GetFeature("bool1").BooleanValue, Is.EqualTo(true));
     }
 
     [Test]
@@ -74,9 +73,9 @@ namespace FeatureHubTest
             new FeatureRolloutStrategyAttribute(conditional: RolloutStrategyAttributeConditional.GREATEREQUALS, type: RolloutStrategyFieldType.NUMBER,
               fieldName: "age", values: new List<object> {20})
           }),
-          
+
         });
-      
+
       // when: setup repo
       repo.UpdateFeatures(new List<FeatureState>{feature});
 
@@ -85,9 +84,9 @@ namespace FeatureHubTest
       var age43 = TestClientContext.Create().Attr("age", "43");
 
       // then
-      ClassicAssert.AreEqual(10, repo.GetFeature("num1").WithContext(age27).NumberValue);
-      ClassicAssert.AreEqual(16, repo.GetFeature("num1").WithContext(age18).NumberValue);
-      ClassicAssert.AreEqual(6, repo.GetFeature("num1").WithContext(age43).NumberValue);
+      Assert.That(repo.GetFeature("num1").WithContext(age27).NumberValue, Is.EqualTo(10));
+      Assert.That(repo.GetFeature("num1").WithContext(age18).NumberValue, Is.EqualTo(16));
+      Assert.That(repo.GetFeature("num1").WithContext(age43).NumberValue, Is.EqualTo(6));
     }
 
     [Test]
@@ -105,15 +104,15 @@ namespace FeatureHubTest
               fieldName: "contractId", values: new List<object> {40, 16, 23})
           }),
         });
-      
+
       // when: setup repo
       repo.UpdateFeatures(new List<FeatureState>{feature});
 
       var oneMatch = TestClientContext.Create().Attrs("contractId", new List<String> { "3", "40", "26" });
       var noneMatch = TestClientContext.Create().Attrs("contractId", new List<String> { "3", "400", "26" });
-      
-      ClassicAssert.AreEqual(6, repo.GetFeature("num1").WithContext(oneMatch).NumberValue);
-      ClassicAssert.AreEqual(16, repo.GetFeature("num1").WithContext(noneMatch).NumberValue);
+
+      Assert.That(repo.GetFeature("num1").WithContext(oneMatch).NumberValue, Is.EqualTo(6));
+      Assert.That(repo.GetFeature("num1").WithContext(noneMatch).NumberValue, Is.EqualTo(16));
     }
 
     private void StringTypeComparison(FeatureValueType ft)
@@ -127,7 +126,7 @@ namespace FeatureHubTest
           new FeatureRolloutStrategy(id: "notmobile", value: "not-mobile", attributes: new List<FeatureRolloutStrategyAttribute>
           {
             new FeatureRolloutStrategyAttribute(conditional: RolloutStrategyAttributeConditional.EXCLUDES, type: RolloutStrategyFieldType.STRING,
-              fieldName: GetEnumMemberValue(StrategyAttributeWellKnownNames.Platform), 
+              fieldName: GetEnumMemberValue(StrategyAttributeWellKnownNames.Platform),
               values: new List<object> {GetEnumMemberValue(StrategyAttributePlatformName.Android), GetEnumMemberValue(StrategyAttributePlatformName.Ios)})
           }),
           new FeatureRolloutStrategy(id: "old-than-twenty", value: "older-than-twenty", attributes: new List<FeatureRolloutStrategyAttribute>
@@ -135,9 +134,9 @@ namespace FeatureHubTest
             new FeatureRolloutStrategyAttribute(conditional: RolloutStrategyAttributeConditional.GREATEREQUALS, type: RolloutStrategyFieldType.NUMBER,
               fieldName: "age", values: new List<object> {20})
           }),
-          
+
         });
-      
+
       // when: setup repo
       repo.UpdateFeatures(new List<FeatureState>{feature});
 
@@ -151,20 +150,20 @@ namespace FeatureHubTest
       {
         case FeatureValueType.STRING:
           // then
-          ClassicAssert.AreEqual("feature", repo.GetFeature("s1").StringValue);
-          ClassicAssert.AreEqual("feature", repo.GetFeature("s1").WithContext(ccEmpty).StringValue);
-          ClassicAssert.AreEqual("feature", repo.GetFeature("s1").WithContext(ccAge18Android).StringValue);
-          ClassicAssert.AreEqual("not-mobile", repo.GetFeature("s1").WithContext(ccAge18MacOS).StringValue);
-          ClassicAssert.AreEqual("older-than-twenty", repo.GetFeature("s1").WithContext(ccAge27Ios).StringValue);
-          ClassicAssert.AreEqual("not-mobile", repo.GetFeature("s1").WithContext(ccAge43MacOS).StringValue);
+          Assert.That(repo.GetFeature("s1").StringValue, Is.EqualTo("feature"));
+          Assert.That(repo.GetFeature("s1").WithContext(ccEmpty).StringValue, Is.EqualTo("feature"));
+          Assert.That(repo.GetFeature("s1").WithContext(ccAge18Android).StringValue, Is.EqualTo("feature"));
+          Assert.That(repo.GetFeature("s1").WithContext(ccAge18MacOS).StringValue, Is.EqualTo("not-mobile"));
+          Assert.That(repo.GetFeature("s1").WithContext(ccAge27Ios).StringValue, Is.EqualTo("older-than-twenty"));
+          Assert.That(repo.GetFeature("s1").WithContext(ccAge43MacOS).StringValue, Is.EqualTo("not-mobile"));
           break;
         case FeatureValueType.JSON:
-          ClassicAssert.AreEqual("feature", repo.GetFeature("s1").JsonValue);
-          ClassicAssert.AreEqual("feature", repo.GetFeature("s1").WithContext(ccEmpty).JsonValue);
-          ClassicAssert.AreEqual("feature", repo.GetFeature("s1").WithContext(ccAge18Android).JsonValue);
-          ClassicAssert.AreEqual("not-mobile", repo.GetFeature("s1").WithContext(ccAge18MacOS).JsonValue);
-          ClassicAssert.AreEqual("older-than-twenty", repo.GetFeature("s1").WithContext(ccAge27Ios).JsonValue);
-          ClassicAssert.AreEqual("not-mobile", repo.GetFeature("s1").WithContext(ccAge43MacOS).JsonValue);
+          Assert.That(repo.GetFeature("s1").JsonValue, Is.EqualTo("feature"));
+          Assert.That(repo.GetFeature("s1").WithContext(ccEmpty).JsonValue, Is.EqualTo("feature"));
+          Assert.That(repo.GetFeature("s1").WithContext(ccAge18Android).JsonValue, Is.EqualTo("feature"));
+          Assert.That(repo.GetFeature("s1").WithContext(ccAge18MacOS).JsonValue, Is.EqualTo("not-mobile"));
+          Assert.That(repo.GetFeature("s1").WithContext(ccAge27Ios).JsonValue, Is.EqualTo("older-than-twenty"));
+          Assert.That(repo.GetFeature("s1").WithContext(ccAge43MacOS).JsonValue, Is.EqualTo("not-mobile"));
           break;
       }
     }

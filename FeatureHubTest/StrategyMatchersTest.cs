@@ -3,7 +3,6 @@ using System.Linq;
 using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
 using NUnit.Framework;
-using NUnit.Framework.Legacy;
 
 namespace FeatureHubTest
 {
@@ -17,26 +16,14 @@ namespace FeatureHubTest
       registry = new MatcherRegistry();
     }
 
-    // need to include mocking library
-    // public void MatcherTest()
-    // {
-    //   var rsa = new FeatureRolloutStrategyAttribute();
-    //   rsa.Conditional = RolloutStrategyAttributeConditional.LESS;
-    //   rsa.Type = RolloutStrategyFieldType.STRING;
-    //   rsa.Values = new List<object> {"a", "b"};
-    //
-    //
-    //
-    // }
-
     [Test, TestCaseSource("StringMatcherProvider")]
     public void StringMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred",
         type: RolloutStrategyFieldType.STRING, values: vals.Select(v => v as object).ToList());
-      
-      ClassicAssert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal, rsa), matches);
+
+      Assert.That(registry.FindMatcher(rsa).Match(suppliedVal, rsa), Is.EqualTo(matches));
     }
 
     public static IEnumerable<TestCaseData> StringMatcherProvider()
@@ -88,10 +75,10 @@ namespace FeatureHubTest
     public void BooleanMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred",
         type: RolloutStrategyFieldType.BOOLEAN, values: vals.Select(v => v as object).ToList());
 
-      ClassicAssert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal?.ToString(), rsa), matches);
+      Assert.That(registry.FindMatcher(rsa).Match(suppliedVal?.ToString(), rsa), Is.EqualTo(matches));
     }
 
     public static IEnumerable<TestCaseData> BooleanMatcherProvider()
@@ -122,10 +109,10 @@ namespace FeatureHubTest
       string suppliedVal,
       bool matches)
     {
-      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred",
         type: RolloutStrategyFieldType.SEMANTICVERSION, values: vals.Select(v => v as object).ToList());
 
-      ClassicAssert.AreEqual(registry.FindMatcher(rsa).Match(suppliedVal, rsa), matches);
+      Assert.That(registry.FindMatcher(rsa).Match(suppliedVal, rsa), Is.EqualTo(matches));
     }
 
     public static IEnumerable<TestCaseData> SemanticVersionMatcherProvider()
@@ -169,10 +156,10 @@ namespace FeatureHubTest
     public void IPAddressMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred",
         type: RolloutStrategyFieldType.IPADDRESS, values: vals.Select(v => v as object).ToList());
 
-      ClassicAssert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
+      Assert.That(registry.FindMatcher(rsa).Match(suppliedVal, rsa), Is.EqualTo(matches));
     }
 
     public static IEnumerable<TestCaseData> IPAddressMatcherProvider()
@@ -212,10 +199,10 @@ namespace FeatureHubTest
     public void NumberMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred",
         type: RolloutStrategyFieldType.NUMBER, values: vals.Select(v => v as object).ToList());
 
-      ClassicAssert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
+      Assert.That(registry.FindMatcher(rsa).Match(suppliedVal, rsa), Is.EqualTo(matches));
     }
 
     public static IEnumerable<TestCaseData> NumberMatcherProvider()
@@ -249,10 +236,10 @@ namespace FeatureHubTest
     public void DateMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred",
         type: RolloutStrategyFieldType.DATE, values: vals.Select(v => v as object).ToList());
 
-      ClassicAssert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
+      Assert.That(registry.FindMatcher(rsa).Match(suppliedVal, rsa), Is.EqualTo(matches));
     }
 
     public static IEnumerable<TestCaseData> DateMatcherProvider()
@@ -309,10 +296,10 @@ namespace FeatureHubTest
     public void DateTimeMatcher(RolloutStrategyAttributeConditional conditional, List<object> vals, string suppliedVal,
       bool matches)
     {
-      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred", 
+      var rsa = new FeatureRolloutStrategyAttribute(conditional: conditional, fieldName: "fred",
         type: RolloutStrategyFieldType.DATETIME, values: vals.Select(v => v as object).ToList());
 
-      ClassicAssert.AreEqual(matches, registry.FindMatcher(rsa).Match(suppliedVal, rsa));
+      Assert.That(registry.FindMatcher(rsa).Match(suppliedVal, rsa), Is.EqualTo(matches));
     }
 
     public static IEnumerable<TestCaseData> DateTimeMatcherProvider()
@@ -368,14 +355,5 @@ namespace FeatureHubTest
       yield return new TestCaseData(RolloutStrategyAttributeConditional.ENDSWITH,
         new List<object> {"rubbish"}, "2017-03-06T01:01:01Z", false);
     }
-
-    /*
-      "2017-03-06T01:01:01Z"      | RolloutStrategyAttributeConditional.STARTS_WITH    | ["2019", "2017"]                                       | true
-      "2017-03-06T01:01:01Z"      | RolloutStrategyAttributeConditional.STARTS_WITH    | ["2019"]                                               | false
-      "2017-03-06T01:01:01Z"      | RolloutStrategyAttributeConditional.ENDS_WITH      | [":01Z"]                                               | true
-      "2017-03-06T01:01:01Z"      | RolloutStrategyAttributeConditional.ENDS_WITH      | ["03", "2017", "01:01"]                                | false
-      "2017-03-06T01:01:01Z"      | RolloutStrategyAttributeConditional.ENDS_WITH      | ["rubbish"]                                            | false
-     */
-
   }
 }

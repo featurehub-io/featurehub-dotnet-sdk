@@ -3,7 +3,6 @@
 using System;
 using FeatureHubSDK;
 using NUnit.Framework;
-using NUnit.Framework.Legacy;
 
 namespace FeatureHubTest
 {
@@ -24,8 +23,8 @@ namespace FeatureHubTest
         }
       }
       Console.WriteLine($"Murmur counter is {counter}");
-      ClassicAssert.LessOrEqual(160, counter);
-      ClassicAssert.GreaterOrEqual(240, counter);
+      Assert.That(counter, Is.GreaterThanOrEqualTo(160));
+      Assert.That(counter, Is.LessThanOrEqualTo(240));
     }
   }
 }

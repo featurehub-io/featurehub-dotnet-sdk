@@ -2,7 +2,6 @@
 using System;
 using FeatureHubSDK;
 using NUnit.Framework;
-using NUnit.Framework.Legacy;
 
 namespace FeatureHubTest
 {
@@ -13,12 +12,12 @@ namespace FeatureHubTest
     {
       var encode = new EncodeUtils();
       var cfg = new EdgeFeatureHubConfig("http://localhost:80/", encode.ClientApiKey);
-      ClassicAssert.IsTrue(!cfg.ServerEvaluation);
-      ClassicAssert.AreEqual($"http://localhost:80/features/{encode.ClientApiKey}", cfg.Url);
+      Assert.That(cfg.ServerEvaluation, Is.False);
+      Assert.That(cfg.Url, Is.EqualTo($"http://localhost:80/features/{encode.ClientApiKey}"));
 
       cfg = new EdgeFeatureHubConfig("http://localhost:80", encode.ServerApiKey);
-      ClassicAssert.IsTrue(cfg.ServerEvaluation);
-      ClassicAssert.AreEqual($"http://localhost:80/features/{encode.ServerApiKey}", cfg.Url);
+      Assert.That(cfg.ServerEvaluation, Is.True);
+      Assert.That(cfg.Url, Is.EqualTo($"http://localhost:80/features/{encode.ServerApiKey}"));
     }
 
     [Test]
@@ -28,8 +27,8 @@ namespace FeatureHubTest
       Environment.SetEnvironmentVariable("FEATUREHUB_API_KEY", apiKey);
       Environment.SetEnvironmentVariable("FEATUREHUB_EDGE_URL", "http://localhost");
       var cfg = new EdgeFeatureHubConfig();
-      ClassicAssert.AreEqual(cfg.SdkKeys.ToArray(), new string[] {apiKey});
-      ClassicAssert.AreEqual(cfg.EdgeUrl, "http://localhost");
+      Assert.That(cfg.SdkKeys.ToArray(), Is.EqualTo(new string[] {apiKey}));
+      Assert.That(cfg.EdgeUrl, Is.EqualTo("http://localhost"));
     }
 
     [TearDown]
@@ -37,15 +36,14 @@ namespace FeatureHubTest
     {
       Environment.SetEnvironmentVariable("FEATUREHUB_API_KEY", null);
       Environment.SetEnvironmentVariable("FEATUREHUB_EDGE_URL", null);
-      
     }
 
 
     [Test]
     public void InvalidKeyStructureFails()
     {
-      ClassicAssert.Throws<FeatureHubSDK.FeatureHubKeyInvalidException>(() => 
+      Assert.Throws<FeatureHubSDK.FeatureHubKeyInvalidException>(() =>
         new EdgeFeatureHubConfig("http://localhost:80/", "123"));
-    } 
+    }
   }
 }
