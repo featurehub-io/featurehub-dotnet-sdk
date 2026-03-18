@@ -89,26 +89,171 @@ context["FLUTTER_COLOUR"].FeatureUpdateHandler += (object sender, IFeatureStateH
 };
 ```
 
-There are many more convenience methods on the `IClientContext`, including:
+### Reading feature values
 
-    - IsEnabled - is this feature enabled?
-    - IsSet - does this feature have a value?
-    - LogAnalyticEvent - logs an analytics event if you have set up an analytics provider.
+Features are read through `IFeature`, returned by indexing a context or the repository directly:
+
+```c#
+IFeature flag = context["MY_FLAG"];
+```
+
+**Typed accessors with defaults** — safe to call even before the repository is ready:
+
+```c#
+bool   on      = context["DARK_MODE"].Boolean(defaultValue: false);
+string colour  = context["BRAND_COLOUR"].String(defaultValue: "blue");
+double timeout = context["TIMEOUT_MS"].Number(defaultValue: 5000);
+string config  = context["APP_CONFIG"].Json(defaultValue: "{}");
+```
+
+**Nullable property accessors** — return `null` when the feature doesn't exist or has no value:
+
+```c#
+bool?   boolVal   = context["DARK_MODE"].BooleanValue;
+string? strVal    = context["BRAND_COLOUR"].StringValue;
+double? numVal    = context["TIMEOUT_MS"].NumberValue;
+string? jsonVal   = context["APP_CONFIG"].JsonValue;
+```
+
+**State helpers:**
+
+```c#
+context["MY_FLAG"].IsEnabled  // true if boolean feature is true
+context["MY_FLAG"].IsSet      // true if feature has a non-null value
+context["MY_FLAG"].IsLocked   // true if the feature is locked server-side
+context["MY_FLAG"].Exists     // true if the feature is known to the repository
+context["MY_FLAG"].Type       // FeatureValueType.BOOLEAN / STRING / NUMBER / JSON, or null
+context["MY_FLAG"].Version    // long? version number
+```
+
+The context shortcuts `context.IsEnabled(name)` and `context.IsSet(name)` are equivalent to the
+property forms above.
+
+### Listening for feature changes
+
+Every `IFeature` exposes a `FeatureUpdateHandler` event that fires whenever that feature's value
+changes. You can subscribe before the repository is ready — the handler will fire once the first
+value arrives and again on every subsequent change:
+
+```c#
+context["DARK_MODE"].FeatureUpdateHandler += (sender, feature) =>
+{
+    Console.WriteLine($"DARK_MODE changed to {feature.BooleanValue}");
+};
+```
+
+The event passes the updated `IFeature` as its argument. You can also listen for *any* feature
+change on the repository:
+
+```c#
+config.Repository.NewFeatureHandler += (sender, repo) =>
+{
+    Console.WriteLine("One or more features changed");
+};
+```
 
 ### Using Polling
 
 You can use polling if you set the following environment variable: `FEATUREHUB_POLL_TIMEOUT` or
-by calling `UsePolling(<timeout-in-seconds>)` on the `config`. 
+by calling `UsePolling(<timeout-in-seconds>)` on the `config`:
+
+```c#
+config.ActiveRest(120); // check for updates every 120 seconds
+```
+
+or
+
+```c#
+config.PassiveRest(120); // check for updates every at most every 120 seconds depending on feature evaluation
+```
+
+There are two polling modes:
+
+- **Active polling** (default when `FEATUREHUB_POLL_TIMEOUT` is set) — fetches updated features
+  on a fixed timer interval.
+- **Passive polling** — only contacts the server when a feature is actually evaluated. Enable it by
+  setting the `FEATUREHUB_POLLING_PASSIVE` environment variable (any value), or by using
+  `EdgeType.PassiveRest` directly. In this mode, the SDK uses the usage event stream to detect that
+  a feature has been read and triggers a background poll if the cache is stale.
+
+```bash
+# passive polling: fetch only when a feature is evaluated
+FEATUREHUB_POLL_TIMEOUT=120 FEATUREHUB_POLLING_PASSIVE=true ./myapp
+```
+
+**Retry behaviour** — the following environment variables control how the SDK handles connection
+failures for both SSE and polling:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `FEATUREHUB_BACKOFF_RETRY_LIMIT` | 100 | Maximum number of reconnect attempts before giving up |
+| `FEATUREHUB_DELAY_RETRY_MS` | 10000 | Delay in milliseconds between retry attempts |
 
 ### Configuring using Environment Variables
 
-You can have the FeatureHub client automatically pick up the server configuration from two 
-environment variables - `FEATUREHUB_EDGE_URL` provides the URL and `FEATUREHUB_API_KEY` provides
-the key that you are using.
+You can have the FeatureHub client automatically pick up the server configuration from environment
+variables:
+
+| Variable | Purpose |
+|---|---|
+| `FEATUREHUB_EDGE_URL` | URL of the FeatureHub Edge server |
+| `FEATUREHUB_API_KEY` | SDK key (or comma-separated list of keys — see below) |
+| `FEATUREHUB_POLL_TIMEOUT` | Enables polling mode; value is the interval in seconds |
+| `FEATUREHUB_POLLING_PASSIVE` | When set alongside `FEATUREHUB_POLL_TIMEOUT`, enables passive polling |
+| `FEATUREHUB_BACKOFF_RETRY_LIMIT` | Max reconnect attempts (default 100) |
+| `FEATUREHUB_DELAY_RETRY_MS` | Delay between retries in milliseconds (default 10000) |
+
+```bash
+FEATUREHUB_EDGE_URL=https://edge.example.com FEATUREHUB_API_KEY=<sdk-key> ./myapp
+```
 
 Then you can just use `new EdgeFeatureHubConfig()`.
 
-### ASP.NET 
+### Multiple SDK keys
+
+`EdgeFeatureHubConfig` accepts a single SDK key, but the underlying `SdkKeys` property is a
+`List<string>`, allowing multiple keys to be registered on the same config. This is useful when
+you need to fan out to multiple environments or tenants from a single process. Add additional keys
+after construction:
+
+```c#
+var config = new EdgeFeatureHubConfig("https://edge.example.com", primaryKey);
+config.SdkKeys.Add(secondaryKey);
+```
+
+Please note this only works for REST, not Streaming.
+
+### Readiness and health checks
+
+The SDK exposes a `Readiness` property that reflects the current connection state:
+
+| Value | Meaning |
+|---|---|
+| `Readiness.NotReady` | Not yet connected, or connection was lost |
+| `Readiness.Ready` | Features have been received and are available |
+| `Readiness.Failed` | A permanent failure occurred (e.g. invalid API key) |
+
+```c#
+// suitable for a liveness or readiness probe
+if (config.Readiness == Readiness.Ready)
+{
+    // safe to serve traffic
+}
+```
+
+You can also react to readiness changes with an event:
+
+```c#
+config.Repository.ReadinessHandler += (sender, readiness) =>
+{
+    Console.WriteLine($"Repository is now {readiness}");
+};
+```
+
+When `await config.Init()` or `await context.Build()` completes, the repository will be either
+`Ready` or `Failed` — it never returns while still `NotReady`.
+
+### ASP.NET
 
 Wiring them into a ASP.NET application should also be fairly simple and it surfaces as an injectable service. Some example
 code from our C# TodoServer in the `ToDoAspCoreExample` folder.
@@ -203,6 +348,74 @@ You can also use `featureHubRepository.ClientContext.Clear()` to empty your cont
 
 In all cases, you need to call `Build()` to re-trigger passing of the new attributes to the server for recalculation.
 
+
+### Usage tracking / analytics
+
+Every time a feature value is read through a context, the SDK emits a usage event onto an internal
+stream. You can tap this stream to send analytics data to any backend (e.g. Google Analytics,
+Amplitude, a custom data warehouse).
+
+#### Writing a plugin
+
+Subclass `UsagePlugin` and implement `Send`:
+
+```c#
+public class MyAnalyticsPlugin : UsagePlugin
+{
+    public override void Send(IUsageEvent usageEvent)
+    {
+        if (usageEvent is IUsageEventWithFeature featureEvent)
+        {
+            // featureEvent.Feature.Key   — the feature key
+            // featureEvent.Feature.Value — serialised value: "on"/"off", number string, raw string
+            // featureEvent.Feature.Type  — FeatureValueType
+            // featureEvent.Attributes    — context attributes at evaluation time
+            // featureEvent.UserKey       — user/session key, if set on the context
+            MyBackend.Track(featureEvent.Feature.Key, featureEvent.Feature.Value);
+        }
+    }
+}
+```
+
+The `IUsageEvent.CopyBaseMap()` method returns a flat `IReadOnlyDictionary<string, object?>` that
+merges all event fields — useful if your backend expects a property bag.
+
+#### Wiring up the adapter
+
+`UsageAdapter` subscribes to the repository stream and fans events out to all registered plugins,
+catching and logging exceptions from individual plugins so one bad plugin cannot affect others:
+
+```c#
+var adapter = new UsageAdapter(config.Repository);
+adapter.RegisterPlugin(new MyAnalyticsPlugin());
+
+// when tearing down (e.g. app shutdown):
+adapter.Close();
+```
+
+#### Customising value serialisation
+
+By default, boolean features serialise as `"on"`/`"off"`, numbers and strings as their string
+representation, and JSON features as `null`. Replace `DefaultUsageProvider.Convert` to change this
+globally:
+
+```c#
+DefaultUsageProvider.Convert = (value, type) =>
+    type == FeatureValueType.BOOLEAN
+        ? (true.Equals(value) ? "true" : "false")
+        : DefaultUsageProvider.DefaultConvert(value, type);
+```
+
+#### Customising event objects
+
+To attach extra fields to every event, replace the provider on the repository:
+
+```c#
+config.Repository.RegisterUsageProvider(new MyUsageProvider());
+```
+
+`MyUsageProvider` implements `IUsageProvider` (or subclasses `BaseUsageProvider`) and returns
+custom event objects that carry whatever additional data you need.
 
 ### Feature Value Interceptors
 

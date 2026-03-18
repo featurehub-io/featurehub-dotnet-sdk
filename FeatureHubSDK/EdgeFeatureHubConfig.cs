@@ -13,10 +13,6 @@ namespace FeatureHubSDK
     Streaming, ActiveRest, PassiveRest
   }
 
-  public class FeatureHubConfig
-  {
-  }
-
   public interface IFeatureHubConfig
   {
 
@@ -37,7 +33,21 @@ namespace FeatureHubSDK
     /// </summary>
     /// <param name="timeout"></param>
     /// <returns></returns>
+    [Obsolete("use PassiveRest or ActiveRest instead")]
     IFeatureHubConfig UsePolling(int timeout = 360);
+
+    /// <summary>
+    /// Tells the client to use Active Polling, an automatic timer will kick off a refresh of data after this many seconds. 
+    /// </summary>
+    IFeatureHubConfig ActiveRest(int timeout = 360);
+    /// <summary>
+    /// Tells the client to use Passive Polling, only when this amount of time has elapsed since the last request will it ask for another one. Triggered by usage. 
+    /// </summary>
+    IFeatureHubConfig PassiveRest(int timeout = 360);
+    /// <summary>
+    /// Uses Streaming, gets near real-time updates from FeatureHub 
+    /// </summary>
+    IFeatureHubConfig Streaming();
     
     /*
      * Initialise the configuration. This will kick off the event source to connect and attempt to start
@@ -150,6 +160,12 @@ namespace FeatureHubSDK
     public string EdgeUrl => _edgeUrl;
     public List<string> SdkKeys => _sdkKeys;
 
+    public IFeatureHubConfig Streaming()
+    {
+      _edgeType = EdgeType.Streaming;
+      return this;
+    }
+
     public async Task Init()
     {
       await EdgeService.Poll();
@@ -194,6 +210,18 @@ namespace FeatureHubSDK
 
     
     public IFeatureHubConfig UsePolling(int timeout = 360)
+    {
+      return ActiveRest(timeout);
+    }
+
+    public IFeatureHubConfig ActiveRest(int timeout = 360)
+    {
+      _edgeType = EdgeType.ActiveRest;
+      _timeout = timeout;
+      return this;
+    }
+
+    public IFeatureHubConfig PassiveRest(int timeout = 360)
     {
       _edgeType = EdgeType.PassiveRest;
       _timeout = timeout;

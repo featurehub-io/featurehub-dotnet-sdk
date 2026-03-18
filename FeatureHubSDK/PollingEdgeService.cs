@@ -290,7 +290,6 @@ namespace FeatureHubSDK
 
         public bool ClientEvaluation => !_config.ServerEvaluation;
 
-        public bool IsRequiresReplacementOnHeaderChange => false;
         public int TimeoutSeconds => _timeoutInSeconds;
 
         public string Etag => _configuration.DefaultHeaders.ContainsKey("if-none-match")

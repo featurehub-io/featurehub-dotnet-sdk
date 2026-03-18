@@ -13,7 +13,6 @@ namespace FeatureHubSDK
     Task ContextChange(string header);
     bool ClientEvaluation { get; }
 
-    bool IsRequiresReplacementOnHeaderChange { get;  }
     void Close();
     Task Poll();
   }
@@ -94,14 +93,8 @@ namespace FeatureHubSDK
       }
     }
     
-    
-    
-
     public bool ClientEvaluation => !_config.ServerEvaluation;
-
-    // "close" works on this events source and doesn't hang
-    public bool IsRequiresReplacementOnHeaderChange => false;
-
+    
     private Dictionary<string, string> BuildContextHeader()
     {
       var headers = new Dictionary<string, string>();
