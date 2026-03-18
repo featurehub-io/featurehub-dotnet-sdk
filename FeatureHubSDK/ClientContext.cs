@@ -222,7 +222,6 @@ namespace FeatureHubSDK
 
         public IFeature this[string name] => _repository.GetFeature(name).WithContext(this);
 
-
         public bool IsEnabled(string name)
         {
             return this[name].IsEnabled;

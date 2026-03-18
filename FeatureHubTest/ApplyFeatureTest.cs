@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
-
+using Moq;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 
@@ -21,25 +21,7 @@ namespace FeatureHubTest
     }
   }
 
-  public class TestClientContext : BaseClientContext
-  {
-    public TestClientContext() : base(null, null)
-    {}
-
-    public override IFeature this[string name] => throw new System.NotImplementedException();
-
-    public override async Task<IClientContext> Build()
-    {
-      return this;
-    }
-
-    public override IEdgeService EdgeService { get; }
-
-    public override void Close()
-    {
-      throw new System.NotImplementedException();
-    }
-  }
+  
 
   class ApplyFeatureTest
   {
@@ -63,7 +45,7 @@ namespace FeatureHubTest
       rs.Value = "blue";
 
       // and: we have a context
-      var cc = new TestClientContext().UserKey("mary@mary.com");
+      var cc = TestClientContext.Create().UserKey("mary@mary.com");
 
       var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {rs}, "fred", Guid.NewGuid(), null);
 
@@ -79,7 +61,7 @@ namespace FeatureHubTest
       rs.Value = "blue";
 
       // and: we have a context
-      var cc = new TestClientContext().UserKey("mary@mary.com");
+      var cc = TestClientContext.Create().UserKey("mary@mary.com");
 
       var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {rs}, "fred", Guid.NewGuid(), cc);
 
@@ -99,7 +81,7 @@ namespace FeatureHubTest
     public void NoRolloutStrategy(int underPercent, string expected, bool matched)
     {
       // and: we have a context
-      var cc = new TestClientContext().UserKey("mary@mary.com");
+      var cc = TestClientContext.Create().UserKey("mary@mary.com");
 
       var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {}, "fred", Guid.NewGuid(), cc);
 

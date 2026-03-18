@@ -195,23 +195,26 @@ namespace FeatureHubSDK
       {
         if (holder?.Key == null)
         {
+          // key has arrived, so create a new holder but steal the internal events from the old one
           holder = new FeatureStateBaseHolder(holder, applyFeature, this);
+          _features[fs.Key] = holder;
         }
         else if (holder.Version != null)
-        {
+        { // its a real one, so check if the version or value actually changed. Any structural change would update the version
           if (holder.Version > fs.VarVersion || (
                 holder.Version == fs.VarVersion && !FeatureStateBaseHolder.ValueChanged(holder.Value, fs.Value)))
           {
             return false;
           }
         }
-
-        holder.FeatureState = fs;
       }
       else
-      {
+      { // its a new feature we haven't seen before, yam it in
+        holder = new FeatureStateBaseHolder(null, applyFeature, this);
         _features.TryAdd(fs.Key, holder);
       }
+
+      holder.FeatureState = fs;
 
       return true;
     }
@@ -223,7 +226,8 @@ namespace FeatureHubSDK
         _features.TryAdd(key, new FeatureStateBaseHolder(null, applyFeature, this));
       }
 
-      return _features[key];
+      var feat = _features[key];
+      return feat;
     }
 
     public override bool Exists(string key)

@@ -34,6 +34,7 @@ namespace FeatureHubTest
       // given: we have a basic boolean feature
       var feature = new FeatureState(
         id: Guid.NewGuid(),
+        environmentId: Guid.NewGuid(),
         key: "bool1", value: true, varVersion: 1, type: FeatureValueType.BOOLEAN,
           strategies: new List<FeatureRolloutStrategy>
           {
@@ -46,8 +47,8 @@ namespace FeatureHubTest
 
       repo.UpdateFeatures(new List<FeatureState>{feature});
 
-      var matchCC = new TestClientContext().Country(StrategyAttributeCountryName.Turkey);
-      var unmatchCC = new TestClientContext().Country(StrategyAttributeCountryName.NewZealand);
+      var matchCC = TestClientContext.Create().Country(StrategyAttributeCountryName.Turkey);
+      var unmatchCC = TestClientContext.Create().Country(StrategyAttributeCountryName.NewZealand);
 
       ClassicAssert.AreEqual(false, repo.GetFeature("bool1").WithContext(matchCC).BooleanValue);
       ClassicAssert.AreEqual(true, repo.GetFeature("bool1").WithContext(unmatchCC).BooleanValue);
@@ -79,9 +80,9 @@ namespace FeatureHubTest
       // when: setup repo
       repo.UpdateFeatures(new List<FeatureState>{feature});
 
-      var age27 = new TestClientContext().Attr("age", "27");
-      var age18 = new TestClientContext().Attr("age", "18");
-      var age43 = new TestClientContext().Attr("age", "43");
+      var age27 = TestClientContext.Create().Attr("age", "27");
+      var age18 = TestClientContext.Create().Attr("age", "18");
+      var age43 = TestClientContext.Create().Attr("age", "43");
 
       // then
       ClassicAssert.AreEqual(10, repo.GetFeature("num1").WithContext(age27).NumberValue);
@@ -108,8 +109,8 @@ namespace FeatureHubTest
       // when: setup repo
       repo.UpdateFeatures(new List<FeatureState>{feature});
 
-      var oneMatch = new TestClientContext().Attrs("contractId", new List<String> { "3", "40", "26" });
-      var noneMatch = new TestClientContext().Attrs("contractId", new List<String> { "3", "400", "26" });
+      var oneMatch = TestClientContext.Create().Attrs("contractId", new List<String> { "3", "40", "26" });
+      var noneMatch = TestClientContext.Create().Attrs("contractId", new List<String> { "3", "400", "26" });
       
       ClassicAssert.AreEqual(6, repo.GetFeature("num1").WithContext(oneMatch).NumberValue);
       ClassicAssert.AreEqual(16, repo.GetFeature("num1").WithContext(noneMatch).NumberValue);
@@ -140,11 +141,11 @@ namespace FeatureHubTest
       // when: setup repo
       repo.UpdateFeatures(new List<FeatureState>{feature});
 
-      var ccAge27Ios = new TestClientContext().Platform(StrategyAttributePlatformName.Ios).Attr("age", "27");
-      var ccAge18Android = new TestClientContext().Platform(StrategyAttributePlatformName.Android).Attr("age", "18");
-      var ccAge43MacOS = new TestClientContext().Platform(StrategyAttributePlatformName.Macos).Attr("age", "43");
-      var ccAge18MacOS = new TestClientContext().Platform(StrategyAttributePlatformName.Macos).Attr("age", "18");
-      var ccEmpty = new TestClientContext();
+      var ccAge27Ios = TestClientContext.Create().Platform(StrategyAttributePlatformName.Ios).Attr("age", "27");
+      var ccAge18Android = TestClientContext.Create().Platform(StrategyAttributePlatformName.Android).Attr("age", "18");
+      var ccAge43MacOS = TestClientContext.Create().Platform(StrategyAttributePlatformName.Macos).Attr("age", "43");
+      var ccAge18MacOS = TestClientContext.Create().Platform(StrategyAttributePlatformName.Macos).Attr("age", "18");
+      var ccEmpty = TestClientContext.Create();
 
       switch (ft)
       {

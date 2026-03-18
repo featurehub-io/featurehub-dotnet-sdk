@@ -17,14 +17,14 @@ namespace FeatureHubTest
     {
         Mock<IFeatureRepositoryContext> repository;
         Mock<IFeatureHubConfig> config;
-        EdgeClientPoll poll;
+        PollingEdgeService poll;
 
         [SetUp]
         public void Setup()
         {
             repository = new Mock<IFeatureRepositoryContext>();
             config = new Mock<IFeatureHubConfig>();
-            poll = new EdgeClientPoll(repository.Object, config.Object);
+            poll = new PollingEdgeService(repository.Object, config.Object);
         }
 
         [Test]
@@ -132,8 +132,10 @@ namespace FeatureHubTest
         public async Task ErrorResponseFromApiCallStopsClient()
         {
             var mockApi = new Mock<IFeatureServiceApi>();
-            var sdkKeys = new List<string>(new[] { "123" });
+            var encode = new EncodeUtils();
+            var sdkKeys = new List<string>(new[] { encode.ClientApiKey });
             config.Setup(c => c.SdkKeys).Returns(sdkKeys);
+            config.Setup(c => c.EnvironmentId).Returns(encode.EnvironmentId);
             mockApi.Setup(s => 
                 s.GetFeatureStatesWithHttpInfoAsync(
                     sdkKeys, 
@@ -144,7 +146,7 @@ namespace FeatureHubTest
             poll.SideloadApi(mockApi.Object);
             await poll.Poll();
             ClassicAssert.IsTrue(poll.DeadConnection);
-            repository.Verify(foo => foo.Notify(SSEResultState.Failure, null));
+            repository.Verify(foo => foo.Notify(SSEResultState.Failure, null, encode.EnvironmentId));
         }
     }
 }

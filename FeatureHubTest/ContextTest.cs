@@ -13,11 +13,13 @@ namespace FeatureHubTest
   public class ContextTest
   {
     FeatureHubRepository _repository;
+    private EncodeUtils _encodeUtils = null;
 
     [SetUp]
     public void Setup()
     {
       _repository = new FeatureHubRepository();
+      _encodeUtils = new EncodeUtils();
     }
 
     internal class EdgeServiceStub : IEdgeService
@@ -49,7 +51,7 @@ namespace FeatureHubTest
     async public Task ChangeInContextFiresRequestToEdgeService()
     {
       var edgeStub = new EdgeServiceStub();
-      var ctx = await new ServerEvalFeatureContext(_repository, null, (repo, config) => edgeStub)
+      var ctx = await new ServerEvalFeatureContext(_repository, null,  edgeStub)
         .Attr("city", "Istanbul City")
         .Attrs("family", new List<String> {"Bambam", "DJ Elif"})
         .Country(StrategyAttributeCountryName.Turkey)
@@ -70,37 +72,25 @@ namespace FeatureHubTest
       ClassicAssert.NotNull(ctx.ToString());
 
       ClassicAssert.NotNull(ctx["fred"]);
-      ClassicAssert.AreEqual(edgeStub, ctx.EdgeService);
 
       await ctx.Clear().Build();
       ClassicAssert.AreEqual("", edgeStub.header);
     }
-
-    [Test]
-    async public Task EnsureStubIsReplacedOnBuildForServerEval()
-    {
-      var edgeStub = new EdgeServiceStub();
-      edgeStub.replace = true;
-      var ctx = await new ServerEvalFeatureContext(_repository, null, (repo, config) => edgeStub).Build();
-      ClassicAssert.AreEqual(0, edgeStub.closeCalled);
-      ctx.Attr("replaceme", "now");
-      await ctx.Build();
-      ClassicAssert.AreEqual(1, edgeStub.closeCalled);
-    }
-
+    
     [Test]
     async public Task EnabledFlagWorksIsTrueOnlyOnTrue()
     {
-      var ctx = new ClientEvalFeatureContext(_repository, null, (repo, config) => null);
+      var ctx = new ClientEvalFeatureContext(_repository, null);
       ClassicAssert.AreEqual(false, ctx.IsSet("1"));
       ClassicAssert.AreEqual(false, ctx.IsEnabled("1"));
-      _repository.Notify(SSEResultState.Features, RepositoryTest.EncodeFeatures(true, 2, FeatureValueType.BOOLEAN));
+      Guid id = Guid.NewGuid();
+      _repository.Notify(SSEResultState.Features, 
+        _encodeUtils.EncodeFeatures(true, 2, FeatureValueType.BOOLEAN), id);
       ClassicAssert.AreEqual(true, ctx.IsEnabled("1"));
-      _repository.Notify(SSEResultState.Features, RepositoryTest.EncodeFeatures(false, 3, FeatureValueType.BOOLEAN));
+      _repository.Notify(SSEResultState.Features, _encodeUtils.EncodeFeatures(false, 3, FeatureValueType.BOOLEAN), id);
       ClassicAssert.AreEqual(false, ctx.IsEnabled("1"));
       ClassicAssert.AreEqual(true, ctx.IsSet("1"));
-
-      ClassicAssert.IsNull(ctx.EdgeService);
+      
       await ctx.Build();
       ctx.Close();
     }

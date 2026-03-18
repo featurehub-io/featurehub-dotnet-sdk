@@ -11,23 +11,25 @@ namespace FeatureHubTest
   public class RepositoryTest
   {
     FeatureHubRepository _repository;
+    private Guid _envId;
 
     [SetUp]
     public void Setup()
     {
       _repository = new FeatureHubRepository();
+      _envId = Guid.NewGuid();
     }
 
-    public static string EncodeFeatures(object value, int varVersion = 1,
+    public string EncodeFeatures(object value, int varVersion = 1,
       FeatureValueType type = FeatureValueType.BOOLEAN)
     {
-      var feature = new FeatureState(id: Guid.NewGuid(), key: "1", varVersion: varVersion, value: value, type: type);
+      var feature = new FeatureState(id: Guid.NewGuid(), key: "1", varVersion: varVersion, value: value, type: type, environmentId: _envId);
       string val = JsonConvert.SerializeObject(new List<FeatureState>(new FeatureState[] { feature }));
 
       return val;
     }
 
-    public static string EncodeFeatures(int varVersion = 1, FeatureValueType type = FeatureValueType.BOOLEAN)
+    public string EncodeFeatures(int varVersion = 1, FeatureValueType type = FeatureValueType.BOOLEAN)
     {
       return EncodeFeatures(false, varVersion, type);
     }
@@ -35,14 +37,15 @@ namespace FeatureHubTest
     [Test]
     public void ABooleanIsStoredCorrectly()
     {
-      _repository.Notify(SSEResultState.Features, EncodeFeatures(true, 1, FeatureValueType.BOOLEAN));
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(true, 1, FeatureValueType.BOOLEAN), _envId);
+      ClassicAssert.IsNotNull(_repository.GetFeature("1"));
       ClassicAssert.AreEqual(true, _repository.GetFeature("1").BooleanValue);
     }
 
     [Test]
     public void ANumberIsStoredCorrectly()
     {
-      _repository.Notify(SSEResultState.Features, EncodeFeatures(16.3, 1, FeatureValueType.NUMBER));
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(16.3, 1, FeatureValueType.NUMBER), _envId);
       ClassicAssert.AreEqual(16.3, _repository.GetFeature("1").NumberValue);
       ClassicAssert.AreEqual(false, _repository.IsEnabled("1"));
       ClassicAssert.AreEqual(true, _repository.IsSet("1"));
@@ -52,7 +55,7 @@ namespace FeatureHubTest
     [Test]
     public void AStringIsStoredCorrectly()
     {
-      _repository.Notify(SSEResultState.Features, EncodeFeatures("some duck", 1, FeatureValueType.STRING));
+      _repository.Notify(SSEResultState.Features, EncodeFeatures("some duck", 1, FeatureValueType.STRING), _envId);
       ClassicAssert.AreEqual("some duck", _repository.GetFeature("1").StringValue);
       ClassicAssert.IsNull(_repository.GetFeature("1").NumberValue);
       ClassicAssert.IsNull(_repository.GetFeature("1").JsonValue);
@@ -64,7 +67,7 @@ namespace FeatureHubTest
     [Test]
     public void JsonIsStoredCorrectly()
     {
-      _repository.Notify(SSEResultState.Features, EncodeFeatures("{}", 1, FeatureValueType.JSON));
+      _repository.Notify(SSEResultState.Features, EncodeFeatures("{}", 1, FeatureValueType.JSON), _envId);
       ClassicAssert.AreEqual("{}", _repository.GetFeature("1").JsonValue);
     }
 
@@ -73,7 +76,7 @@ namespace FeatureHubTest
     {
       var found = false;
       _repository.ReadinessHandler += (sender, readyness) => { found = true; };
-      _repository.Notify(SSEResultState.Features, EncodeFeatures());
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);
       ClassicAssert.AreEqual(true, found);
     }
 
@@ -83,7 +86,7 @@ namespace FeatureHubTest
       var found = false;
       _repository.ReadinessHandler += (sender, readyness) => throw new Exception();
       _repository.ReadinessHandler += (sender, readyness) => { found = true; };
-      _repository.Notify(SSEResultState.Features, EncodeFeatures());
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);
       ClassicAssert.AreEqual(false, found);
     }
 
@@ -93,7 +96,7 @@ namespace FeatureHubTest
       var found = false;
       _repository.NewFeatureHandler += (sender, readyness) => throw new Exception();
       _repository.NewFeatureHandler += (sender, readyness) => { found = true; };
-      _repository.Notify(SSEResultState.Features, EncodeFeatures());
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);
       ClassicAssert.AreEqual(false, found);
     }
 
@@ -104,15 +107,15 @@ namespace FeatureHubTest
       _repository.FeatureState("1").FeatureUpdateHandler += (sender, state) => throw new Exception();
       _repository.FeatureState("1").FeatureUpdateHandler += (sender, state) => { found = true; };
       ClassicAssert.AreEqual(false, found);
-      _repository.Notify(SSEResultState.Features, EncodeFeatures());
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);
     }
 
     [Test]
     public void ByeTurnsOffReadyness()
     {
-      _repository.Notify(SSEResultState.Features, EncodeFeatures());
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);
       ClassicAssert.AreEqual(Readiness.Ready, _repository.Readiness);
-      _repository.Notify(SSEResultState.Bye, null);
+      _repository.Notify(SSEResultState.Bye, null, _envId);
       ClassicAssert.AreEqual(Readiness.NotReady, _repository.Readiness);
     }
 
@@ -121,7 +124,7 @@ namespace FeatureHubTest
     {
       var state = Readiness.Ready;
       _repository.ReadinessHandler += (sender, readyness) => { state = readyness; };
-      _repository.Notify(SSEResultState.Failure, null);
+      _repository.Notify(SSEResultState.Failure, null, _envId);
       ClassicAssert.AreEqual(Readiness.Failed, state);
     }
 
@@ -130,8 +133,8 @@ namespace FeatureHubTest
     {
       var found = false;
       _repository.NewFeatureHandler += (sender, repository) => { found = true; };
-      _repository.Notify(SSEResultState.Features, EncodeFeatures());
-      _repository.Notify(SSEResultState.Features, EncodeFeatures(varVersion: 2));
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(varVersion: 2), _envId);
       ClassicAssert.AreEqual(true, found);
     }
 
@@ -141,9 +144,9 @@ namespace FeatureHubTest
       var nfCount = 0;
       _repository.NewFeatureHandler += (sender, repository) => { nfCount++; };
       var features = EncodeFeatures();
-      _repository.Notify(SSEResultState.Features, features);
-      _repository.Notify(SSEResultState.Features, features);
-      _repository.Notify(SSEResultState.Features, features);
+      _repository.Notify(SSEResultState.Features, features, _envId);
+      _repository.Notify(SSEResultState.Features, features, _envId);
+      _repository.Notify(SSEResultState.Features, features, _envId);
       ClassicAssert.AreEqual(1, nfCount);
     }
 
@@ -157,7 +160,7 @@ namespace FeatureHubTest
         holder = fs;
         hCount++;
       };
-      _repository.Notify(SSEResultState.Features, EncodeFeatures());
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);
       ClassicAssert.AreEqual(1, hCount);
       ClassicAssert.IsNotNull(holder);
       ClassicAssert.AreEqual("1", holder.Key);
@@ -172,7 +175,7 @@ namespace FeatureHubTest
     {
       IFeature holder = null;
       _repository.FeatureState("1").FeatureUpdateHandler += (sender, fs) => { holder = fs; };
-      _repository.Notify(SSEResultState.Features, EncodeFeatures("fred", varVersion: 2, type: FeatureValueType.STRING));
+      _repository.Notify(SSEResultState.Features, EncodeFeatures("fred", varVersion: 2, type: FeatureValueType.STRING), _envId);
       ClassicAssert.AreEqual(FeatureValueType.STRING, holder.Type);
       ClassicAssert.AreEqual("fred", holder.StringValue);
       ClassicAssert.AreEqual("fred", _repository.FeatureState("1").Value);
@@ -183,7 +186,7 @@ namespace FeatureHubTest
     {
       IFeature holder = null;
       _repository.FeatureState("1").FeatureUpdateHandler += (sender, fs) => { holder = fs; };
-      _repository.Notify(SSEResultState.Features, EncodeFeatures(78.3, varVersion: 2, type: FeatureValueType.NUMBER));
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(78.3, varVersion: 2, type: FeatureValueType.NUMBER), _envId);
       ClassicAssert.AreEqual(FeatureValueType.NUMBER, holder.Type);
       ClassicAssert.AreEqual(78.3, holder.NumberValue);
     }
@@ -193,7 +196,7 @@ namespace FeatureHubTest
     {
       IFeature holder = null;
       _repository.FeatureState("1").FeatureUpdateHandler += (sender, fs) => { holder = fs; };
-      _repository.Notify(SSEResultState.Features, EncodeFeatures("fred", varVersion: 2, type: FeatureValueType.JSON));
+      _repository.Notify(SSEResultState.Features, EncodeFeatures("fred", varVersion: 2, type: FeatureValueType.JSON), _envId);
       ClassicAssert.AreEqual(FeatureValueType.JSON, holder.Type);
       ClassicAssert.AreEqual("fred", holder.JsonValue);
       ClassicAssert.IsNull(holder.StringValue);
@@ -212,17 +215,17 @@ namespace FeatureHubTest
         Console.WriteLine($"{fs}");
         hCount++;
       };
-      _repository.Notify(SSEResultState.Features, EncodeFeatures());
-      _repository.Notify(SSEResultState.Features, EncodeFeatures()); // same again
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId); // same again
       _repository.Notify(SSEResultState.Features,
-        EncodeFeatures(varVersion: 2)); // same again, new version but same value
-      _repository.Notify(SSEResultState.Features, EncodeFeatures(true, varVersion: 3));
+        EncodeFeatures(varVersion: 2), _envId); // same again, new version but same value
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(true, varVersion: 3), _envId);
       ClassicAssert.AreEqual(2, hCount);
       ClassicAssert.IsNotNull(holder);
       ClassicAssert.AreEqual(true, holder.BooleanValue);
       var feature = new FeatureState(id: Guid.NewGuid(), key: "1", varVersion: 4, value: false,
         type: FeatureValueType.BOOLEAN);
-      _repository.Notify(SSEResultState.Feature, JsonConvert.SerializeObject(feature));
+      _repository.Notify(SSEResultState.Feature, JsonConvert.SerializeObject(feature), _envId);
       ClassicAssert.AreEqual(3, hCount);
       ClassicAssert.AreEqual(false, holder.BooleanValue);
     }
@@ -238,8 +241,8 @@ namespace FeatureHubTest
         Console.WriteLine($"{fs}");
         hCount++;
       };
-      _repository.Notify(SSEResultState.Features, EncodeFeatures()); // false, 1, boolean
-      _repository.Notify(SSEResultState.Features, EncodeFeatures(true, 1, FeatureValueType.BOOLEAN));
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId); // false, 1, boolean
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(true, 1, FeatureValueType.BOOLEAN), _envId);
 
       ClassicAssert.AreEqual(2, hCount);
       ClassicAssert.IsNotNull(holder);
@@ -249,7 +252,7 @@ namespace FeatureHubTest
     [Test]
     public void ANumberCanBeAnInteger()
     {
-      _repository.Notify(SSEResultState.Features, EncodeFeatures(1L, varVersion: 1, type: FeatureValueType.NUMBER));
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(1L, varVersion: 1, type: FeatureValueType.NUMBER), _envId);
       ClassicAssert.AreEqual(1, _repository.FeatureState("1").NumberValue);
       ClassicAssert.AreEqual(1, _repository.GetFeature("1").NumberValue);
     }
@@ -257,11 +260,11 @@ namespace FeatureHubTest
     [Test]
     public void DeleteRemovesFeature()
     {
-      _repository.Notify(SSEResultState.Features, EncodeFeatures());
+      _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);
       var feature = new FeatureState(id: Guid.NewGuid(), key: "1", varVersion: 2, value: true,
         type: FeatureValueType.BOOLEAN);
       ClassicAssert.AreEqual(1, _repository.FeatureState("1").Version);
-      _repository.Notify(SSEResultState.DeleteFeature, JsonConvert.SerializeObject(feature));
+      _repository.Notify(SSEResultState.DeleteFeature, JsonConvert.SerializeObject(feature), _envId);
       ClassicAssert.IsNull(_repository.FeatureState("1").Version);
     }
   }
