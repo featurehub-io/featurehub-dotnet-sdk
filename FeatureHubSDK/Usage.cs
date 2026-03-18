@@ -1,5 +1,8 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using IO.FeatureHub.SSE.Model;
 
 namespace FeatureHubSDK
@@ -17,7 +20,7 @@ namespace FeatureHubSDK
       _cancel = cancel;
     }
 
-    public void Cancel() => _cancel?.Invoke();
+    public void Cancel() => _cancel.Invoke();
   }
   
   /// <summary>
@@ -32,32 +35,19 @@ namespace FeatureHubSDK
     /// The feature value serialised to a string. Boolean → "on"/"off", Number → toString,
     /// String → as-is, JSON → null.
     /// </summary>
-    public readonly string Value;
-    public readonly object RawValue;
+    public readonly string? Value;
+    public readonly object? RawValue;
     public readonly FeatureValueType Type;
     public readonly Guid EnvironmentId;
 
-    public static string Convert(object value, FeatureValueType? type)
-    {
-      if (type == null || value == null) return null;
-      switch (type)
-      {
-        case FeatureValueType.BOOLEAN:
-          return true.Equals(value) ? "on" : "off";
-        case FeatureValueType.STRING:
-        case FeatureValueType.NUMBER:
-          return value.ToString();
-        default:
-          return null; // JSON → null
-      }
-    }
+    
 
     public FeatureHubUsageValue(FeatureState fs, object? value)
     {
       Id = fs.Id;
       Key = fs.Key;
       RawValue = value;
-      Value = Convert(value, fs.Type);
+      Value = DefaultUsageProvider.Convert(value, fs.Type);
       EnvironmentId = fs.EnvironmentId;
       Type = fs.Type ?? throw new InvalidOperationException($"Feature type must not be null for key '{fs.Key}'");
     }
@@ -67,7 +57,7 @@ namespace FeatureHubSDK
       Id = fs.Id  ?? throw new InvalidOperationException($"Feature ID must not be null for key '{fs.Key}'");
       Key = fs.Key;
       RawValue = value;
-      Value = Convert(value, fs.Type);
+      Value = DefaultUsageProvider.Convert(value, fs.Type);
       EnvironmentId = fs.EnvironmentId  ?? throw new InvalidOperationException($"Feature EnvironmentId must not be null for key '{fs.Key}'");
       Type = fs.Type ?? throw new InvalidOperationException($"Feature type must not be null for key '{fs.Key}'");
     }
@@ -79,9 +69,10 @@ namespace FeatureHubSDK
   /// </summary>
   public interface IUsageEvent
   {
-    string UserKey { get; set; }
+    string? UserKey { get; set; }
     void SetAdditionalParams(Dictionary<string, object>? additionalParams);
-    IReadOnlyDictionary<string, object> ToMap();
+    
+    IReadOnlyDictionary<string, object?> CopyBaseMap();
   }
 
   /// <summary>
@@ -100,7 +91,7 @@ namespace FeatureHubSDK
   public interface IUsageEventWithFeature : IUsageEvent, IUsageEventName
   {
     /// <summary>Context attributes from the evaluation context (may be null for no-context reads).</summary>
-    Dictionary<string, List<string>> Attributes { get; }
+    Dictionary<string, List<string>>? Attributes { get; }
     FeatureHubUsageValue Feature { get; }
   }
 
@@ -145,7 +136,7 @@ namespace FeatureHubSDK
         _additionalParams = additionalParams;
     }
 
-    public string UserKey { get; set; }
+    public string? UserKey { get; set; }
 
     public void SetAdditionalParams(Dictionary<string, object>? additionalParams)
       => _additionalParams = additionalParams ?? new Dictionary<string, object>();
@@ -153,8 +144,8 @@ namespace FeatureHubSDK
     public virtual IReadOnlyDictionary<string, object> ToMap() => _additionalParams;
 
     /// <summary>Returns a mutable copy of the base additional-params map for subclass use.</summary>
-    protected Dictionary<string, object> CopyBaseMap()
-      => new Dictionary<string, object>(_additionalParams);
+    public IReadOnlyDictionary<string, object?> CopyBaseMap()
+      => new ReadOnlyDictionary<string, object?>(_additionalParams!);
   }
 
   /// <summary>
@@ -164,7 +155,7 @@ namespace FeatureHubSDK
   /// </summary>
   public class DefaultUsageEventWithFeature : DefaultUsageEvent, IUsageEventWithFeature
   {
-    public Dictionary<string, List<string>> Attributes { get; }
+    public Dictionary<string, List<string>>? Attributes { get; }
     public FeatureHubUsageValue Feature { get; }
     public string EventName => "feature";
 
@@ -172,13 +163,14 @@ namespace FeatureHubSDK
       Dictionary<string, List<string>>? attributes, string? userKey)
     {
       Feature = feature;
-      Attributes = attributes ?? new Dictionary<string, List<string>>();
+      Attributes = attributes;
       UserKey = userKey;
     }
 
-    public override IReadOnlyDictionary<string, object> ToMap()
+    public new IReadOnlyDictionary<string, object?> CopyBaseMap()
     {
-      var m = CopyBaseMap();
+      var m = base.CopyBaseMap().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+      
       if (Attributes != null)
       {
         foreach (var kvp in Attributes)
@@ -187,7 +179,7 @@ namespace FeatureHubSDK
       m["feature"] = Feature.Key;
       m["value"] = Feature.Value;
       m["id"] = Feature.Id;
-      return m;
+      return new ReadOnlyDictionary<string, object?>(m);
     }
   }
 
@@ -205,14 +197,14 @@ namespace FeatureHubSDK
       : base(userKey, additionalParams) { }
 
     public void SetFeatureValues(List<FeatureHubUsageValue> featureValues)
-      => FeatureValues = featureValues ?? new List<FeatureHubUsageValue>();
+      => FeatureValues = featureValues;
 
-    public override IReadOnlyDictionary<string, object> ToMap()
+    public new IReadOnlyDictionary<string, object?> CopyBaseMap()
     {
-      var m = CopyBaseMap();
+      var m = base.CopyBaseMap().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
       foreach (var fv in FeatureValues)
         m[fv.Key] = fv.Value;
-      return m;
+      return new ReadOnlyDictionary<string, object?>(m);
     }
   }
 
@@ -232,11 +224,11 @@ namespace FeatureHubSDK
       : base(userKey, additionalParams) { }
 
     public void SetAttributes(Dictionary<string, List<string>> attributes)
-      => _attributes = attributes ?? new Dictionary<string, List<string>>();
+      => _attributes = attributes;
 
-    public override IReadOnlyDictionary<string, object> ToMap()
+    public new IReadOnlyDictionary<string, object?> CopyBaseMap()
     {
-      var m = CopyBaseMap();
+      var m = base.CopyBaseMap().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
       foreach (var kvp in _attributes)
         m[kvp.Key] = kvp.Value;
       return m;
@@ -283,12 +275,37 @@ namespace FeatureHubSDK
     IUsageEventWithFeature CreateUsageEventWithFeature(FeatureHubUsageValue feature,
       Dictionary<string, List<string>>? attributes, string? userKey);
   }
+  
 
+  public class DefaultUsageProvider
+  {
+    // replace this value if you wish to globally replace the default usage provider
+    public static IUsageProvider Instance = new BaseUsageProvider();
+    
+    // this allows you to replace the conversion method for outgoing feature values
+    public static Func<object?, FeatureValueType?, string?> Convert = DefaultConvert;
+    
+    public static string? DefaultConvert(object? value, FeatureValueType? type)
+    {
+      if (type == null || value == null) return null;
+      switch (type)
+      {
+        case FeatureValueType.BOOLEAN:
+          return true.Equals(value) ? "on" : "off";
+        case FeatureValueType.STRING:
+        case FeatureValueType.NUMBER:
+          return value.ToString();
+        default:
+          return null; // JSON → null
+      }
+    }
+  }
+  
   /// <summary>
   /// Default implementation of IUsageProvider — constructs the standard event types.
   /// Equivalent to Java's UsageProvider.DefaultUsageProvider.
   /// </summary>
-  public class DefaultUsageProvider : IUsageProvider
+  public class BaseUsageProvider : IUsageProvider
   {
     public IUsageEventWithFeature CreateUsageFeature(FeatureHubUsageValue feature,
       Dictionary<string, List<string>> attributes)

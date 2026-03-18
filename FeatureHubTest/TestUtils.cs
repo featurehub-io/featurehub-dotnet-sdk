@@ -57,7 +57,7 @@ namespace FeatureHubTest
         {
             var repo = new Mock<IFeatureRepositoryContext>();
             var config = new Mock<IFeatureHubConfig>();
-            var usage = new DefaultUsageProvider();
+            var usage = new BaseUsageProvider();
             
             repo.Setup(s => s.UsageProvider).Returns(usage);
       

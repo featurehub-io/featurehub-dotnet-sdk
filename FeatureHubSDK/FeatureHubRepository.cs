@@ -51,7 +51,7 @@ namespace FeatureHubSDK
     private readonly ConcurrentDictionary<int, Action<IUsageEvent>> _usageStreams =
       new ConcurrentDictionary<int, Action<IUsageEvent>>();
     private int _usageStreamCounter;
-    private IUsageProvider _usageProvider = new DefaultUsageProvider();
+    private IUsageProvider _usageProvider = DefaultUsageProvider.Instance;
 
     public override Readiness Readiness => _readiness;
     public override Readiness Readyness => _readiness;
