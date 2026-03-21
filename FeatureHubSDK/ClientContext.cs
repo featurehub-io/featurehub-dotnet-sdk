@@ -60,9 +60,11 @@ namespace FeatureHubSDK
   public abstract class BaseClientContext(IFeatureRepositoryContext repository, IFeatureHubConfig config)
       : IClientContext
   {
+#pragma warning disable CA1051
     protected readonly Dictionary<string, List<string>> _attributes = new Dictionary<string, List<string>>();
     protected readonly IFeatureRepositoryContext _repository = repository;
     protected readonly IFeatureHubConfig _config = config;
+#pragma warning restore CA1051
 
     public IFeatureHubRepository Repository => _repository;
 
@@ -197,10 +199,8 @@ namespace FeatureHubSDK
 
     public string GetAttr(string key, string defaultValue)
     {
-      if (_attributes.ContainsKey(key) && _attributes[key].Count > 0)
-      {
-        return _attributes[key][0];
-      }
+      if (_attributes.TryGetValue(key, out var attrs) && attrs.Count > 0)
+        return attrs[0];
 
       return defaultValue;
     }
@@ -216,9 +216,15 @@ namespace FeatureHubSDK
     }
 
 
-    public string? DefaultPercentageKey => _attributes.ContainsKey("session")
-        ? _attributes["session"][0]
-        : (_attributes.ContainsKey("userkey") ? _attributes["userkey"][0] : null);
+    public string? DefaultPercentageKey
+    {
+      get
+      {
+        if (_attributes.TryGetValue("session", out var session)) return session[0];
+        if (_attributes.TryGetValue("userkey", out var userkey)) return userkey[0];
+        return null;
+      }
+    }
 
     public IFeature this[string name] => _repository.GetFeature(name).WithContext(this);
 
@@ -266,7 +272,7 @@ namespace FeatureHubSDK
           _attributes.Select((e) => e.Key + "=" +
                                     HttpUtility.UrlEncode(string.Join(",", e.Value))).OrderBy(u => u));
 
-      if (!newHeader.Equals(_xHeader))
+      if (!string.Equals(newHeader, _xHeader, StringComparison.Ordinal))
       {
         _xHeader = newHeader;
         _repository.NotReady();

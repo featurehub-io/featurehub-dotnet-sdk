@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -19,7 +20,7 @@ using IO.FeatureHub.SSE.Model;
  */
 namespace FeatureHubSDK
 {
-  public class PollingEdgeService : IEdgeService
+  public class PollingEdgeService : IEdgeService, IDisposable
   {
     private readonly IFeatureRepositoryContext _repositoryContext;
     private readonly IFeatureHubConfig _config;
@@ -123,7 +124,7 @@ namespace FeatureHubSDK
       byte[] crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(shaString));
       foreach (byte theByte in crypto)
       {
-        hash.Append(theByte.ToString("x2"));
+        hash.Append(theByte.ToString("x2", CultureInfo.InvariantCulture));
       }
 
       return hash.ToString();
@@ -304,7 +305,7 @@ namespace FeatureHubSDK
         {
           try
           {
-            var cacheAge = int.Parse(match.Groups[0].Value.Substring(8));
+            var cacheAge = int.Parse(match.Groups[0].Value.Substring(8), CultureInfo.InvariantCulture);
             if (cacheAge > 0)
             {
               if (FeatureLogging.InfoLogger != null)
@@ -341,9 +342,7 @@ namespace FeatureHubSDK
 
     public int TimeoutSeconds => _timeoutInSeconds;
 
-    public string Etag => _configuration.DefaultHeaders.ContainsKey("if-none-match")
-      ? _configuration.DefaultHeaders["if-none-match"]
-      : null;
+    public string Etag => _configuration.DefaultHeaders.TryGetValue("if-none-match", out var etag) ? etag : null;
 
     public bool Stopped => _stopped;
 
@@ -362,6 +361,12 @@ namespace FeatureHubSDK
       _pollTimer?.Dispose();
       _pollTimer = null;
       _timerActive = false;
+    }
+
+    public void Dispose()
+    {
+      Close();
+      GC.SuppressFinalize(this);
     }
   }
 }

@@ -12,6 +12,7 @@ namespace FeatureHubSDK
   /// Represents a subscription to a repository event stream. Call Cancel() to unsubscribe.
   /// Equivalent to Java's RepositoryEventHandler.
   /// </summary>
+#pragma warning disable CA1711
   public class RepositoryEventHandler
   {
     private readonly Action _cancel;
@@ -23,6 +24,7 @@ namespace FeatureHubSDK
 
     public void Cancel() => _cancel.Invoke();
   }
+#pragma warning restore CA1711
 
   /// <summary>
   /// The serialised snapshot of a single feature at the moment it was evaluated.
@@ -30,37 +32,42 @@ namespace FeatureHubSDK
   /// </summary>
   public class FeatureHubUsageValue
   {
-    public readonly Guid Id;
-    public readonly string Key;
+    private readonly Guid _id;
+    private readonly string _key;
+    private readonly string? _value;
+    private readonly object? _rawValue;
+    private readonly FeatureValueType _type;
+    private readonly Guid _environmentId;
+
+    public Guid Id => _id;
+    public string Key => _key;
     /// <summary>
     /// The feature value serialised to a string. Boolean → "on"/"off", Number → toString,
     /// String → as-is, JSON → null.
     /// </summary>
-    public readonly string? Value;
-    public readonly object? RawValue;
-    public readonly FeatureValueType Type;
-    public readonly Guid EnvironmentId;
-
-
+    public string? Value => _value;
+    public object? RawValue => _rawValue;
+    public FeatureValueType Type => _type;
+    public Guid EnvironmentId => _environmentId;
 
     public FeatureHubUsageValue(FeatureState fs, object? value)
     {
-      Id = fs.Id;
-      Key = fs.Key;
-      RawValue = value;
-      Value = DefaultUsageProvider.Convert(value, fs.Type);
-      EnvironmentId = fs.EnvironmentId;
-      Type = fs.Type ?? throw new InvalidOperationException($"Feature type must not be null for key '{fs.Key}'");
+      _id = fs.Id;
+      _key = fs.Key;
+      _rawValue = value;
+      _value = DefaultUsageProvider.Convert(value, fs.Type);
+      _environmentId = fs.EnvironmentId;
+      _type = fs.Type ?? throw new InvalidOperationException($"Feature type must not be null for key '{fs.Key}'");
     }
 
     public FeatureHubUsageValue(IFeature fs, object? value)
     {
-      Id = fs.Id ?? throw new InvalidOperationException($"Feature ID must not be null for key '{fs.Key}'");
-      Key = fs.Key;
-      RawValue = value;
-      Value = DefaultUsageProvider.Convert(value, fs.Type);
-      EnvironmentId = fs.EnvironmentId ?? throw new InvalidOperationException($"Feature EnvironmentId must not be null for key '{fs.Key}'");
-      Type = fs.Type ?? throw new InvalidOperationException($"Feature type must not be null for key '{fs.Key}'");
+      _id = fs.Id ?? throw new InvalidOperationException($"Feature ID must not be null for key '{fs.Key}'");
+      _key = fs.Key;
+      _rawValue = value;
+      _value = DefaultUsageProvider.Convert(value, fs.Type);
+      _environmentId = fs.EnvironmentId ?? throw new InvalidOperationException($"Feature EnvironmentId must not be null for key '{fs.Key}'");
+      _type = fs.Type ?? throw new InvalidOperationException($"Feature type must not be null for key '{fs.Key}'");
     }
   }
 
@@ -100,10 +107,12 @@ namespace FeatureHubSDK
   /// A batch of feature values (e.g. fired on readiness).
   /// Equivalent to Java's UsageFeaturesCollection.
   /// </summary>
+#pragma warning disable CA1711
   public interface IUsageFeaturesCollection : IUsageEvent
   {
     void SetFeatureValues(List<FeatureHubUsageValue> featureValues);
   }
+#pragma warning restore CA1711
 
   /// <summary>
   /// A batch of feature values paired with context attributes (e.g. fired on server-eval update).
@@ -188,9 +197,10 @@ namespace FeatureHubSDK
   /// A batch of feature values. ToMap() adds each feature as key → serialised value.
   /// Equivalent to Java's DefaultUsageFeaturesCollection.
   /// </summary>
+#pragma warning disable CA1711
   public class DefaultUsageFeaturesCollection : DefaultUsageEvent, IUsageFeaturesCollection
   {
-    protected List<FeatureHubUsageValue> FeatureValues = new List<FeatureHubUsageValue>();
+    protected List<FeatureHubUsageValue> FeatureValues { get; private set; } = new List<FeatureHubUsageValue>();
 
     public DefaultUsageFeaturesCollection() { }
 
@@ -214,6 +224,7 @@ namespace FeatureHubSDK
       return new ReadOnlyDictionary<string, object?>(m);
     }
   }
+#pragma warning restore CA1711
 
   /// <summary>
   /// A batch of feature values with context attributes. ToMap() merges features then
@@ -248,8 +259,10 @@ namespace FeatureHubSDK
   /// </summary>
   public abstract class UsagePlugin
   {
+#pragma warning disable CA1051
     protected readonly Dictionary<string, object> DefaultEventParams =
       new Dictionary<string, object>();
+#pragma warning restore CA1051
 
     public Dictionary<string, object> GetDefaultEventParams() => DefaultEventParams;
 
@@ -294,10 +307,10 @@ namespace FeatureHubSDK
   public class DefaultUsageProvider
   {
     // replace this value if you wish to globally replace the default usage provider
-    public static IUsageProvider Instance = new BaseUsageProvider();
+    public static IUsageProvider Instance { get; set; } = new BaseUsageProvider();
 
     // this allows you to replace the conversion method for outgoing feature values
-    public static Func<object?, FeatureValueType?, string?> Convert = DefaultConvert;
+    public static Func<object?, FeatureValueType?, string?> Convert { get; set; } = DefaultConvert;
 
     public static string? DefaultConvert(object? value, FeatureValueType? type)
     {

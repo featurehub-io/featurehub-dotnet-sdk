@@ -84,13 +84,13 @@ namespace FeatureHubSDK
       }
     }
 
-    public void UpdateFeatures(IEnumerable<FeatureState>? features)
+    public void UpdateFeatures(IEnumerable<FeatureState>? states)
     {
-      if (features == null)
+      if (states == null)
         return;
 
       var updated = false;
-      foreach (var featureState in features)
+      foreach (var featureState in states)
       {
         updated = FeatureUpdate(featureState) || updated;
       }
@@ -230,12 +230,12 @@ namespace FeatureHubSDK
 
     public IFeature FeatureState(string key)
     {
-      if (!_features.ContainsKey(key))
+      if (!_features.TryGetValue(key, out var feat))
       {
         _features.TryAdd(key, new FeatureStateBaseHolder(null, applyFeature, this));
+        feat = _features[key];
       }
 
-      var feat = _features[key];
       return feat;
     }
 
@@ -284,12 +284,12 @@ namespace FeatureHubSDK
           // if we have no feature state and it therefore has no state, lets check if its a bool
           if (featureState == null && value != null)
           {
-            if (value.ToString().ToLower() == "false")
+            if (string.Equals(value.ToString(), "false", StringComparison.OrdinalIgnoreCase))
             {
               return (true, false);
             }
 
-            if (value.ToString().ToLower() == "true")
+            if (string.Equals(value.ToString(), "true", StringComparison.OrdinalIgnoreCase))
             {
               return (true, true);
             }

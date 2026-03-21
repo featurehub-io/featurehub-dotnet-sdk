@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using IO.FeatureHub.SSE.Model;
@@ -21,29 +22,37 @@ namespace FeatureHubSDK
 
   public class ExceptionEvent
   {
-    public readonly String Message;
-    public readonly Exception Exception;
+    public string Message { get; }
+    public Exception Exception { get; }
 
     public ExceptionEvent(string message, Exception exception)
     {
-      this.Message = message;
-      this.Exception = exception;
+      Message = message;
+      Exception = exception;
     }
   }
 
   public static class FeatureLogging
   {
     // Attach event handler to receive Trace level logs
-    public static EventHandler<string> TraceLogger = (sender, args) => { };
+
+    public static EventHandler<string> TraceLogger { get; set; } = (sender, args) => { };
+
     // Attach event handler to receive Debug level logs
-    public static EventHandler<string> DebugLogger = (sender, args) => { };
+
+    public static EventHandler<string> DebugLogger { get; set; } = (sender, args) => { };
+
     // Attach event handler to receive Info level logs
-    public static EventHandler<string> InfoLogger = (sender, args) => { };
+
+    public static EventHandler<string> InfoLogger { get; set; } = (sender, args) => { };
+
     // Attach event handler to receive Warn level logs
-    public static EventHandler<string> WarnLogger = (sender, args) => { };
+
+    public static EventHandler<string> WarnLogger { get; } = (sender, args) => { };
+
     // Attach event handler to receive Error level logs
-    public static EventHandler<string> ErrorLogger = (sender, args) => { };
-    public static EventHandler<ExceptionEvent> ExceptionLogger = (sender, args) => { };
+    public static EventHandler<string> ErrorLogger { get; set; } = (sender, args) => { };
+    public static EventHandler<ExceptionEvent> ExceptionLogger { get; set; } = (sender, args) => { };
   }
 
   class ConfigData
@@ -73,7 +82,9 @@ namespace FeatureHubSDK
     private readonly IEventSourceFactory _eventSourceFactory;
     private string _xFeatureHubHeader;
     private bool _closed;
+#pragma warning disable CA1051
     public EventHandler<ConfigurationBuilder> ConfigModificationHook = delegate { };
+#pragma warning restore CA1051
 
     internal bool IsClosed => _closed;
 
@@ -96,16 +107,16 @@ namespace FeatureHubSDK
       _repository.ServerSideEvaluation = config.ServerEvaluation;
     }
 
-    public async Task ContextChange(string newHeader)
+    public async Task ContextChange(string header)
     {
       if (_closed)
         return;
 
       if (_config.ServerEvaluation)
       {
-        if (newHeader != _xFeatureHubHeader)
+        if (header != _xFeatureHubHeader)
         {
-          _xFeatureHubHeader = newHeader;
+          _xFeatureHubHeader = header;
 
           if (_eventSource == null || _eventSource.ReadyState == ReadyState.Open ||
               _eventSource.ReadyState == ReadyState.Connecting)
@@ -136,7 +147,7 @@ namespace FeatureHubSDK
       return headers;
     }
 
-    private string DefaultEnvConfig(string envVar, string defaultValue)
+    private static string DefaultEnvConfig(string envVar, string defaultValue)
     {
       return Environment.GetEnvironmentVariable(envVar) ?? defaultValue;
     }
@@ -243,12 +254,12 @@ namespace FeatureHubSDK
 
       var configBuilder = Configuration.Builder(uri: new UriBuilder(_config.Url).Uri)
         .BackoffResetThreshold(
-          TimeSpan.FromMinutes(int.Parse(DefaultEnvConfig("FEATUREHUB_BACKOFF_RESET_THRESHOLD", "1"))))
+          TimeSpan.FromMinutes(int.Parse(DefaultEnvConfig("FEATUREHUB_BACKOFF_RESET_THRESHOLD", "1"), CultureInfo.InvariantCulture)))
         .RequestHeaders(_config.ServerEvaluation ? BuildContextHeader() : null)
         .MaxRetryDelay(
-          TimeSpan.FromMilliseconds(int.Parse(DefaultEnvConfig("FEATUREHUB_MAX_DELAY_RETRY_MS", "20000"))))
+          TimeSpan.FromMilliseconds(int.Parse(DefaultEnvConfig("FEATUREHUB_MAX_DELAY_RETRY_MS", "20000"), CultureInfo.InvariantCulture)))
         .InitialRetryDelay(
-          TimeSpan.FromMilliseconds(int.Parse(DefaultEnvConfig("FEATUREHUB_DELAY_RETRY_MS", "500"))));
+          TimeSpan.FromMilliseconds(int.Parse(DefaultEnvConfig("FEATUREHUB_DELAY_RETRY_MS", "500"), CultureInfo.InvariantCulture)));
 
       // in case the user wants to modify the config
       ConfigModificationHook(this, configBuilder);

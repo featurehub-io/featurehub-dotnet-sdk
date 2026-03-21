@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using IO.FeatureHub.SSE.Model;
-using Newtonsoft.Json;
 
 // because dependent library does
 
@@ -13,36 +10,36 @@ namespace FeatureHubSDK
     /// <summary>
     /// if the value is not null, exists returns true
     /// </summary>
-    bool Exists { get; }
+    public bool Exists { get; }
 
-    bool Boolean(bool defaultValue = false);
-    string String(string defaultValue = "");
-    double Number(double defaultValue = 0.0);
-    string Json(string defaultValue = "{}");
+    public bool BooleanFeature(bool defaultValue = false);
+    public string StringFeature(string defaultValue = "");
+    public double NumberFeature(double defaultValue = 0.0);
+    public string JsonFeature(string defaultValue = "{}");
 
-    Guid? Id { get; }
-    Guid? EnvironmentId { get; }
+    public Guid? Id { get; }
+    public Guid? EnvironmentId { get; }
 
     /// <summary>
     /// Type is a bool. It will only be null if the type of Feature is not a bool.
     /// </summary>
-    bool? BooleanValue { get; }
+    public bool? BooleanValue { get; }
 
     /// <summary>
     /// the type is a string and returned as such
     /// </summary>
-    string StringValue { get; }
+    public string StringValue { get; }
 
     /// <summary>
     /// A numeric value. This could be an integer or a double.
     /// </summary>
-    double? NumberValue { get; }
+    public double? NumberValue { get; }
 
     /// <summary>
     /// this is just the same as StringValue, no attempt to decode into JSON is done as it is easier for the end user to decode it into
     /// the format they require.
     /// </summary>
-    string JsonValue { get; }
+    public string JsonValue { get; }
 
     /// <summary>
     /// The KEY of this feature

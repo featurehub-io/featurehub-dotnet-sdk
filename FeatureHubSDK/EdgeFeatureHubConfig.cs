@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 
 namespace FeatureHubSDK
@@ -136,7 +137,7 @@ namespace FeatureHubSDK
       {
         _edgeType = Environment.GetEnvironmentVariable("FEATUREHUB_POLLING_PASSIVE") != null ? EdgeType.PassiveRest : EdgeType.ActiveRest;
 
-        _timeout = int.Parse(pollTimeout);
+        _timeout = int.Parse(pollTimeout, CultureInfo.InvariantCulture);
       }
       else
       {

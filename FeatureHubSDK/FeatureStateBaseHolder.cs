@@ -13,10 +13,7 @@ namespace FeatureHubSDK
     private IClientContext? _context;
     private readonly IFeatureRepositoryContext _repository;
 
-    public IFeature WithContext(IClientContext context)
-    {
-      return CopyFeatureStateHolder().SetContext(context);
-    }
+    public IFeature WithContext(IClientContext context) => CopyFeatureStateHolder().SetContext(context);
 
     public event EventHandler<IFeature>? FeatureUpdateHandler;
 
@@ -56,33 +53,21 @@ namespace FeatureHubSDK
     }
 
     public bool Exists => _feature != null;
-    public bool Boolean(bool defaultValue = false)
-    {
-      return BooleanValue ?? defaultValue;
-    }
+    public bool BooleanFeature(bool defaultValue = false) => BooleanValue ?? defaultValue;
 
-    public string String(string defaultValue = "")
-    {
-      return StringValue ?? defaultValue;
-    }
+    public string StringFeature(string defaultValue = "") => StringValue ?? defaultValue;
 
-    public double Number(double defaultValue = 0)
-    {
-      return NumberValue ?? defaultValue;
-    }
+    public double NumberFeature(double defaultValue = 0) => NumberValue ?? defaultValue;
 
-    public string Json(string defaultValue = "{}")
-    {
-      return JsonValue ?? defaultValue;
-    }
+    public string JsonFeature(string defaultValue = "{}") => JsonValue ?? defaultValue;
 
     public object? RawValue => _feature == null ? null : GetValue(_feature.Type, false);
 
     private object? GetValue(FeatureValueType? passedType, bool triggerUsage = true)
     {
-      var (interceptMatched, val) = _repository.FindIntercept(Key, _feature);
+      (bool interceptMatched, object? val) = _repository.FindIntercept(Key, _feature);
 
-      var type = passedType ?? _feature?.Type;
+      FeatureValueType? type = passedType ?? _feature?.Type;
 
       if (interceptMatched)
       {
@@ -128,7 +113,7 @@ namespace FeatureHubSDK
       get
       {
         var val = GetValue(FeatureValueType.BOOLEAN);
-        return val == null ? null : Convert.ToBoolean(val);
+        return val == null ? null : Convert.ToBoolean(val, System.Globalization.CultureInfo.InvariantCulture);
       }
     }
 
@@ -137,7 +122,7 @@ namespace FeatureHubSDK
       get
       {
         var val = GetValue(FeatureValueType.STRING);
-        return val == null ? null : Convert.ToString(val);
+        return val == null ? null : Convert.ToString(val, System.Globalization.CultureInfo.InvariantCulture);
       }
     }
 
@@ -146,7 +131,7 @@ namespace FeatureHubSDK
       get
       {
         var val = GetValue(FeatureValueType.NUMBER);
-        return val == null ? null : Convert.ToDouble(val);
+        return val == null ? null : Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
       }
     }
 
@@ -155,7 +140,7 @@ namespace FeatureHubSDK
       get
       {
         var val = GetValue(FeatureValueType.JSON);
-        return val == null ? null : Convert.ToString(val);
+        return val == null ? null : Convert.ToString(val, System.Globalization.CultureInfo.InvariantCulture);
       }
     }
 
@@ -177,31 +162,26 @@ namespace FeatureHubSDK
     {
       set
       {
-        var oldVal = GetValue(_feature?.Type);
+        object? oldVal = GetValue(_feature?.Type);
         _feature = value;
-        var val = GetValue(_feature?.Type);
+        object? val = GetValue(_feature?.Type);
 
         // did the value change? if so, tell everyone listening via event handler
-        if (ValueChanged(oldVal, val))
+        if (!ValueChanged(oldVal, val)) return;
+
+        EventHandler<IFeature>? handler = FeatureUpdateHandler;
+
+        try
         {
-          var handler = FeatureUpdateHandler;
-          try
-          {
-            handler?.Invoke(this, this);
-          }
-          catch (Exception e)
-          {
-            FeatureLogging.ErrorLogger(this, $"Failed to process update for feature {Key} {e.Message}");
-          }
+          handler?.Invoke(this, this);
+        }
+        catch (Exception e)
+        {
+          FeatureLogging.ErrorLogger(this, $"Failed to process update for feature {Key} {e.Message}");
         }
       }
     }
 
-    public static bool ValueChanged(object? oldVal, object? value)
-    {
-      return (value != null && !value.Equals(oldVal)) || (oldVal != null && !oldVal.Equals(value));
-    }
-
-
+    public static bool ValueChanged(object? oldVal, object? value) => (value != null && !value.Equals(oldVal)) || (oldVal != null && !oldVal.Equals(value));
   }
 }
