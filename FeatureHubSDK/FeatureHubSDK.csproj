@@ -16,9 +16,9 @@
         <RepositoryUrl>https://github.com/featurehub-io/featurehub-dotnet-sdk</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageTags>FeatureFlags FeatureToggles SDK Flags Toggles RemoteConfig</PackageTags>
-        <PackageReleaseNotes>3.0.0 - EventSource library dependency update.</PackageReleaseNotes>
+        <PackageReleaseNotes>4.0.0 - EventSource library dependency update.</PackageReleaseNotes>
         <Version>3.0.0</Version>
-        <PackageVersion>3.0.0</PackageVersion>
+        <PackageVersion>4.0.0</PackageVersion>
         <LangVersion>12</LangVersion>
         <TargetFramework>netstandard2.0</TargetFramework>
     </PropertyGroup>
@@ -36,7 +36,6 @@
       <None Include="FeatureHub-icon.png" Pack="true" PackagePath="\" />
       <None Include="../README.md" Pack="true" PackagePath="\" />
       <PackageReference Include="SemanticVersioning" Version="3.0.0" />
-      <PackageReference Include="YamlDotNet" Version="16.3.0" />
     </ItemGroup>
 
 </Project>

@@ -5,7 +5,7 @@ using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
 using NUnit.Framework;
 
-namespace FeatureHubTest
+namespace FeatureHubInterceptorYamlTest
 {
   [TestFixture]
   sealed class LocalYamlValueInterceptorTest

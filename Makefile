@@ -1,6 +1,6 @@
 .PHONY: all build test restore \
-        build-sdk build-otel \
-        test-sdk test-otel \
+        build-sdk build-otel build-yaml \
+        test-sdk test-otel test-yaml \
         format format-check \
         pack docker docker-run
 
@@ -41,11 +41,17 @@ build-sdk: restore
 build-otel: restore
 	dotnet build FeatureHubUsageOpenTelemetry/FeatureHubUsageOpenTelemetry.csproj
 
+build-yaml: restore
+	dotnet build FeatureHubInterceptorYaml/FeatureHubInterceptorYaml.csproj
+
 test-sdk:
 	dotnet test FeatureHubTest/FeatureHubTest.csproj
 
 test-otel:
 	dotnet test FeatureHubUsageOpenTelemetryTest/FeatureHubUsageOpenTelemetryTest.csproj
+
+test-yaml:
+	dotnet test FeatureHubInterceptorYamlTest/FeatureHubInterceptorYamlTest.csproj
 
 # ---------------------------------------------------------------------------
 # Pack

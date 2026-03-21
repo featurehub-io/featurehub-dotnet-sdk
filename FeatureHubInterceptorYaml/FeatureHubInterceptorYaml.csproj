@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Title>FeatureHub Local YAML Value Interceptor</Title>
+    <Authors>FeatureHub IO</Authors>
+    <Copyright>MIT</Copyright>
+    <PackageProjectUrl>https://github.com/featurehub-io/featurehub</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicense>MIT</PackageLicense>
+    <PackageId>FeatureHub.LocalYamlInterceptor</PackageId>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Local YAML file-based feature value interceptor for the FeatureHub .NET SDK. Allows overriding feature flag values from a local YAML file during development and testing.</Description>
+    <RepositoryUrl>https://github.com/featurehub-io/featurehub-dotnet-sdk</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>FeatureFlags FeatureToggles SDK Flags Toggles YAML Interceptor</PackageTags>
+    <PackageReleaseNotes>1.0.0 - Initial release.</PackageReleaseNotes>
+    <Version>1.0.0</Version>
+    <PackageVersion>1.0.0</PackageVersion>
+    <LangVersion>12</LangVersion>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>FeatureHubSDK</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    <None Include="../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FeatureHubSDK\FeatureHubSDK.csproj" />
+  </ItemGroup>
+
+</Project>

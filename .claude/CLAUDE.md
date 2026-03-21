@@ -19,8 +19,10 @@ make format-check  # dry-run format check (used in CI)
 
 make build-sdk  # build FeatureHubSDK only
 make build-otel # build FeatureHubUsageOpenTelemetry only
+make build-yaml # build FeatureHubInterceptorYaml only
 make test-sdk   # run FeatureHubTest only
 make test-otel  # run FeatureHubUsageOpenTelemetryTest only
+make test-yaml  # run FeatureHubInterceptorYamlTest only
 
 make pack PACKAGE_VERSION=3.0.0  # pack NuGet
 ```
@@ -111,6 +113,12 @@ A separate project (targets `net8.0` and `net10.0`) that ships two plugins:
 - **`OpenTelemetryTrackerUsagePlugin`** — writes evaluated feature values to the current OTel span as span attributes or span events
 - **`OpenTelemetryUsagePlugin`** — propagates feature values into OTel Baggage under the `fhub` key (pairs with `OpenTelemetryFeatureValueInterceptor`)
 
+### Local YAML Interceptor (`FeatureHubInterceptorYaml`)
+
+A separate project (targets `netstandard2.0`, NuGet ID `FeatureHub.LocalYamlInterceptor`) containing:
+
+- **`LocalYamlValueInterceptor`** — YAML-file-based feature value interceptor; reads `flagValues` map from a YAML file at construction time
+
 ### Generated Code
 
 `FeatureHubSDK/src/IO.FeatureHub.SSE/` is OpenAPI-generated and contains:
@@ -141,6 +149,8 @@ FeatureHubSDK/                      # Core SDK (netstandard2.0) — published to
 FeatureHubTest/                     # NUnit tests for the core SDK (net10.0)
 FeatureHubUsageOpenTelemetry/       # OpenTelemetry analytics plugin (net8.0, net10.0)
 FeatureHubUsageOpenTelemetryTest/   # NUnit tests for the OTel plugin (net8.0, net10.0)
+FeatureHubInterceptorYaml/          # Local YAML interceptor (netstandard2.0) — published to NuGet as FeatureHub.LocalYamlInterceptor
+FeatureHubInterceptorYamlTest/      # NUnit tests for the YAML interceptor (net10.0)
 ConsoleAppExample/                  # Console usage example
 ToDoWebApi/                         # ASP.NET Core 8 usage example
 ```
