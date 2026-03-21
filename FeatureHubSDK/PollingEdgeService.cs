@@ -52,7 +52,7 @@ namespace FeatureHubSDK
     private string _oldHeader;
 
     public PollingEdgeService(IFeatureRepositoryContext repositoryContext, IFeatureHubConfig config,
-        int timeout = 360, EdgeType edgeType = EdgeType.PassiveRest)
+      int timeout = 360, EdgeType edgeType = EdgeType.PassiveRest)
     {
       _repositoryContext = repositoryContext;
       _config = config;
@@ -62,13 +62,10 @@ namespace FeatureHubSDK
       if (FeatureLogging.InfoLogger != null)
       {
         FeatureLogging.InfoLogger(this,
-            $"[featurehub] using {edgeType} polling, timeout is {timeout}s");
+          $"[featurehub] using {edgeType} polling, timeout is {timeout}s");
       }
 
-      _configuration = new Configuration
-      {
-        BasePath = config.EdgeUrl
-      };
+      _configuration = new Configuration { BasePath = config.EdgeUrl };
 
       ReloadApi();
 
@@ -167,7 +164,7 @@ namespace FeatureHubSDK
           {
             var keys = String.Join(",", _config.SdkKeys.ToArray());
             FeatureLogging.TraceLogger(this,
-                $"featurehub: polling for {_configuration.BasePath} with keys {keys}");
+              $"featurehub: polling for {_configuration.BasePath} with keys {keys}");
           }
 
           _busy = true;
@@ -233,7 +230,7 @@ namespace FeatureHubSDK
             if (statusCodeAsInt == 236)
             {
               FeatureLogging.InfoLogger(this,
-                  "featurehub: this environment has gone stale and will not receive any further updates");
+                "featurehub: this environment has gone stale and will not receive any further updates");
               _stopped = true;
             }
 
@@ -331,10 +328,10 @@ namespace FeatureHubSDK
       envs.ForEach(e =>
       {
         e.Features.ForEach(f =>
-              {
-            f.EnvironmentId = e.Id;
-            states.Add(f);
-          });
+        {
+          f.EnvironmentId = e.Id;
+          states.Add(f);
+        });
       });
 
       _repositoryContext.UpdateFeatures(states);
@@ -345,8 +342,8 @@ namespace FeatureHubSDK
     public int TimeoutSeconds => _timeoutInSeconds;
 
     public string Etag => _configuration.DefaultHeaders.ContainsKey("if-none-match")
-        ? _configuration.DefaultHeaders["if-none-match"]
-        : null;
+      ? _configuration.DefaultHeaders["if-none-match"]
+      : null;
 
     public bool Stopped => _stopped;
 

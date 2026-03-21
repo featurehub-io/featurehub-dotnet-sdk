@@ -390,9 +390,9 @@ namespace FeatureHubSDK
         case RolloutStrategyAttributeConditional.INCLUDES:
           return DVals.Any(v => dec.Equals(v));
         case RolloutStrategyAttributeConditional.ENDSWITH:
-          return attr.Values.Where(v => v != null).Any(v => suppliedValue.EndsWith(v.ToString()));
+          return attr.Values.Where(v => v != null).Any(v => suppliedValue.EndsWith(v.ToString(), System.StringComparison.InvariantCulture));
         case RolloutStrategyAttributeConditional.STARTSWITH:
-          return attr.Values.Where(v => v != null).Any(v => suppliedValue.StartsWith(v.ToString()));
+          return attr.Values.Where(v => v != null).Any(v => suppliedValue.StartsWith(v.ToString(), System.StringComparison.InvariantCulture));
         case RolloutStrategyAttributeConditional.GREATER:
           return DVals.Any(v => dec.CompareTo(v) > 0);
         case RolloutStrategyAttributeConditional.GREATEREQUALS:

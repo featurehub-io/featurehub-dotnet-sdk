@@ -37,15 +37,15 @@ namespace FeatureHubSDK
     IFeatureHubConfig UsePolling(int timeout = 360);
 
     /// <summary>
-    /// Tells the client to use Active Polling, an automatic timer will kick off a refresh of data after this many seconds. 
+    /// Tells the client to use Active Polling, an automatic timer will kick off a refresh of data after this many seconds.
     /// </summary>
     IFeatureHubConfig ActiveRest(int timeout = 360);
     /// <summary>
-    /// Tells the client to use Passive Polling, only when this amount of time has elapsed since the last request will it ask for another one. Triggered by usage. 
+    /// Tells the client to use Passive Polling, only when this amount of time has elapsed since the last request will it ask for another one. Triggered by usage.
     /// </summary>
     IFeatureHubConfig PassiveRest(int timeout = 360);
     /// <summary>
-    /// Uses Streaming, gets near real-time updates from FeatureHub 
+    /// Uses Streaming, gets near real-time updates from FeatureHub
     /// </summary>
     IFeatureHubConfig Streaming();
 
@@ -101,19 +101,19 @@ namespace FeatureHubSDK
 
       _serverEvaluation = !sdkKey.Contains("*"); // two part keys are server evaluated
 
-      if (!sdkKey.Contains("/") || sdkKey.StartsWith("\""))
+      if (!sdkKey.Contains("/") || sdkKey.StartsWith("\"", System.StringComparison.InvariantCulture))
       {
         throw new FeatureHubKeyInvalidException($"The SDK key `{sdkKey}` is invalid");
       }
 
       _sdkKeys.Add(sdkKey);
 
-      if (edgeUrl.EndsWith("/"))
+      if (edgeUrl.EndsWith("/", System.StringComparison.InvariantCulture))
       {
         edgeUrl = edgeUrl.Substring(0, edgeUrl.Length - 1);
       }
 
-      if (edgeUrl.EndsWith("/features"))
+      if (edgeUrl.EndsWith("/features", System.StringComparison.InvariantCulture))
       {
         edgeUrl = edgeUrl.Substring(0, edgeUrl.Length - "/features".Length);
       }
