@@ -220,8 +220,10 @@ namespace FeatureHubSDK
     {
       get
       {
-        if (_attributes.TryGetValue("session", out var session)) return session[0];
-        if (_attributes.TryGetValue("userkey", out var userkey)) return userkey[0];
+        if (_attributes.TryGetValue("session", out var session))
+          return session[0];
+        if (_attributes.TryGetValue("userkey", out var userkey))
+          return userkey[0];
         return null;
       }
     }

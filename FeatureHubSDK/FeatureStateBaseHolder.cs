@@ -167,7 +167,8 @@ namespace FeatureHubSDK
         object? val = GetValue(_feature?.Type);
 
         // did the value change? if so, tell everyone listening via event handler
-        if (!ValueChanged(oldVal, val)) return;
+        if (!ValueChanged(oldVal, val))
+          return;
 
         EventHandler<IFeature>? handler = FeatureUpdateHandler;
 
