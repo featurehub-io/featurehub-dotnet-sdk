@@ -2,12 +2,20 @@
 
 Welcome to the .Net SDK implementation for [FeatureHub.io](https://featurehub.io) - Open source Feature flags management, A/B testing and remote configuration platform.
 
-## SDK features 
+## SDK features
 Details about what general features are available in FeatureHub SDKs are [available here](https://docs.featurehub.io/#_sdks).
 
 ## Changelog
-- 3.0.1 
-  * Documentation updates 
+- 4.0.0
+    * Added `IFeatureValueInterceptor` and `LocalYamlValueInterceptor` for local feature value overrides via a YAML file
+  * Introduced usage/analytics pipeline: `IUsageEvent`, `UsagePlugin`, `UsageAdapter`, `IUsageProvider` and default implementations
+  * Added `FeatureHubUsageOpenTelemetry` package with `OpenTelemetryTrackerUsagePlugin` (writes feature evaluations to the current OTel span as attributes or span events) and `OpenTelemetryUsagePlugin` (propagates feature values into OTel Baggage under the `fhub` key)
+  * `FeatureHubUsageOpenTelemetry` targets `net8.0` and `net10.0`. The `OpenTelemetryUsagePlugin` is paired with a `OpenTelemetryFeatureValueInterceptor` that extracts feature
+ values from the Otel baggage, allowing safe propagation of long term feature values across distributed tracing.
+  * Polling now supports active (fixed-timer) and passive (evaluation-triggered) modes via `ActiveRest()` / `PassiveRest()` or environment variables
+  * Streaming edge service exposes a hook callback for connection lifecycle events and further detailed configuration of the EventSource
+- 3.0.1
+  * Documentation updates
 - 3.0.0
   * Updated for .NET 8+
   * Updated library support
@@ -28,7 +36,7 @@ and delay retry timeout (was zero, now 10s, controlled by `FEATUREHUB_DELAY_RETR
 - 2.2.0 - FeatureHub 1.5.9 support - supporting Fastly integration, server side polling period control, stale environments.
  We have upgraded to the 6.0.1 OpenAPI compiler, but gone no further because it generates code that does not work.
 - 2.1.5 - FeatureHub 1.5.6 is not returning the name of the feature and this is causing the 2.1.4 to version to break.
-- 2.1.4 - Bump dependencies version. Update source repository reference. 
+- 2.1.4 - Bump dependencies version. Update source repository reference.
 - 2.1.3 - logging support (see below) and fixing of the backoff for the eventsource (it was randomly increasing the time, making features go out of date)
 - 2.0.0 - client side evaluation support for feature strategies
 - 1.1.0 - analytics support
@@ -38,7 +46,7 @@ and delay retry timeout (was zero, now 10s, controlled by `FEATUREHUB_DELAY_RETR
 
 There are two connection choices in the SDK:
 
-- realtime updates - if you have servers and applications that require updates in realtime, 
+- realtime updates - if you have servers and applications that require updates in realtime,
  we recommend you use the default connectivity this SDK provides, which is the event source.
 - timeout based polling - if you have a requirement only to check features periodically, say once
 every 3 minutes (or more), then you can use the Polling SDK. It operates by triggering on the same
@@ -47,7 +55,7 @@ has expired and if so, it will request an updated set of features in the backgro
 
 In all cases, you can synchronously wait for your features using either polling or the event source,
 by just using an `await` when you use `Init` or `NewContext`. They will wait for a response to occur
-whether it is success or failure. 
+whether it is success or failure.
 
 ### Using the EventSource SDK
 
@@ -63,10 +71,10 @@ You could implement it in the following way:
 
 ```c#
 // start by creating a IFeatureHubConfig object and telling it where your host server is and your
-// client-evaluated API Key 
+// client-evaluated API Key
 var config = new FeatureHubConfig("http://localhost:8903",
   "default/82afd7ae-e7de-4567-817b-dd684315adf7/SJXBRyGCe1dZ*PNYGy7iOFeKE");
-  
+
 config.Init(); // tell it to asynchronously connect and start listening
 ```
 
@@ -75,7 +83,7 @@ You can optionally set an analytics provider on the config (see below).
 ```c#
 // this will set up a ClientContext - which is a bucket of information about this user
 // and then attempt to connect to the repository and retrieve your data. It will return once it
-// has received your data.  
+// has received your data.
 var context = await config.NewContext().UserKey("ideally-unique-id")
         .Country(StrategyAttributeCountryName.Australia)
         .Device(StrategyAttributeDeviceName.Desktop)
@@ -85,7 +93,7 @@ var context = await config.NewContext().UserKey("ideally-unique-id")
 // listen for changes to the feature FLUTTER_COLOUR and let me know what they are
 context["FLUTTER_COLOUR"].FeatureUpdateHandler += (object sender, IFeatureStateHolder holder) =>
 {
-  Console.WriteLine($"Received type {holder.Key}: {context[holder.Key].StringValue}");        
+  Console.WriteLine($"Received type {holder.Key}: {context[holder.Key].StringValue}");
 };
 ```
 
@@ -269,7 +277,7 @@ code from our C# TodoServer in the `ToDoAspCoreExample` folder.
   }
 ```
 
-It is then available to be injected into your Controllers or Filters. 
+It is then available to be injected into your Controllers or Filters.
 
 ### Rollout Strategies
 Starting from version 1.1.0 FeatureHub supports _server side_ evaluation of complex rollout strategies
@@ -280,7 +288,7 @@ For more details on rollout strategies, targeting rules and feature experiments 
 We are actively working on supporting client side evaluation of
 strategies in the future releases as this scales better when you have 10000+ consumers.
 
-#### Coding for Rollout strategies 
+#### Coding for Rollout strategies
 There are several preset strategies rules we track specifically: `user key`, `country`, `device` and `platform`. However, if those do not satisfy your requirements you also have an ability to attach a custom rule. Custom rules can be created as following types: `string`, `number`, `boolean`, `date`, `date-time`, `semantic-version`, `ip-address`
 
 FeatureHub SDK will match your users according to those rules, so you need to provide attributes to match on in the SDK:
@@ -290,27 +298,27 @@ FeatureHub SDK will match your users according to those rules, so you need to pr
 Provide the following attribute to support `userKey` rule:
 
 ```c#
-    await context.UserKey("ideally-unique-id").Build(); 
+    await context.UserKey("ideally-unique-id").Build();
 ```
 
 to support `country` rule:
 ```c#
-    await context.Country(StrategyAttributeCountryName.Australia).Build(); 
+    await context.Country(StrategyAttributeCountryName.Australia).Build();
 ```
 
 to support `device` rule:
 ```c#
-    await context.Device(StrategyAttributeDeviceName.Desktop).Build(); 
+    await context.Device(StrategyAttributeDeviceName.Desktop).Build();
 ```
 
 to support `platform` rule:
 ```c#
-    await context.Platform(StrategyAttributePlatformName.Android).Build(); 
+    await context.Platform(StrategyAttributePlatformName.Android).Build();
 ```
 
 to support `semantic-version` rule:
 ```c#
-    await context.Version("1.2.0").Build(); 
+    await context.Version("1.2.0").Build();
 ```
 or if you are using multiple rules, you can combine attributes as follows:
 
@@ -320,11 +328,11 @@ or if you are using multiple rules, you can combine attributes as follows:
       .Device(StrategyAttributeDeviceName.Browser)
       .Platform(StrategyAttributePlatformName.Android)
       .Version("1.2.0")
-      .Build(); 
+      .Build();
 ```
 
-For *Server Evaluated keys*, the  `Build()` method will trigger the regeneration of a 
-special header (`x-featurehub`). This in turn will automatically retrigger a refresh of your events if 
+For *Server Evaluated keys*, the  `Build()` method will trigger the regeneration of a
+special header (`x-featurehub`). This in turn will automatically retrigger a refresh of your events if
 you have already connected.
 
 For *Client Evaluated API keys*, the `Build()` method does nothing, as all
@@ -377,7 +385,7 @@ public class MyAnalyticsPlugin : UsagePlugin
 }
 ```
 
-The `IUsageEvent.CopyBaseMap()` method returns a flat `IReadOnlyDictionary<string, object?>` that
+The `IUsageEvent.CollectUsageRecord()` method returns a flat `IReadOnlyDictionary<string, object?>` that
 merges all event fields — useful if your backend expects a property bag.
 
 #### Wiring up the adapter
@@ -489,11 +497,50 @@ public class MyInterceptor : IFeatureValueInterceptor
 }
 ```
 
+### OpenTelemetry integration
+
+The separate `FeatureHubUsageOpenTelemetry` NuGet package (targets `net8.0` and `net10.0`) ships two
+plugins that wire the usage event stream into OpenTelemetry.
+
+#### OpenTelemetryTrackerUsagePlugin
+
+Writes evaluated feature values to the current OTel span. Requires an active `Activity.Current` —
+if there is no current span the event is silently dropped.
+
+```c#
+// Attach as span attributes (default):
+adapter.RegisterPlugin(new OpenTelemetryTrackerUsagePlugin(prefix: "featurehub."));
+
+// Or attach as a span event instead:
+adapter.RegisterPlugin(new OpenTelemetryTrackerUsagePlugin(attachAsSpanEvents: true));
+```
+
+Each attribute key is prefixed with `prefix` (default `"featurehub."`). When `attachAsSpanEvents`
+is `true` the prefix is prepended to the event name instead and the attribute keys are unprefixed.
+
+Only events that also implement `IUsageEventName` are forwarded; all others are ignored. The plugin
+is always synchronous (`CanSendAsync` is `false`) to ensure attributes are set before the span ends.
+
+#### OpenTelemetryUsagePlugin
+
+Propagates evaluated feature values into OTel Baggage under the `fhub` key as a sorted
+comma-separated list of `feature=url-encoded-value` pairs. This pairs with
+`OpenTelemetryFeatureValueInterceptor`, which reads the same `fhub` key on the receiving side to
+seed feature values from incoming baggage.
+
+```c#
+adapter.RegisterPlugin(new OpenTelemetryUsagePlugin());
+```
+
+Single-feature events (`IUsageEventWithFeature`) merge into the existing `fhub` baggage entry,
+replacing the previous value for that key. Collection events (`IUsageFeaturesCollection`) rebuild
+the entry from scratch using the full feature set.
+
 ### Logging
 
 This library doesn't "use" any of the various .NET logging systems, it simply exposes a static logger class, and
 if you add events to this, you can see what is going on. This can be especially useful diagnosing connection issues
-if you are having them. 
+if you are having them.
 
 ```c#
 public static class FeatureLogging
@@ -512,10 +559,10 @@ public static class FeatureLogging
 So a full diagnostic, as we have in our ASP.NET example looks like this:
 
 ```c#
-  FeatureLogging.DebugLogger += (sender, s) => Console.WriteLine("DEBUG: " + s + "\n"); 
-  FeatureLogging.TraceLogger += (sender, s) => Console.WriteLine("TRACE: " + s + "\n"); 
-  FeatureLogging.InfoLogger += (sender, s) => Console.WriteLine("INFO: " + s + "\n"); 
-  FeatureLogging.ErrorLogger += (sender, s) => Console.WriteLine("ERROR: " + s + "\n"); 
+  FeatureLogging.DebugLogger += (sender, s) => Console.WriteLine("DEBUG: " + s + "\n");
+  FeatureLogging.TraceLogger += (sender, s) => Console.WriteLine("TRACE: " + s + "\n");
+  FeatureLogging.InfoLogger += (sender, s) => Console.WriteLine("INFO: " + s + "\n");
+  FeatureLogging.ErrorLogger += (sender, s) => Console.WriteLine("ERROR: " + s + "\n");
 ```
 
 You can connect it to the logger of your choice.
