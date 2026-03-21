@@ -50,7 +50,7 @@ namespace FeatureHubSDK
         void UpdateFeatures(IEnumerable<FeatureState> states);
         void AddFeatureValueInterceptor(IFeatureValueInterceptor interceptor);
 
-        (bool, object?) FindIntercept(bool isLocked, string key, FeatureState? featureState);
+        (bool, object?) FindIntercept(string key, FeatureState? featureState);
 
         void Used(FeatureState featureState, object? value);
         List<String> AllKeys();

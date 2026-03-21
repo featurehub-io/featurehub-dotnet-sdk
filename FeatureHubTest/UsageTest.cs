@@ -164,7 +164,7 @@ namespace FeatureHubTest
     public void AdditionalParamsConstructorMergesIntoMap()
     {
       var e = new DefaultUsageEvent("bob", new Dictionary<string, object> { ["x"] = 1 });
-      Assert.That(e.CopyBaseMap()["x"], Is.EqualTo(1));
+      Assert.That(e.CollectUsageRecord()["x"], Is.EqualTo(1));
     }
 
     [Test]
@@ -172,7 +172,7 @@ namespace FeatureHubTest
     {
       var e = new DefaultUsageEvent("alice");
       e.SetAdditionalParams(new Dictionary<string, object> { ["y"] = "hello" });
-      Assert.That(e.CopyBaseMap()["y"], Is.EqualTo("hello"));
+      Assert.That(e.CollectUsageRecord()["y"], Is.EqualTo("hello"));
     }
 
     [Test]
@@ -180,14 +180,14 @@ namespace FeatureHubTest
     {
       var e = new DefaultUsageEvent("alice", new Dictionary<string, object> { ["a"] = 1 });
       e.SetAdditionalParams(null);
-      Assert.That(e.CopyBaseMap(), Is.Empty);
+      Assert.That(e.CollectUsageRecord(), Is.Empty);
     }
 
     [Test]
-    public void CopyBaseMapIsReadOnly()
+    public void CollectUsageRecordIsReadOnly()
     {
       var e = new DefaultUsageEvent();
-      Assert.That(e.CopyBaseMap(), Is.InstanceOf<IReadOnlyDictionary<string, object>>());
+      Assert.That(e.CollectUsageRecord(), Is.InstanceOf<IReadOnlyDictionary<string, object>>());
     }
   }
 
@@ -223,10 +223,10 @@ namespace FeatureHubTest
     }
 
     [Test]
-    public void CopyBaseMapContainsFeatureFields()
+    public void CollectUsageRecordContainsFeatureFields()
     {
       var e = new DefaultUsageEventWithFeature(_fv, null, null);
-      var map = e.CopyBaseMap();
+      var map = e.CollectUsageRecord();
 
       Assert.That(map["feature"], Is.EqualTo("myFlag"));
       Assert.That(map["value"], Is.EqualTo("on"));
@@ -234,14 +234,14 @@ namespace FeatureHubTest
     }
 
     [Test]
-    public void CopyBaseMapMergesContextAttributes()
+    public void CollectUsageRecordMergesContextAttributes()
     {
       var attrs = new Dictionary<string, List<string>>
       {
         ["country"] = new List<string> { "nz" }
       };
       var e = new DefaultUsageEventWithFeature(_fv, attrs, null);
-      var map = e.CopyBaseMap();
+      var map = e.CollectUsageRecord();
 
       Assert.That(map.ContainsKey("country"), Is.True);
       Assert.That(map["feature"], Is.EqualTo("myFlag")); // feature fields still present
@@ -256,7 +256,7 @@ namespace FeatureHubTest
         ["feature"] = new List<string> { "overridden" }
       };
       var e = new DefaultUsageEventWithFeature(_fv, attrs, null);
-      var map = e.CopyBaseMap();
+      var map = e.CollectUsageRecord();
 
       Assert.That(map["feature"], Is.EqualTo("myFlag"));
     }
@@ -266,7 +266,7 @@ namespace FeatureHubTest
     {
       var e = new DefaultUsageEventWithFeature(_fv, null, null);
       e.SetAdditionalParams(new Dictionary<string, object> { ["custom"] = "data" });
-      var map = e.CopyBaseMap();
+      var map = e.CollectUsageRecord();
 
       Assert.That(map["custom"], Is.EqualTo("data"));
     }
@@ -275,7 +275,7 @@ namespace FeatureHubTest
     public void NullAttributesDoesNotThrow()
     {
       var e = new DefaultUsageEventWithFeature(_fv, null, null);
-      Assert.DoesNotThrow(() => { var _ = e.CopyBaseMap(); });
+      Assert.DoesNotThrow(() => { var _ = e.CollectUsageRecord(); });
     }
   }
 
@@ -292,7 +292,7 @@ namespace FeatureHubTest
     }
 
     [Test]
-    public void CopyBaseMapContainsFeatureKeyValuePairs()
+    public void CollectUsageRecordContainsFeatureKeyValuePairs()
     {
       var coll = new DefaultUsageFeaturesCollection();
       coll.SetFeatureValues(new List<FeatureHubUsageValue>
@@ -301,7 +301,7 @@ namespace FeatureHubTest
         MakeValue("flag2", FeatureValueType.STRING, "hello")
       });
 
-      var map = coll.CopyBaseMap();
+      var map = coll.CollectUsageRecord();
       Assert.That(map["flag1"], Is.EqualTo("on"));
       Assert.That(map["flag2"], Is.EqualTo("hello"));
     }
@@ -312,7 +312,7 @@ namespace FeatureHubTest
       var coll = new DefaultUsageFeaturesCollection("user1", new Dictionary<string, object> { ["extra"] = 99 });
       coll.SetFeatureValues(new List<FeatureHubUsageValue>());
 
-      var map = coll.CopyBaseMap();
+      var map = coll.CollectUsageRecord();
       Assert.That(map["extra"], Is.EqualTo(99));
     }
 
@@ -337,13 +337,13 @@ namespace FeatureHubTest
     }
 
     [Test]
-    public void CopyBaseMapContainsBothFeaturesAndAttributes()
+    public void CollectUsageRecordContainsBothFeaturesAndAttributes()
     {
       var coll = new DefaultUsageFeaturesCollectionContext();
       coll.SetFeatureValues(new List<FeatureHubUsageValue> { MakeValue("f1", FeatureValueType.BOOLEAN, false) });
       coll.SetAttributes(new Dictionary<string, List<string>> { ["country"] = new List<string> { "nz" } });
 
-      var map = coll.CopyBaseMap();
+      var map = coll.CollectUsageRecord();
       Assert.That(map.ContainsKey("f1"), Is.True);
       Assert.That(map.ContainsKey("country"), Is.True);
     }
@@ -356,7 +356,7 @@ namespace FeatureHubTest
       var attrVal = new List<string> { "nz" };
       coll.SetAttributes(new Dictionary<string, List<string>> { ["country"] = attrVal });
 
-      var map = coll.CopyBaseMap();
+      var map = coll.CollectUsageRecord();
       Assert.That(map["country"], Is.EqualTo(attrVal));
     }
 
@@ -367,7 +367,7 @@ namespace FeatureHubTest
       coll.SetFeatureValues(new List<FeatureHubUsageValue>());
       coll.SetAttributes(new Dictionary<string, List<string>>());
 
-      Assert.DoesNotThrow(() => { var _ = coll.CopyBaseMap(); });
+      Assert.DoesNotThrow(() => { var _ = coll.CollectUsageRecord(); });
     }
   }
 
@@ -450,7 +450,7 @@ namespace FeatureHubTest
     public void CreateUsageEventWithAdditionalParams()
     {
       var e = _provider.CreateUsageEvent("bob", new Dictionary<string, object> { ["a"] = 1 });
-      Assert.That(e.CopyBaseMap()["a"], Is.EqualTo(1));
+      Assert.That(e.CollectUsageRecord()["a"], Is.EqualTo(1));
     }
   }
 

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using IO.FeatureHub.SSE.Model;
 
 namespace FeatureHubSDK
@@ -72,7 +73,7 @@ namespace FeatureHubSDK
     string? UserKey { get; set; }
     void SetAdditionalParams(Dictionary<string, object>? additionalParams);
     
-    IReadOnlyDictionary<string, object?> CopyBaseMap();
+    IReadOnlyDictionary<string, object?> CollectUsageRecord();
   }
 
   /// <summary>
@@ -144,7 +145,7 @@ namespace FeatureHubSDK
     public virtual IReadOnlyDictionary<string, object> ToMap() => _additionalParams;
 
     /// <summary>Returns a mutable copy of the base additional-params map for subclass use.</summary>
-    public IReadOnlyDictionary<string, object?> CopyBaseMap()
+    public IReadOnlyDictionary<string, object?> CollectUsageRecord()
       => new ReadOnlyDictionary<string, object?>(_additionalParams!);
   }
 
@@ -167,9 +168,9 @@ namespace FeatureHubSDK
       UserKey = userKey;
     }
 
-    public new IReadOnlyDictionary<string, object?> CopyBaseMap()
+    public new IReadOnlyDictionary<string, object?> CollectUsageRecord()
     {
-      var m = base.CopyBaseMap().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+      var m = base.CollectUsageRecord().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
       
       if (Attributes != null)
       {
@@ -199,11 +200,17 @@ namespace FeatureHubSDK
     public void SetFeatureValues(List<FeatureHubUsageValue> featureValues)
       => FeatureValues = featureValues;
 
-    public new IReadOnlyDictionary<string, object?> CopyBaseMap()
+    public new IReadOnlyDictionary<string, object?> CollectUsageRecord()
     {
-      var m = base.CopyBaseMap().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+      var m = base.CollectUsageRecord().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
       foreach (var fv in FeatureValues)
+      {
         m[fv.Key] = fv.Value;
+        m[fv.Key + "_raw"] = fv.RawValue;
+      }
+      
+      m["fhub_keys"] = String.Join(",", FeatureValues.Select(fv => fv.Key));
+      
       return new ReadOnlyDictionary<string, object?>(m);
     }
   }
@@ -226,9 +233,9 @@ namespace FeatureHubSDK
     public void SetAttributes(Dictionary<string, List<string>> attributes)
       => _attributes = attributes;
 
-    public new IReadOnlyDictionary<string, object?> CopyBaseMap()
+    public new IReadOnlyDictionary<string, object?> CollectUsageRecord()
     {
-      var m = base.CopyBaseMap().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+      var m = base.CollectUsageRecord().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
       foreach (var kvp in _attributes)
         m[kvp.Key] = kvp.Value;
       return m;
@@ -247,6 +254,13 @@ namespace FeatureHubSDK
     public Dictionary<string, object> GetDefaultEventParams() => DefaultEventParams;
 
     public abstract void Send(IUsageEvent usageEvent);
+
+    /// <summary>
+    /// When true, <see cref="UsageAdapter"/> dispatches <see cref="Send"/> on a background
+    /// thread (fire-and-forget). When false (default), Send is called synchronously on the
+    /// caller's thread.
+    /// </summary>
+    public virtual bool CanSendAsync => false;
   }
 
   /// <summary>
@@ -356,14 +370,33 @@ namespace FeatureHubSDK
     {
       foreach (var plugin in _plugins)
       {
-        try
+        if (plugin.CanSendAsync)
         {
-          plugin.Send(usageEvent);
+          var capturedPlugin = plugin;
+          _ = Task.Run(() =>
+          {
+            try
+            {
+              capturedPlugin.Send(usageEvent);
+            }
+            catch (Exception e)
+            {
+              FeatureLogging.ExceptionLogger(this,
+                new ExceptionEvent("Usage plugin failed to process event", e));
+            }
+          });
         }
-        catch (Exception e)
+        else
         {
-          FeatureLogging.ExceptionLogger(this,
-            new ExceptionEvent("Usage plugin failed to process event", e));
+          try
+          {
+            plugin.Send(usageEvent);
+          }
+          catch (Exception e)
+          {
+            FeatureLogging.ExceptionLogger(this,
+              new ExceptionEvent("Usage plugin failed to process event", e));
+          }
         }
       }
     }

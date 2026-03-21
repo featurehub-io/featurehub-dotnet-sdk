@@ -4,5 +4,5 @@ ToDoWebApi/bin
 ToDoWebApi/obj
 FeatureHubSDK/.openapi-generator
 FeatureHubSDK/api
-/.claude
-
+/.vs
+/.claude/settings.local.json

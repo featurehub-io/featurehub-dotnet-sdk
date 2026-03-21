@@ -54,9 +54,6 @@ nunit-*.xml
 [Rr]eleasePS/
 dlldata.c
 
-/appveyor.yml
-/git_push.sh
-
 # Benchmark Results
 BenchmarkDotNet.Artifacts/
 

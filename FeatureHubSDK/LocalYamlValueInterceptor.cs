@@ -41,8 +41,6 @@ namespace FeatureHubSDK
     private readonly Dictionary<string, object?> _overrides =
       new Dictionary<string, object?>(StringComparer.Ordinal);
 
-    public bool AllowLockOverride => false;
-
     public LocalYamlValueInterceptor(string filePath)
     {
       if (!File.Exists(filePath))
@@ -77,7 +75,7 @@ namespace FeatureHubSDK
       }
     }
 
-    public (bool, object?) GetValue(string key, FeatureState? featureState)
+    public (bool, object?) GetValue(string key, IFeatureRepositoryContext repository, FeatureState? featureState)
     {
       if (_overrides.TryGetValue(key, out var value))
         return (true, value);

@@ -14,10 +14,8 @@ namespace FeatureHubSDK
     // the FeatureRepository holds these interceptors.
     public interface IFeatureValueInterceptor
     {
-        // if a feature is locked, should we even call this interceptor?
-        bool AllowLockOverride { get; }
         // having been allowed to call, is it overridden?
-        (bool, object?) GetValue(string key, FeatureState? featureState);
+        (bool, object?) GetValue(string key, IFeatureRepositoryContext repository, FeatureState? featureState);
     }
 };
 

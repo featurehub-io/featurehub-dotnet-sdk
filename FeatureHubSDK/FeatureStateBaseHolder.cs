@@ -80,7 +80,7 @@ namespace FeatureHubSDK
 
         private object? GetValue(FeatureValueType? passedType, bool triggerUsage = true)
         {
-            var (interceptMatched, val) = _repository.FindIntercept(IsLocked, Key, _feature);
+            var (interceptMatched, val) = _repository.FindIntercept(Key, _feature);
             
             var type = passedType ?? _feature?.Type;
 

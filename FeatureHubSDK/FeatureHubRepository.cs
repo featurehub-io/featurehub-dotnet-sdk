@@ -32,7 +32,7 @@ namespace FeatureHubSDK
     public abstract IUsageProvider UsageProvider { get; }
     public abstract void RecordUsageEvent(IUsageEvent usageEvent);
 
-    public abstract (bool, object?) FindIntercept(bool isLocked, string key, FeatureState featureState);
+    public abstract (bool, object?) FindIntercept(string key, FeatureState? featureState);
   }
 
 
@@ -267,32 +267,29 @@ namespace FeatureHubSDK
 
     public override IUsageProvider UsageProvider => _usageProvider;
     
-    public override (bool, object?) FindIntercept(bool isLocked, string key, FeatureState? featureState)
+    public override (bool, object?) FindIntercept(string key, FeatureState? featureState)
     {
       foreach (var interceptor in _interceptors)
       {
-        if (!isLocked || interceptor.AllowLockOverride)
-        {
-          var (matched, value) = interceptor.GetValue(key, featureState);
-          
-          if (matched)
-          {
-            // if we have no feature state and it therefore has no state, lets check if its a bool
-            if (featureState == null && value != null)
-            {
-              if (value.ToString().ToLower() == "false")
-              {
-                return (true, false);
-              }
+        var (matched, value) = interceptor.GetValue(key, this, featureState);
 
-              if (value.ToString().ToLower() == "true")
-              {
-                return (true, true);
-              }
+        if (matched)
+        {
+          // if we have no feature state and it therefore has no state, lets check if its a bool
+          if (featureState == null && value != null)
+          {
+            if (value.ToString().ToLower() == "false")
+            {
+              return (true, false);
             }
-            
-            return (true, value);
+
+            if (value.ToString().ToLower() == "true")
+            {
+              return (true, true);
+            }
           }
+
+          return (true, value);
         }
       }
 

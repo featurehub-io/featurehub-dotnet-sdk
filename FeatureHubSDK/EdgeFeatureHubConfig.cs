@@ -228,21 +228,37 @@ namespace FeatureHubSDK
     }
 
     private IFeatureRepositoryContext _repository;
+    private UsageAdapter _usageAdapter;
+
+    // Dispatches async so that Poll() does not block the feature-read call path.
+    private sealed class PassiveRestTriggerPlugin : UsagePlugin
+    {
+      private readonly EdgeFeatureHubConfig _owner;
+
+      internal PassiveRestTriggerPlugin(EdgeFeatureHubConfig owner) => _owner = owner;
+
+      public override bool CanSendAsync => true;
+
+      public override void Send(IUsageEvent usageEvent)
+      {
+        // a feature evaluation came in and we are using passive rest, so tell the poller in case
+        // it needs to break its cache and perform a new poll
+        if (usageEvent is IUsageEventWithFeature &&
+            _owner._edgeType == EdgeType.PassiveRest &&
+            _owner._edgeService != null)
+        {
+          _ = _owner._edgeService.Poll();
+        }
+      }
+    }
 
     private void CheckRepository()
     {
       if (_repository == null)
       {
         _repository = new FeatureHubRepository();
-        _repository.RegisterUsageStream((@event =>
-        {
-          // a feature evaluation came in and we are using passive rest, so tell the poller in case it needs
-          // to break its cache and perform a new poll
-          if (@event is IUsageEventWithFeature && _edgeType == EdgeType.PassiveRest && _edgeService != null)
-          {
-            _edgeService.Poll();
-          }
-        }));
+        _usageAdapter = new UsageAdapter(_repository);
+        _usageAdapter.RegisterPlugin(new PassiveRestTriggerPlugin(this));
       }
     }
     
