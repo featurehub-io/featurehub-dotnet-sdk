@@ -274,6 +274,12 @@ namespace FeatureHubSDK
     /// caller's thread.
     /// </summary>
     public virtual bool CanSendAsync => false;
+
+    /// <summary>
+    /// Release any resources held by the plugin (e.g. HTTP clients, exporters, timers).
+    /// Called by <see cref="UsageAdapter.Close"/>. Override in subclasses as needed.
+    /// </summary>
+    public virtual void Close() { }
   }
 
   /// <summary>
@@ -378,7 +384,12 @@ namespace FeatureHubSDK
       _usageHandlerSub = repository.RegisterUsageStream(Process);
     }
 
-    public void Close() => _usageHandlerSub.Cancel();
+    public void Close()
+    {
+      _usageHandlerSub.Cancel();
+      foreach (var plugin in _plugins)
+        plugin.Close();
+    }
 
     public void Process(IUsageEvent usageEvent)
     {

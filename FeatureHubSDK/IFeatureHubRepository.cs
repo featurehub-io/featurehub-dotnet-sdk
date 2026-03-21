@@ -54,5 +54,10 @@ namespace FeatureHubSDK
 
     void Used(FeatureState featureState, object? value);
     List<String> AllKeys();
+
+    /// <summary>
+    /// Close all registered feature value interceptors and release their resources.
+    /// </summary>
+    void Close();
   }
 }

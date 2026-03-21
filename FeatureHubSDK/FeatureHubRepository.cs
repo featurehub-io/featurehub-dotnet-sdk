@@ -329,6 +329,12 @@ namespace FeatureHubSDK
       _interceptors.Add(interceptor);
     }
 
+    public void Close()
+    {
+      foreach (var interceptor in _interceptors)
+        interceptor.Close();
+    }
+
 
   }
 

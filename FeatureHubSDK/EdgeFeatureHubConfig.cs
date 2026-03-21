@@ -68,6 +68,11 @@ namespace FeatureHubSDK
     Readiness Readiness { get; }
 
     void AddFeatureValueInterceptor(IFeatureValueInterceptor interceptor);
+
+    /// <summary>
+    /// Shut down the edge connection, close all usage plugins, and close all feature value interceptors.
+    /// </summary>
+    void Close();
   }
 
   public class FeatureHubKeyInvalidException : Exception
@@ -83,6 +88,17 @@ namespace FeatureHubSDK
     }
   }
 
+  /// <summary>
+  /// Thrown when an operation is attempted on a configuration that has been closed.
+  /// </summary>
+  public class FeatureHubConfigInvalidException : Exception
+  {
+    public FeatureHubConfigInvalidException(string message)
+      : base(message)
+    {
+    }
+  }
+
   public class EdgeFeatureHubConfig : IFeatureHubConfig
   {
     private readonly string _url;
@@ -92,6 +108,7 @@ namespace FeatureHubSDK
     private EdgeType _edgeType = EdgeType.Streaming;
     private readonly Guid _environmentId;
     private int _timeout;
+    private bool _closed;
 
     public EdgeFeatureHubConfig(string edgeUrl, string sdkKey)
     {
@@ -178,6 +195,9 @@ namespace FeatureHubSDK
 
     private void CheckEdgeService()
     {
+      if (_closed)
+        return;
+
       CheckRepository();
 
       if (_edgeService == null)
@@ -255,12 +275,12 @@ namespace FeatureHubSDK
 
     private void CheckRepository()
     {
-      if (_repository == null)
-      {
-        _repository = new FeatureHubRepository();
-        _usageAdapter = new UsageAdapter(_repository);
-        _usageAdapter.RegisterPlugin(new PassiveRestTriggerPlugin(this));
-      }
+      if (_closed || _repository != null)
+        return;
+
+      _repository = new FeatureHubRepository();
+      _usageAdapter = new UsageAdapter(_repository);
+      _usageAdapter.RegisterPlugin(new PassiveRestTriggerPlugin(this));
     }
 
     public IFeatureRepositoryContext Repository
@@ -276,6 +296,9 @@ namespace FeatureHubSDK
 
     public IClientContext NewContext()
     {
+      if (_closed)
+        throw new FeatureHubConfigInvalidException("Cannot create a new context: the configuration has been closed.");
+
       CheckEdgeService();
 
       // kick off if it hasn't already
@@ -290,8 +313,8 @@ namespace FeatureHubSDK
     }
 
 
-    public Readiness Readyness => Repository.Readiness;
-    public Readiness Readiness => Repository.Readiness;
+    public Readiness Readyness => _closed ? Readiness.NotReady : Repository.Readiness;
+    public Readiness Readiness => _closed ? Readiness.NotReady : Repository.Readiness;
 
 
     public string Url => _url;
@@ -301,6 +324,20 @@ namespace FeatureHubSDK
       CheckRepository();
 
       _repository.AddFeatureValueInterceptor(interceptor);
+    }
+
+    public void Close()
+    {
+      if (_closed)
+        return;
+
+      _closed = true;
+      _edgeService?.Close();
+      _usageAdapter?.Close();
+      _repository?.Close();
+      _edgeService = null;
+      _usageAdapter = null;
+      _repository = null;
     }
   }
 

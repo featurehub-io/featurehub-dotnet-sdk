@@ -51,6 +51,17 @@ Generated code under `FeatureHubSDK/src/` is excluded from both formatting and a
 
 CI runs `dotnet format FeatureHubSDK.sln --verify-no-changes` before the build. Run `make format` locally before pushing.
 
+## After Making Code Changes
+
+After every set of code edits, always run both steps before considering the task done:
+
+```bash
+make test          # or make test-sdk / make test-otel for targeted runs
+make format-check  # verifies no formatting violations were introduced
+```
+
+If `format-check` reports violations, run `make format` to auto-fix them, then re-run `make format-check` to confirm clean. The programmatic Edit tool does not apply Roslyn formatting rules (e.g. `csharp_preserve_single_line_statements = false`), so violations are common when editing without this step.
+
 ## Architecture
 
 ### Two Evaluation Modes

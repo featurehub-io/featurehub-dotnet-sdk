@@ -51,6 +51,8 @@ public class OpenTelemetryFeatureValueInterceptor : IFeatureValueInterceptor
     return (false, null);
   }
 
+  public void Close() { }
+
   private static (bool, object?) ConvertValue(string raw, FeatureValueType type) =>
       type switch
       {

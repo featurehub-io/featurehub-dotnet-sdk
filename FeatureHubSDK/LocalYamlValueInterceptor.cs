@@ -83,6 +83,8 @@ namespace FeatureHubSDK
       return (false, null);
     }
 
+    public void Close() { }
+
     /// <summary>
     /// Converts a YAML node to the appropriate C# value.
     /// Scalars use the YAML tag (or plain-style heuristics) to distinguish bool/number/string.

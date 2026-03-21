@@ -16,6 +16,12 @@ namespace FeatureHubSDK
   {
     // having been allowed to call, is it overridden?
     (bool, object?) GetValue(string key, IFeatureRepositoryContext repository, FeatureState? featureState);
+
+    /// <summary>
+    /// Release any resources held by the interceptor (e.g. file watchers, HTTP clients).
+    /// Called by the repository when it is closed.
+    /// </summary>
+    void Close();
   }
 };
 
