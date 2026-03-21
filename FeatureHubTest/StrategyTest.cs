@@ -44,7 +44,7 @@ namespace FeatureHubTest
             })
           });
 
-      repo.UpdateFeatures(new List<FeatureState>{feature});
+      repo.UpdateFeatures(new List<FeatureState> { feature });
 
       var matchCC = TestClientContext.Create().Country(StrategyAttributeCountryName.Turkey);
       var unmatchCC = TestClientContext.Create().Country(StrategyAttributeCountryName.NewZealand);
@@ -77,7 +77,7 @@ namespace FeatureHubTest
         });
 
       // when: setup repo
-      repo.UpdateFeatures(new List<FeatureState>{feature});
+      repo.UpdateFeatures(new List<FeatureState> { feature });
 
       var age27 = TestClientContext.Create().Attr("age", "27");
       var age18 = TestClientContext.Create().Attr("age", "18");
@@ -106,7 +106,7 @@ namespace FeatureHubTest
         });
 
       // when: setup repo
-      repo.UpdateFeatures(new List<FeatureState>{feature});
+      repo.UpdateFeatures(new List<FeatureState> { feature });
 
       var oneMatch = TestClientContext.Create().Attrs("contractId", new List<String> { "3", "40", "26" });
       var noneMatch = TestClientContext.Create().Attrs("contractId", new List<String> { "3", "400", "26" });
@@ -138,7 +138,7 @@ namespace FeatureHubTest
         });
 
       // when: setup repo
-      repo.UpdateFeatures(new List<FeatureState>{feature});
+      repo.UpdateFeatures(new List<FeatureState> { feature });
 
       var ccAge27Ios = TestClientContext.Create().Platform(StrategyAttributePlatformName.Ios).Attr("age", "27");
       var ccAge18Android = TestClientContext.Create().Platform(StrategyAttributePlatformName.Android).Attr("age", "18");

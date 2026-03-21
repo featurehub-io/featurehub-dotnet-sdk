@@ -109,7 +109,8 @@ namespace FeatureHubSDK
     private static object? ConvertScalar(YamlScalarNode scalar)
     {
       var raw = scalar.Value;
-      if (raw == null) return null;
+      if (raw == null)
+        return null;
 
       // Quoted scalars are always strings.
       if (scalar.Style == ScalarStyle.SingleQuoted || scalar.Style == ScalarStyle.DoubleQuoted)

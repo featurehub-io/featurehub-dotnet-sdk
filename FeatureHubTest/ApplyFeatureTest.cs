@@ -46,7 +46,7 @@ namespace FeatureHubTest
       // and: we have a context
       var cc = TestClientContext.Create().UserKey("mary@mary.com");
 
-      var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {rs}, "fred", Guid.NewGuid(), null);
+      var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> { rs }, "fred", Guid.NewGuid(), null);
 
       Assert.That(val.Matched, Is.EqualTo(false));
     }
@@ -62,7 +62,7 @@ namespace FeatureHubTest
       // and: we have a context
       var cc = TestClientContext.Create().UserKey("mary@mary.com");
 
-      var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {rs}, "fred", Guid.NewGuid(), cc);
+      var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> { rs }, "fred", Guid.NewGuid(), cc);
 
       Assert.That(val.Value, Is.EqualTo(expected));
       Assert.That(val.Matched, Is.EqualTo(matched));
@@ -82,7 +82,7 @@ namespace FeatureHubTest
       // and: we have a context
       var cc = TestClientContext.Create().UserKey("mary@mary.com");
 
-      var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> {}, "fred", Guid.NewGuid(), cc);
+      var val = _applyFeature.Apply(new List<FeatureRolloutStrategy> { }, "fred", Guid.NewGuid(), cc);
 
       Assert.That(val.Value, Is.EqualTo(expected));
       Assert.That(val.Matched, Is.EqualTo(matched));

@@ -28,13 +28,13 @@ namespace FeatureHubSDK
     {
       _hashAlgorithm = MurmurHash.Create32();
     }
-    
+
     public int DetermineClientPercentage(string percentageText, Guid featureId)
     {
       var hashCode = _hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(percentageText + featureId));
       var result = BitConverter.ToInt32(hashCode, 0);
       var ratio = (result & 0xFFFFFFFFL) / Math.Pow(2, 32);
-      return (int) Math.Floor(MAX_PERCENTAGE * ratio);
+      return (int)Math.Floor(MAX_PERCENTAGE * ratio);
     }
 
     public void Dispose()
@@ -116,7 +116,7 @@ namespace FeatureHubSDK
               }
             }
 
-              // this was only a percentage and had no other attributes
+            // this was only a percentage and had no other attributes
             if (rsi.Attributes == null || rsi.Attributes.Count == 0)
             {
               basePercentage[percentageKey] += rsi.Percentage;
@@ -254,12 +254,12 @@ namespace FeatureHubSDK
 
       if (attr.Conditional == RolloutStrategyAttributeConditional.EQUALS)
       {
-        return val == (attr.Values[0] is bool ? (bool) attr.Values[0] : bool.Parse(attr.Values[0].ToString()));
+        return val == (attr.Values[0] is bool ? (bool)attr.Values[0] : bool.Parse(attr.Values[0].ToString()));
       }
 
       if (attr.Conditional == RolloutStrategyAttributeConditional.NOTEQUALS)
       {
-        return val != (attr.Values[0] is bool ? ((bool) attr.Values[0]) : bool.Parse(attr.Values[0].ToString()));
+        return val != (attr.Values[0] is bool ? ((bool)attr.Values[0]) : bool.Parse(attr.Values[0].ToString()));
       }
 
       return false;
@@ -499,7 +499,7 @@ namespace FeatureHubSDK
     {
       if (proxy._isAddress && _isAddress)
       {
-        return  _address.Equals(proxy._address);
+        return _address.Equals(proxy._address);
       }
 
       if (!proxy._isAddress && !_isAddress)

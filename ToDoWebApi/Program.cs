@@ -3,7 +3,7 @@ using FeatureHubSDK;
 
 if (File.Exists("sample.env"))
 {
-    DotEnv.Load(new DotEnvOptions(envFilePaths: ["sample.env"]));
+  DotEnv.Load(new DotEnvOptions(envFilePaths: ["sample.env"]));
 }
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,12 +12,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 IFeatureHubConfig config = new EdgeFeatureHubConfig(
-    Environment.GetEnvironmentVariable("FEATUREHUB_EDGE_URL") ?? builder.Configuration["FeatureHub:Host"], 
+    Environment.GetEnvironmentVariable("FEATUREHUB_EDGE_URL") ?? builder.Configuration["FeatureHub:Host"],
     Environment.GetEnvironmentVariable("FEATUREHUB_CLIENT_API_KEY") ?? builder.Configuration["FeatureHub:ApiKey"]);
 
 config.Repository.ReadinessHandler += (sender, readiness) =>
 {
-    Console.WriteLine($"Readyness is {readiness}");
+  Console.WriteLine($"Readyness is {readiness}");
 };
 
 var Timestamp = () => DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
@@ -26,7 +26,7 @@ FeatureLogging.DebugLogger += (sender, s) => Console.WriteLine($"DEBUG - {Timest
 FeatureLogging.TraceLogger += (sender, s) => Console.WriteLine($"TRACE - {Timestamp()} - {s}");
 FeatureLogging.InfoLogger += (sender, s) => Console.WriteLine($"INFO - {Timestamp()} - {s}");
 FeatureLogging.ErrorLogger += (sender, s) => Console.WriteLine($"ERROR - {Timestamp()} - {s}");
-FeatureLogging.ExceptionLogger += (sender, s) => Console.WriteLine("ERROR: " + s.Message + "\n" + s.Exception );
+FeatureLogging.ExceptionLogger += (sender, s) => Console.WriteLine("ERROR: " + s.Message + "\n" + s.Exception);
 
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 config.Init();

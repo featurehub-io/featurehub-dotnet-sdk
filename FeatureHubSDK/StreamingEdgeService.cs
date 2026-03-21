@@ -98,7 +98,8 @@ namespace FeatureHubSDK
 
     public async Task ContextChange(string newHeader)
     {
-      if (_closed) return;
+      if (_closed)
+        return;
 
       if (_config.ServerEvaluation)
       {
@@ -146,7 +147,8 @@ namespace FeatureHubSDK
     /// </summary>
     internal void ProcessError(int statusCode)
     {
-      if (statusCode == 503) return;
+      if (statusCode == 503)
+        return;
       _repository.Notify(SSEResultState.Failure, null, _config.EnvironmentId);
       FeatureLogging.ErrorLogger(this, "Server issued a failure, stopping.");
       _closed = true;
@@ -215,7 +217,8 @@ namespace FeatureHubSDK
       if (FeatureLogging.TraceLogger != null)
         FeatureLogging.TraceLogger(this, $"featurehub: The state was {state} with value {data}");
 
-      if (state == null) return;
+      if (state == null)
+        return;
 
       if (state != SSEResultState.Config)
       {
@@ -234,8 +237,9 @@ namespace FeatureHubSDK
 
     public void Init()
     {
-      
-      if (_closed) return;
+
+      if (_closed)
+        return;
 
       var configBuilder = Configuration.Builder(uri: new UriBuilder(_config.Url).Uri)
         .BackoffResetThreshold(
@@ -260,7 +264,8 @@ namespace FeatureHubSDK
 
       _eventSource.Error += (sender, ex) =>
       {
-        if (!(ex.Exception is EventSourceServiceUnsuccessfulResponseException result)) return;
+        if (!(ex.Exception is EventSourceServiceUnsuccessfulResponseException result))
+          return;
         ProcessError(result.StatusCode);
       };
 

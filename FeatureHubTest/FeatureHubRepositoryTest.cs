@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
 using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
 using Newtonsoft.Json;
+using NUnit.Framework;
 
 namespace FeatureHubTest
 {

@@ -35,72 +35,74 @@ namespace FeatureHubUsageOpenTelemetry;
 /// </summary>
 public class OpenTelemetryTrackerUsagePlugin : UsagePlugin
 {
-    private readonly string _prefix;
-    private readonly bool _attachAsSpanEvents;
+  private readonly string _prefix;
+  private readonly bool _attachAsSpanEvents;
 
-    public override bool CanSendAsync => false;
+  public override bool CanSendAsync => false;
 
-    public OpenTelemetryTrackerUsagePlugin(string prefix = "featurehub.", bool attachAsSpanEvents = false)
+  public OpenTelemetryTrackerUsagePlugin(string prefix = "featurehub.", bool attachAsSpanEvents = false)
+  {
+    _prefix = prefix;
+    _attachAsSpanEvents = attachAsSpanEvents;
+  }
+
+  public override void Send(IUsageEvent usageEvent)
+  {
+    if (usageEvent is not IUsageEventName named)
+      return;
+
+    var activity = Activity.Current;
+    if (activity == null)
+      return;
+
+    var map = usageEvent.CollectUsageRecord();
+    var eventName = named.EventName;
+
+    if (_attachAsSpanEvents)
     {
-        _prefix = prefix;
-        _attachAsSpanEvents = attachAsSpanEvents;
+      var tags = new ActivityTagsCollection();
+      foreach (var kvp in map)
+      {
+        var converted = ConvertValue(kvp.Value);
+        if (converted != null)
+          tags[kvp.Key] = converted;
+      }
+      activity.AddEvent(new ActivityEvent(_prefix + eventName, tags: tags));
     }
-
-    public override void Send(IUsageEvent usageEvent)
+    else
     {
-        if (usageEvent is not IUsageEventName named) return;
-
-        var activity = Activity.Current;
-        if (activity == null) return;
-
-        var map = usageEvent.CollectUsageRecord();
-        var eventName = named.EventName;
-
-        if (_attachAsSpanEvents)
-        {
-            var tags = new ActivityTagsCollection();
-            foreach (var kvp in map)
-            {
-                var converted = ConvertValue(kvp.Value);
-                if (converted != null)
-                    tags[kvp.Key] = converted;
-            }
-            activity.AddEvent(new ActivityEvent(_prefix + eventName, tags: tags));
-        }
-        else
-        {
-            foreach (var kvp in map)
-            {
-                var converted = ConvertValue(kvp.Value);
-                if (converted != null)
-                    activity.SetTag(_prefix + kvp.Key, converted);
-            }
-        }
+      foreach (var kvp in map)
+      {
+        var converted = ConvertValue(kvp.Value);
+        if (converted != null)
+          activity.SetTag(_prefix + kvp.Key, converted);
+      }
     }
+  }
 
-    /// <summary>
-    /// Converts a map value to an OTel-supported attribute type.
-    /// Returns null for null inputs (caller omits those entries).
-    /// </summary>
-    public static object? ConvertValue(object? value) => value switch
-    {
-        null => null,
-        bool b => b,
-        double d => d,
-        float f => (double)f,
-        long l => l,
-        int i => (long)i,
-        string s => s,
-        Guid g => g.ToString(),
-        IEnumerable<bool> bools => bools.ToArray(),
-        IEnumerable<double> doubles => doubles.ToArray(),
-        IEnumerable<long> longs => longs.ToArray(),
-        IEnumerable<int> ints => ints.Select(i => (long)i).ToArray(),
-        IEnumerable<string> strings => strings.ToArray(),
-        // Generic enumerable — convert each element to string
-        System.Collections.IEnumerable enumerable => enumerable.Cast<object?>()
-            .Select(o => o?.ToString())
-            .ToArray(),
-        _ => value.ToString()
-    };
+  /// <summary>
+  /// Converts a map value to an OTel-supported attribute type.
+  /// Returns null for null inputs (caller omits those entries).
+  /// </summary>
+  public static object? ConvertValue(object? value) => value switch
+  {
+    null => null,
+    bool b => b,
+    double d => d,
+    float f => (double)f,
+    long l => l,
+    int i => (long)i,
+    string s => s,
+    Guid g => g.ToString(),
+    IEnumerable<bool> bools => bools.ToArray(),
+    IEnumerable<double> doubles => doubles.ToArray(),
+    IEnumerable<long> longs => longs.ToArray(),
+    IEnumerable<int> ints => ints.Select(i => (long)i).ToArray(),
+    IEnumerable<string> strings => strings.ToArray(),
+    // Generic enumerable — convert each element to string
+    System.Collections.IEnumerable enumerable => enumerable.Cast<object?>()
+        .Select(o => o?.ToString())
+        .ToArray(),
+    _ => value.ToString()
+  };
 }

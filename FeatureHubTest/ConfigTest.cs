@@ -27,7 +27,7 @@ namespace FeatureHubTest
       Environment.SetEnvironmentVariable("FEATUREHUB_API_KEY", apiKey);
       Environment.SetEnvironmentVariable("FEATUREHUB_EDGE_URL", "http://localhost");
       var cfg = new EdgeFeatureHubConfig();
-      Assert.That(cfg.SdkKeys.ToArray(), Is.EqualTo(new string[] {apiKey}));
+      Assert.That(cfg.SdkKeys.ToArray(), Is.EqualTo(new string[] { apiKey }));
       Assert.That(cfg.EdgeUrl, Is.EqualTo("http://localhost"));
     }
 

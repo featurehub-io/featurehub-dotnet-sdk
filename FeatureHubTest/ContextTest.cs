@@ -50,9 +50,9 @@ namespace FeatureHubTest
     async public Task ChangeInContextFiresRequestToEdgeService()
     {
       var edgeStub = new EdgeServiceStub();
-      var ctx = await new ServerEvalFeatureContext(_repository, null,  edgeStub)
+      var ctx = await new ServerEvalFeatureContext(_repository, null, edgeStub)
         .Attr("city", "Istanbul City")
-        .Attrs("family", new List<String> {"Bambam", "DJ Elif"})
+        .Attrs("family", new List<String> { "Bambam", "DJ Elif" })
         .Country(StrategyAttributeCountryName.Turkey)
         .Platform(StrategyAttributePlatformName.Ios)
         .Device(StrategyAttributeDeviceName.Mobile)

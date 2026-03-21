@@ -18,7 +18,8 @@ namespace FeatureHubTest
 
     public override void Send(IUsageEvent usageEvent)
     {
-      if (Throws) throw new Exception("plugin error");
+      if (Throws)
+        throw new Exception("plugin error");
       Received.Add(usageEvent);
     }
   }

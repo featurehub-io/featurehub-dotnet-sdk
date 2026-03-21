@@ -42,8 +42,8 @@ namespace FeatureHubSDK
       new ConcurrentDictionary<string, FeatureStateBaseHolder>();
 
     private Readiness _readiness = Readiness.NotReady;
-    public override event EventHandler<Readiness> ReadinessHandler = delegate {};
-    public override event EventHandler<IFeatureHubRepository> NewFeatureHandler = delegate {};
+    public override event EventHandler<Readiness> ReadinessHandler = delegate { };
+    public override event EventHandler<IFeatureHubRepository> NewFeatureHandler = delegate { };
     private bool _serverSideEvaluation;
 
     private readonly List<IFeatureValueInterceptor> _interceptors = new List<IFeatureValueInterceptor>();
@@ -68,7 +68,7 @@ namespace FeatureHubSDK
       }
       catch (Exception e)
       {
-        FeatureLogging.ExceptionLogger(this,new ExceptionEvent($"Failed to indicate readyness change to {_readiness}", e));
+        FeatureLogging.ExceptionLogger(this, new ExceptionEvent($"Failed to indicate readyness change to {_readiness}", e));
       }
     }
 
@@ -80,14 +80,15 @@ namespace FeatureHubSDK
       }
       catch (Exception e)
       {
-        FeatureLogging.ExceptionLogger(this,new ExceptionEvent("Failed to indicate trigger new feature change.", e));
+        FeatureLogging.ExceptionLogger(this, new ExceptionEvent("Failed to indicate trigger new feature change.", e));
       }
     }
 
     public void UpdateFeatures(IEnumerable<FeatureState>? features)
     {
-      if (features == null) return;
-      
+      if (features == null)
+        return;
+
       var updated = false;
       foreach (var featureState in features)
       {
@@ -136,11 +137,12 @@ namespace FeatureHubSDK
           if (data != null)
           {
             var features = JsonConvert.DeserializeObject<List<FeatureState>>(data);
-            if (features == null) return;
+            if (features == null)
+              return;
             foreach (var featureState in features)
             {
               featureState.EnvironmentId = EnvironmentId;
-            } 
+            }
             UpdateFeatures(features);
           }
 
@@ -149,7 +151,8 @@ namespace FeatureHubSDK
           if (data != null)
           {
             var fu = JsonConvert.DeserializeObject<FeatureState>(data);
-            if (fu == null) return;
+            if (fu == null)
+              return;
             fu.EnvironmentId = EnvironmentId;
             if (FeatureUpdate(fu))
             {
@@ -162,7 +165,8 @@ namespace FeatureHubSDK
           if (data != null)
           {
             var fu = JsonConvert.DeserializeObject<FeatureState>(data);
-            if (fu == null) return;
+            if (fu == null)
+              return;
             fu.EnvironmentId = EnvironmentId;
             DeleteFeature(fu);
           }
@@ -181,10 +185,11 @@ namespace FeatureHubSDK
 
     private void DeleteFeature(FeatureState? fs)
     {
-      if (fs == null) return;
+      if (fs == null)
+        return;
       if (_features.TryRemove(fs.Key, out var _))
       {
-        TriggerNewUpdate();        
+        TriggerNewUpdate();
       }
     }
 
@@ -192,8 +197,9 @@ namespace FeatureHubSDK
     // update the feature if its version is greater than the version we currently store
     private bool FeatureUpdate(FeatureState? fs)
     {
-      if (fs == null) return false;
-      
+      if (fs == null)
+        return false;
+
       if (_features.TryGetValue(fs.Key, out var holder))
       {
         if (holder?.Key == null)
@@ -266,7 +272,7 @@ namespace FeatureHubSDK
     }
 
     public override IUsageProvider UsageProvider => _usageProvider;
-    
+
     public override (bool, object?) FindIntercept(string key, FeatureState? featureState)
     {
       foreach (var interceptor in _interceptors)
@@ -317,13 +323,13 @@ namespace FeatureHubSDK
         listener(usageEvent);
       }
     }
-    
+
     public void AddFeatureValueInterceptor(IFeatureValueInterceptor interceptor)
     {
       _interceptors.Add(interceptor);
     }
-    
-    
+
+
   }
-  
+
 }

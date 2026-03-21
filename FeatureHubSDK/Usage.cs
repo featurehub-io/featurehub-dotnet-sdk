@@ -23,7 +23,7 @@ namespace FeatureHubSDK
 
     public void Cancel() => _cancel.Invoke();
   }
-  
+
   /// <summary>
   /// The serialised snapshot of a single feature at the moment it was evaluated.
   /// Equivalent to Java's FeatureHubUsageValue.
@@ -41,7 +41,7 @@ namespace FeatureHubSDK
     public readonly FeatureValueType Type;
     public readonly Guid EnvironmentId;
 
-    
+
 
     public FeatureHubUsageValue(FeatureState fs, object? value)
     {
@@ -55,11 +55,11 @@ namespace FeatureHubSDK
 
     public FeatureHubUsageValue(IFeature fs, object? value)
     {
-      Id = fs.Id  ?? throw new InvalidOperationException($"Feature ID must not be null for key '{fs.Key}'");
+      Id = fs.Id ?? throw new InvalidOperationException($"Feature ID must not be null for key '{fs.Key}'");
       Key = fs.Key;
       RawValue = value;
       Value = DefaultUsageProvider.Convert(value, fs.Type);
-      EnvironmentId = fs.EnvironmentId  ?? throw new InvalidOperationException($"Feature EnvironmentId must not be null for key '{fs.Key}'");
+      EnvironmentId = fs.EnvironmentId ?? throw new InvalidOperationException($"Feature EnvironmentId must not be null for key '{fs.Key}'");
       Type = fs.Type ?? throw new InvalidOperationException($"Feature type must not be null for key '{fs.Key}'");
     }
   }
@@ -72,7 +72,7 @@ namespace FeatureHubSDK
   {
     string? UserKey { get; set; }
     void SetAdditionalParams(Dictionary<string, object>? additionalParams);
-    
+
     IReadOnlyDictionary<string, object?> CollectUsageRecord();
   }
 
@@ -171,7 +171,7 @@ namespace FeatureHubSDK
     public new IReadOnlyDictionary<string, object?> CollectUsageRecord()
     {
       var m = base.CollectUsageRecord().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-      
+
       if (Attributes != null)
       {
         foreach (var kvp in Attributes)
@@ -208,9 +208,9 @@ namespace FeatureHubSDK
         m[fv.Key] = fv.Value;
         m[fv.Key + "_raw"] = fv.RawValue;
       }
-      
+
       m["fhub_keys"] = String.Join(",", FeatureValues.Select(fv => fv.Key));
-      
+
       return new ReadOnlyDictionary<string, object?>(m);
     }
   }
@@ -289,19 +289,20 @@ namespace FeatureHubSDK
     IUsageEventWithFeature CreateUsageEventWithFeature(FeatureHubUsageValue feature,
       Dictionary<string, List<string>>? attributes, string? userKey);
   }
-  
+
 
   public class DefaultUsageProvider
   {
     // replace this value if you wish to globally replace the default usage provider
     public static IUsageProvider Instance = new BaseUsageProvider();
-    
+
     // this allows you to replace the conversion method for outgoing feature values
     public static Func<object?, FeatureValueType?, string?> Convert = DefaultConvert;
-    
+
     public static string? DefaultConvert(object? value, FeatureValueType? type)
     {
-      if (type == null || value == null) return null;
+      if (type == null || value == null)
+        return null;
       switch (type)
       {
         case FeatureValueType.BOOLEAN:
@@ -314,7 +315,7 @@ namespace FeatureHubSDK
       }
     }
   }
-  
+
   /// <summary>
   /// Default implementation of IUsageProvider — constructs the standard event types.
   /// Equivalent to Java's UsageProvider.DefaultUsageProvider.

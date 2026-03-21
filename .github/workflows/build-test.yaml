@@ -16,6 +16,10 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Check formatting
+        run: dotnet format FeatureHubSDK.sln --verify-no-changes
       - name: Restore
         working-directory: FeatureHubSDK
         run: dotnet restore

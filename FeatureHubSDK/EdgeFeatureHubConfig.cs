@@ -23,9 +23,9 @@ namespace FeatureHubSDK
     /// <summary>
     ///  this is the URL of the GET edit service
     /// </summary>
-    string EdgeUrl { get;  }
-    List<string> SdkKeys { get;  }
-    
+    string EdgeUrl { get; }
+    List<string> SdkKeys { get; }
+
     bool ServerEvaluation { get; }
 
     /// <summary>
@@ -48,7 +48,7 @@ namespace FeatureHubSDK
     /// Uses Streaming, gets near real-time updates from FeatureHub 
     /// </summary>
     IFeatureHubConfig Streaming();
-    
+
     /*
      * Initialise the configuration. This will kick off the event source to connect and attempt to start
      * pushing data into the FeatureHub repository for use in contexts.
@@ -58,7 +58,7 @@ namespace FeatureHubSDK
     IFeatureRepositoryContext Repository { get; set; }
     IEdgeService EdgeService { get; set; }
     int Timeout { get; }
-    
+
     Guid EnvironmentId { get; }
 
     IClientContext NewContext();
@@ -68,7 +68,7 @@ namespace FeatureHubSDK
 
     void AddFeatureValueInterceptor(IFeatureValueInterceptor interceptor);
   }
-  
+
   public class FeatureHubKeyInvalidException : Exception
   {
     public FeatureHubKeyInvalidException(string message)
@@ -98,14 +98,14 @@ namespace FeatureHubSDK
       {
         throw new FeatureHubKeyInvalidException($"The edge url or sdk key are null.");
       }
-      
+
       _serverEvaluation = !sdkKey.Contains("*"); // two part keys are server evaluated
 
       if (!sdkKey.Contains("/") || sdkKey.StartsWith("\""))
       {
         throw new FeatureHubKeyInvalidException($"The SDK key `{sdkKey}` is invalid");
       }
-      
+
       _sdkKeys.Add(sdkKey);
 
       if (edgeUrl.EndsWith("/"))
@@ -121,11 +121,11 @@ namespace FeatureHubSDK
       _edgeUrl = edgeUrl; // the API client automatically adds the /features, etc on
 
       _url = edgeUrl + "/features/" + sdkKey;
-      
+
       // extract the environment id from the sdk key
-      string []parts = sdkKey.Split('/');
+      string[] parts = sdkKey.Split('/');
       _environmentId = parts.Length > 2 ? Guid.Parse(parts[1]) : Guid.Parse(parts[0]);
-      
+
       DetermineEdgeType();
     }
 
@@ -143,9 +143,9 @@ namespace FeatureHubSDK
         _edgeType = EdgeType.Streaming;
       }
     }
-    
+
     public int Timeout => _timeout;
-    
+
     public Guid EnvironmentId => _environmentId;
 
     /// <summary>
@@ -154,8 +154,8 @@ namespace FeatureHubSDK
     public EdgeFeatureHubConfig() : this(Environment.GetEnvironmentVariable("FEATUREHUB_EDGE_URL"),
       Environment.GetEnvironmentVariable("FEATUREHUB_API_KEY"))
     {
-      
-    } 
+
+    }
 
     public string EdgeUrl => _edgeUrl;
     public List<string> SdkKeys => _sdkKeys;
@@ -178,7 +178,7 @@ namespace FeatureHubSDK
     private void CheckEdgeService()
     {
       CheckRepository();
-      
+
       if (_edgeService == null)
       {
         switch (_edgeType)
@@ -201,13 +201,13 @@ namespace FeatureHubSDK
       get
       {
         CheckEdgeService();
-        
+
         return _edgeService;
       }
       set => _edgeService = value;
     }
 
-    
+
     public IFeatureHubConfig UsePolling(int timeout = 360)
     {
       return ActiveRest(timeout);
@@ -261,13 +261,13 @@ namespace FeatureHubSDK
         _usageAdapter.RegisterPlugin(new PassiveRestTriggerPlugin(this));
       }
     }
-    
+
     public IFeatureRepositoryContext Repository
     {
       get
       {
         CheckRepository();
-        
+
         return _repository;
       }
       set => _repository = value;
@@ -291,16 +291,16 @@ namespace FeatureHubSDK
 
     public Readiness Readyness => Repository.Readiness;
     public Readiness Readiness => Repository.Readiness;
-    
-    
+
+
     public string Url => _url;
-    
+
     public void AddFeatureValueInterceptor(IFeatureValueInterceptor interceptor)
     {
       CheckRepository();
-      
+
       _repository.AddFeatureValueInterceptor(interceptor);
     }
   }
-  
+
 }

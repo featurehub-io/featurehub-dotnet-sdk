@@ -1,6 +1,7 @@
 .PHONY: all build test restore \
         build-sdk build-otel \
         test-sdk test-otel \
+        format format-check \
         pack docker docker-run
 
 # ---------------------------------------------------------------------------
@@ -17,6 +18,18 @@ build: restore
 
 test:
 	dotnet test FeatureHubSDK.sln
+
+# ---------------------------------------------------------------------------
+# Formatting
+# ---------------------------------------------------------------------------
+
+# Reformat all files in-place
+format:
+	dotnet format FeatureHubSDK.sln
+
+# Check formatting without modifying files (used in CI)
+format-check:
+	dotnet format FeatureHubSDK.sln --verify-no-changes
 
 # ---------------------------------------------------------------------------
 # Fine-grained: individual projects
