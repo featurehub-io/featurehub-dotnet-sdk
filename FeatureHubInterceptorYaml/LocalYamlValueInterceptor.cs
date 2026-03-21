@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Threading;
 using IO.FeatureHub.SSE.Model;
 using Newtonsoft.Json;
 using YamlDotNet.Core;
@@ -34,27 +35,123 @@ namespace FeatureHubSDK
   ///   <item>map or sequence → serialised to a JSON string</item>
   /// </list>
   ///
-  /// The file is read once at construction. <see cref="AllowLockOverride"/> is <c>false</c>.
+  /// The file is read once at construction. When <paramref name="watch"/> is <c>true</c>, a
+  /// <see cref="FileSystemWatcher"/> is started and the overrides are atomically reloaded
+  /// whenever the file changes. Call <see cref="Close"/> to stop watching.
   /// </summary>
+#pragma warning disable CA1001 // FileSystemWatcher and Timer are disposed in Close()
   public class LocalYamlValueInterceptor : IFeatureValueInterceptor
+#pragma warning restore CA1001
   {
-    private readonly Dictionary<string, object?> _overrides =
-      new Dictionary<string, object?>(StringComparer.Ordinal);
+    private volatile Dictionary<string, object?> _overrides;
+    private readonly string _filePath;
+    private FileSystemWatcher? _watcher;
+    private Timer? _debounceTimer;
+    private readonly object _debounceLock = new object();
+    private volatile bool _disposed;
 
-    public LocalYamlValueInterceptor(string filePath)
+    private const int DebounceMs = 300;
+
+    /// <summary>
+    /// Creates a new interceptor that reads overrides from <paramref name="filePath"/>.
+    /// </summary>
+    /// <param name="filePath">Path to the YAML file containing a <c>flagValues</c> map.</param>
+    /// <param name="watch">
+    /// When <c>true</c>, a <see cref="FileSystemWatcher"/> monitors the file for changes and
+    /// reloads overrides automatically. Call <see cref="Close"/> to stop watching.
+    /// </param>
+    public LocalYamlValueInterceptor(string filePath, bool watch = false)
     {
-      if (!File.Exists(filePath))
+      _filePath = filePath;
+      _overrides = LoadFile(filePath);
+
+      if (!watch)
         return;
+
+      var dir = Path.GetDirectoryName(Path.GetFullPath(filePath)) ?? ".";
+      var file = Path.GetFileName(filePath);
+
+      _watcher = new FileSystemWatcher(dir, file)
+      {
+        NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+        EnableRaisingEvents = true,
+      };
+      _watcher.Changed += OnFileChanged;
+      _watcher.Created += OnFileChanged;
+    }
+
+    private void OnFileChanged(object sender, FileSystemEventArgs e)
+    {
+      lock (_debounceLock)
+      {
+        _debounceTimer?.Dispose();
+
+        if (_disposed)
+          return;
+
+        _debounceTimer = new Timer(_ => Reload(), null, DebounceMs, Timeout.Infinite);
+      }
+    }
+
+    private void Reload()
+    {
+      if (_disposed)
+        return;
+
+      try
+      {
+        _overrides = LoadFile(_filePath);
+      }
+      catch (IOException)
+      {
+        // Keep current values if the file is temporarily locked during a write.
+      }
+    }
+
+    public (bool, object?) GetValue(string key, IFeatureRepositoryContext repository, FeatureState? featureState)
+    {
+      if (_overrides.TryGetValue(key, out var value))
+        return (true, value);
+
+      return (false, null);
+    }
+
+    /// <summary>
+    /// Stops watching the file for changes and releases all resources.
+    /// Safe to call multiple times.
+    /// </summary>
+    public void Close()
+    {
+      if (_disposed)
+        return;
+
+      _disposed = true;
+      _watcher?.Dispose();
+      _watcher = null;
+
+      lock (_debounceLock)
+      {
+        _debounceTimer?.Dispose();
+        _debounceTimer = null;
+      }
+    }
+
+    private static Dictionary<string, object?> LoadFile(string filePath)
+    {
+      var overrides = new Dictionary<string, object?>(StringComparer.Ordinal);
+
+      if (!File.Exists(filePath))
+        return overrides;
 
       var stream = new YamlStream();
       using (var reader = new StreamReader(filePath))
         stream.Load(reader);
 
       if (stream.Documents.Count == 0)
-        return;
+        return overrides;
 
       if (stream.Documents[0].RootNode is not YamlMappingNode root)
-        return;
+        return overrides;
 
       foreach (var topLevel in root.Children)
       {
@@ -69,21 +166,13 @@ namespace FeatureHubSDK
           if (string.IsNullOrEmpty(flagKey))
             continue;
 
-          _overrides[flagKey!] = ConvertNode(flag.Value);
+          overrides[flagKey!] = ConvertNode(flag.Value);
         }
         break; // only one flagValues block needed
       }
+
+      return overrides;
     }
-
-    public (bool, object?) GetValue(string key, IFeatureRepositoryContext repository, FeatureState? featureState)
-    {
-      if (_overrides.TryGetValue(key, out var value))
-        return (true, value);
-
-      return (false, null);
-    }
-
-    public void Close() { }
 
     /// <summary>
     /// Converts a YAML node to the appropriate C# value.

@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
 using NUnit.Framework;
@@ -211,6 +212,131 @@ namespace FeatureHubInterceptorYamlTest
       var (matched, value) = interceptor.GetValue("flag", null!, fs);
       Assert.That(matched, Is.True);
       Assert.That(value, Is.EqualTo(true));
+    }
+
+    // ---- close is idempotent for non-watching instances ----
+
+    [Test]
+    public void CloseIsIdempotent()
+    {
+      var interceptor = WithYaml("flagValues:\n  flag: true\n");
+      interceptor.Close();
+      interceptor.Close(); // should not throw
+    }
+  }
+
+  [TestFixture]
+  sealed class LocalYamlValueInterceptorWatcherTest
+  {
+    private string _yamlFile = null!;
+    private LocalYamlValueInterceptor? _interceptor;
+
+    [SetUp]
+    public void SetUp() => _yamlFile = Path.GetTempFileName();
+
+    [TearDown]
+    public void TearDown()
+    {
+      _interceptor?.Close();
+      _interceptor = null;
+      if (File.Exists(_yamlFile))
+        File.Delete(_yamlFile);
+    }
+
+    private LocalYamlValueInterceptor WithWatchedYaml(string yaml)
+    {
+      File.WriteAllText(_yamlFile, yaml);
+      _interceptor = new LocalYamlValueInterceptor(_yamlFile, watch: true);
+      return _interceptor;
+    }
+
+    private static async Task WaitForAsync(Func<bool> condition, int timeoutMs = 3000)
+    {
+      var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+      while (!condition() && DateTime.UtcNow < deadline)
+        await Task.Delay(50);
+    }
+
+    [Test]
+    public async Task WatcherPicksUpChangedBoolValue()
+    {
+      var interceptor = WithWatchedYaml("flagValues:\n  flag: true\n");
+      Assert.That(interceptor.GetValue("flag", null!, null), Is.EqualTo((true, (object)true)));
+
+      File.WriteAllText(_yamlFile, "flagValues:\n  flag: false\n");
+
+      await WaitForAsync(() => interceptor.GetValue("flag", null!, null) is (true, false));
+
+      var (matched, value) = interceptor.GetValue("flag", null!, null);
+      Assert.That(matched, Is.True);
+      Assert.That(value, Is.EqualTo(false));
+    }
+
+    [Test]
+    public async Task WatcherPicksUpNewKey()
+    {
+      var interceptor = WithWatchedYaml("flagValues:\n  existing: true\n");
+
+      File.WriteAllText(_yamlFile, "flagValues:\n  existing: true\n  newKey: hello\n");
+
+      await WaitForAsync(() => interceptor.GetValue("newKey", null!, null).Item1);
+
+      var (matched, value) = interceptor.GetValue("newKey", null!, null);
+      Assert.That(matched, Is.True);
+      Assert.That(value, Is.EqualTo("hello"));
+    }
+
+    [Test]
+    public async Task WatcherPicksUpRemovedKey()
+    {
+      var interceptor = WithWatchedYaml("flagValues:\n  flag: true\n  extra: hello\n");
+
+      File.WriteAllText(_yamlFile, "flagValues:\n  flag: true\n");
+
+      await WaitForAsync(() => !interceptor.GetValue("extra", null!, null).Item1);
+
+      var (matched, _) = interceptor.GetValue("extra", null!, null);
+      Assert.That(matched, Is.False);
+    }
+
+    [Test]
+    public async Task WatcherPicksUpChangedStringValue()
+    {
+      var interceptor = WithWatchedYaml("flagValues:\n  msg: hello\n");
+
+      File.WriteAllText(_yamlFile, "flagValues:\n  msg: world\n");
+
+      await WaitForAsync(() => interceptor.GetValue("msg", null!, null) is (true, "world"));
+
+      var (matched, value) = interceptor.GetValue("msg", null!, null);
+      Assert.That(matched, Is.True);
+      Assert.That(value, Is.EqualTo("world"));
+    }
+
+    [Test]
+    public async Task AfterCloseWatcherStopsUpdating()
+    {
+      var interceptor = WithWatchedYaml("flagValues:\n  flag: true\n");
+
+      // Close BEFORE writing — the watcher is disposed so no events can fire.
+      interceptor.Close();
+
+      File.WriteAllText(_yamlFile, "flagValues:\n  flag: false\n");
+
+      // Give it time to (incorrectly) reload if Close failed.
+      await Task.Delay(700);
+
+      var (matched, value) = interceptor.GetValue("flag", null!, null);
+      Assert.That(matched, Is.True);
+      Assert.That(value, Is.EqualTo(true)); // must still be old value
+    }
+
+    [Test]
+    public void CloseIsIdempotentOnWatchingInstance()
+    {
+      var interceptor = WithWatchedYaml("flagValues:\n  flag: true\n");
+      interceptor.Close();
+      interceptor.Close(); // should not throw
     }
   }
 }
