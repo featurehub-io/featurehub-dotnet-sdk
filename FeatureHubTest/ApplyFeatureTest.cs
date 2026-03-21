@@ -10,9 +10,11 @@ using NUnit.Framework;
 
 namespace FeatureHubTest
 {
-  class TestPercentageCalculator : IPercentageCalculator
+  sealed class TestPercentageCalculator : IPercentageCalculator
   {
+#pragma warning disable CA1051
     public int pc = 21;
+#pragma warning restore CA1051
 
     public int DetermineClientPercentage(string percentageText, Guid featureId)
     {
@@ -22,7 +24,7 @@ namespace FeatureHubTest
 
 
 
-  class ApplyFeatureTest
+  sealed class ApplyFeatureTest
   {
     private ApplyFeature _applyFeature;
     private TestPercentageCalculator _percentageCalculator;

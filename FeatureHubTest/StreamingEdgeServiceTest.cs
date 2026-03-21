@@ -9,7 +9,7 @@ using NUnit.Framework;
 namespace FeatureHubTest
 {
   [TestFixture]
-  public class StreamingEdgeServiceTest
+  public sealed class StreamingEdgeServiceTest
   {
     private Mock<IFeatureRepositoryContext> _repository;
     private Mock<IFeatureHubConfig> _config;

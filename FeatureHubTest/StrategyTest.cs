@@ -7,7 +7,7 @@ using NUnit.Framework;
 
 namespace FeatureHubTest
 {
-  class StrategyTest
+  sealed class StrategyTest
   {
     private FeatureHubRepository repo;
 

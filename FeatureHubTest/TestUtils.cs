@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace FeatureHubTest
 {
-  class TestUtils
+  sealed class TestUtils
   {
     public static string ClientApiKey => $"{Guid.NewGuid()}/123*456";
     public static string ServerApiKey => $"{Guid.NewGuid()}/123456";
@@ -16,9 +16,9 @@ namespace FeatureHubTest
 
   }
 
-  class EncodeUtils
+  sealed class EncodeUtils
   {
-    public Guid EnvironmentId = Guid.NewGuid();
+    public Guid EnvironmentId { get; } = Guid.NewGuid();
 
     public string ClientApiKey => $"{EnvironmentId}/123*456";
     public string ServerApiKey => $"{EnvironmentId}/123456";
@@ -39,11 +39,13 @@ namespace FeatureHubTest
 
   }
 
-  public class TestClientContext : BaseClientContext
+  public sealed class TestClientContext : BaseClientContext
   {
+#pragma warning disable CA1051
     public readonly Mock<IFeatureRepositoryContext> repo;
     public readonly Mock<IFeatureHubConfig> config;
     public readonly IUsageProvider usage;
+#pragma warning restore CA1051
 
     public TestClientContext(Mock<IFeatureRepositoryContext> repo,
         Mock<IFeatureHubConfig> config, IUsageProvider usage) : base(repo.Object, config.Object)

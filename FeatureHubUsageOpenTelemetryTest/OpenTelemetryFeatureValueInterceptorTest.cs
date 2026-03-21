@@ -7,7 +7,7 @@ using OpenTelemetry;
 namespace FeatureHubUsageOpenTelemetryTest;
 
 [TestFixture]
-public class OpenTelemetryFeatureValueInterceptorTest
+public sealed class OpenTelemetryFeatureValueInterceptorTest
 {
   private OpenTelemetryFeatureValueInterceptor _interceptor = null!;
 

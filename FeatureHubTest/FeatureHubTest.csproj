@@ -9,6 +9,7 @@
         <OutputType>Library</OutputType>
 
         <TargetFramework>net10.0</TargetFramework>
+        <NoWarn>CA1707</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

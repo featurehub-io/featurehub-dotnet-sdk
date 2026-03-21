@@ -7,7 +7,7 @@ using NUnit.Framework;
 
 namespace FeatureHubTest
 {
-  public class RepositoryTest
+  public sealed class RepositoryTest
   {
     FeatureHubRepository _repository;
     private Guid _envId;
@@ -83,7 +83,7 @@ namespace FeatureHubTest
     public void ExplodeWhenReadynessDoesntFailTest()
     {
       var found = false;
-      _repository.ReadinessHandler += (sender, readyness) => throw new Exception();
+      _repository.ReadinessHandler += (sender, readyness) => throw new InvalidOperationException();
       _repository.ReadinessHandler += (sender, readyness) => { found = true; };
       _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);
       Assert.That(found, Is.EqualTo(false));
@@ -93,7 +93,7 @@ namespace FeatureHubTest
     public void ExplodeWhenNewFeatureDoesntFailTest()
     {
       var found = false;
-      _repository.NewFeatureHandler += (sender, readyness) => throw new Exception();
+      _repository.NewFeatureHandler += (sender, readyness) => throw new InvalidOperationException();
       _repository.NewFeatureHandler += (sender, readyness) => { found = true; };
       _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);
       Assert.That(found, Is.EqualTo(false));
@@ -103,7 +103,7 @@ namespace FeatureHubTest
     public void ExplodeWhenFeatureUpdatesDoesNotFailTest()
     {
       var found = false;
-      _repository.FeatureState("1").FeatureUpdateHandler += (sender, state) => throw new Exception();
+      _repository.FeatureState("1").FeatureUpdateHandler += (sender, state) => throw new InvalidOperationException();
       _repository.FeatureState("1").FeatureUpdateHandler += (sender, state) => { found = true; };
       Assert.That(found, Is.EqualTo(false));
       _repository.Notify(SSEResultState.Features, EncodeFeatures(), _envId);

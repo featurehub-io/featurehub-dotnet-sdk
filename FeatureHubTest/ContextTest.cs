@@ -9,10 +9,10 @@ using NUnit.Framework;
 
 namespace FeatureHubTest
 {
-  public class ContextTest
+  public sealed class ContextTest
   {
     FeatureHubRepository _repository;
-    private EncodeUtils _encodeUtils = null;
+    private EncodeUtils _encodeUtils;
 
     [SetUp]
     public void Setup()
@@ -21,11 +21,15 @@ namespace FeatureHubTest
       _encodeUtils = new EncodeUtils();
     }
 
-    internal class EdgeServiceStub : IEdgeService
+    internal sealed class EdgeServiceStub : IEdgeService
     {
+#pragma warning disable CA1051
       public string header;
-      public int closeCalled = 0;
-      public bool replace = false;
+      public int closeCalled;
+#pragma warning disable CS0649
+      public bool replace;
+#pragma warning restore CS0649
+#pragma warning restore CA1051
 
       public async Task ContextChange(string header)
       {

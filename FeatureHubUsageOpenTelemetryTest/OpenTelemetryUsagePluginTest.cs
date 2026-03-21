@@ -11,7 +11,7 @@ using OpenTelemetry;
 namespace FeatureHubUsageOpenTelemetryTest;
 
 [TestFixture]
-public class OpenTelemetryUsagePluginTest
+public sealed class OpenTelemetryUsagePluginTest
 {
   private OpenTelemetryUsagePlugin _plugin = null!;
 
@@ -33,14 +33,14 @@ public class OpenTelemetryUsagePluginTest
   private static FeatureState MakeState(string key, FeatureValueType type) =>
       new FeatureState(id: Guid.NewGuid(), key: key, type: type, environmentId: Guid.NewGuid());
 
-  private static IUsageEventWithFeature FeatureEvent(string key, FeatureValueType type, object? rawValue)
+  private static DefaultUsageEventWithFeature FeatureEvent(string key, FeatureValueType type, object? rawValue)
   {
     var fs = MakeState(key, type);
     var fuv = new FeatureHubUsageValue(fs, rawValue);
     return new DefaultUsageEventWithFeature(fuv, null, null);
   }
 
-  private static IUsageFeaturesCollection CollectionEvent(params (string key, FeatureValueType type, object? rawValue)[] features)
+  private static DefaultUsageFeaturesCollection CollectionEvent(params (string key, FeatureValueType type, object? rawValue)[] features)
   {
     var values = new List<FeatureHubUsageValue>();
     foreach (var (key, type, rawValue) in features)

@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace FeatureHubTest
 {
-  class PercentageMurmurTest
+  sealed class PercentageMurmurTest
   {
     [Test]
     public void BasicMumurTest()

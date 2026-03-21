@@ -34,15 +34,17 @@ public class OpenTelemetryFeatureValueInterceptor : IFeatureValueInterceptor
       if (eqIndex < 0)
         continue;
 
-      var segmentKey = segment.Substring(0, eqIndex).Trim();
-      if (!string.Equals(segmentKey, key, StringComparison.Ordinal))
+      var segmentKey = segment.AsSpan(0, eqIndex).Trim();
+      if (!segmentKey.Equals(key.AsSpan(), StringComparison.Ordinal))
         continue;
 
       // Key matched — no point overriding if we have no type information
       if (featureState?.Type == null)
         return (false, null);
 
+#pragma warning disable CA1846 // Uri.UnescapeDataString has no span-based overload
       var rawValue = Uri.UnescapeDataString(segment.Substring(eqIndex + 1));
+#pragma warning restore CA1846
       return ConvertValue(rawValue, featureState.Type.Value);
     }
 

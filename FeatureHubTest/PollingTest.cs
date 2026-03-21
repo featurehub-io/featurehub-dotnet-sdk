@@ -12,8 +12,16 @@ using NUnit.Framework;
 
 namespace FeatureHubTest
 {
-  class PollingTest
+#pragma warning disable CA1001 // poll is disposed in [TearDown]
+  sealed class PollingTest
+#pragma warning restore CA1001
   {
+    private static readonly string[] CacheControlWithMaxAge = { "bark, max-age=21, woof" };
+    private static readonly string[] CacheControlNoAge = { "no-store, no-age, bark, bark, bark" };
+    private static readonly string[] EtagValue = { "123445" };
+    private static readonly string[] SingleSdkKey = { "123" };
+    private static readonly string[] SingleKey1 = { "key1" };
+
     Mock<IFeatureRepositoryContext> repository;
     Mock<IFeatureHubConfig> config;
     PollingEdgeService poll;
@@ -26,12 +34,18 @@ namespace FeatureHubTest
       poll = new PollingEdgeService(repository.Object, config.Object);
     }
 
+    [TearDown]
+    public void TearDown()
+    {
+      poll?.Dispose();
+    }
+
     [Test]
     public void CacheControlContainsNewTimeout()
     {
-      poll.DecodeCacheControl(new List<string>(new string[] { "bark, max-age=21, woof" }));
+      poll.DecodeCacheControl(new List<string>(CacheControlWithMaxAge));
       Assert.That(poll.TimeoutSeconds, Is.EqualTo(21));
-      poll.DecodeCacheControl(new List<string>(new string[] { "no-store, no-age, bark, bark, bark" }));
+      poll.DecodeCacheControl(new List<string>(CacheControlNoAge));
       Assert.That(poll.TimeoutSeconds, Is.EqualTo(21));
     }
 
@@ -43,7 +57,7 @@ namespace FeatureHubTest
           new List<FeatureEnvironmentCollection>());
       poll.CheckForEtag(response);
       Assert.That(poll.Etag, Is.Null);
-      response.Headers["ETag"] = new List<string>(new[] { "123445" });
+      response.Headers["ETag"] = new List<string>(EtagValue);
       poll.CheckForEtag(response);
       Assert.That(poll.Etag, Is.EqualTo("123445"));
     }
@@ -113,7 +127,7 @@ namespace FeatureHubTest
       var response = new ApiResponse<List<FeatureEnvironmentCollection>>((HttpStatusCode)236,
           new Multimap<string, string>(),
           new List<FeatureEnvironmentCollection>());
-      var sdkKeys = new List<string>(new[] { "123" });
+      var sdkKeys = new List<string>(SingleSdkKey);
       config.Setup(c => c.SdkKeys).Returns(sdkKeys);
       mockApi.Setup(s =>
           s.GetFeatureStatesWithHttpInfoAsync(
@@ -159,7 +173,7 @@ namespace FeatureHubTest
       return activePoll;
     }
 
-    private Mock<IFeatureServiceApi> OkApiMock(List<string> sdkKeys)
+    private static Mock<IFeatureServiceApi> OkApiMock(List<string> sdkKeys)
     {
       var mockApi = new Mock<IFeatureServiceApi>();
       var response = new ApiResponse<List<FeatureEnvironmentCollection>>(
@@ -175,7 +189,7 @@ namespace FeatureHubTest
     [Test]
     public async Task ActiveRest_FirstPollCallsApi()
     {
-      var sdkKeys = new List<string>(new[] { "key1" });
+      var sdkKeys = new List<string>(SingleKey1);
       config.Setup(c => c.SdkKeys).Returns(sdkKeys);
       var mockApi = OkApiMock(sdkKeys);
       var activePoll = ActiveRestPoll(mockApi, sdkKeys);
@@ -189,7 +203,7 @@ namespace FeatureHubTest
     [Test]
     public async Task ActiveRest_TimerIsActiveAfterFirstPoll()
     {
-      var sdkKeys = new List<string>(new[] { "key1" });
+      var sdkKeys = new List<string>(SingleKey1);
       config.Setup(c => c.SdkKeys).Returns(sdkKeys);
       var mockApi = OkApiMock(sdkKeys);
       var activePoll = ActiveRestPoll(mockApi, sdkKeys);
@@ -202,7 +216,7 @@ namespace FeatureHubTest
     [Test]
     public async Task ActiveRest_SecondPollIgnoredWhileTimerActive()
     {
-      var sdkKeys = new List<string>(new[] { "key1" });
+      var sdkKeys = new List<string>(SingleKey1);
       config.Setup(c => c.SdkKeys).Returns(sdkKeys);
       var mockApi = OkApiMock(sdkKeys);
       var activePoll = ActiveRestPoll(mockApi, sdkKeys);
@@ -217,7 +231,7 @@ namespace FeatureHubTest
     [Test]
     public async Task ActiveRest_TimerFiresNewPoll()
     {
-      var sdkKeys = new List<string>(new[] { "key1" });
+      var sdkKeys = new List<string>(SingleKey1);
       config.Setup(c => c.SdkKeys).Returns(sdkKeys);
       var mockApi = OkApiMock(sdkKeys);
       // use a very short timeout so the timer fires quickly in the test
@@ -235,7 +249,7 @@ namespace FeatureHubTest
     [Test]
     public async Task ActiveRest_DeadConnectionStopsTimer()
     {
-      var sdkKeys = new List<string>(new[] { "key1" });
+      var sdkKeys = new List<string>(SingleKey1);
       var encode = new EncodeUtils();
       config.Setup(c => c.SdkKeys).Returns(sdkKeys);
       config.Setup(c => c.EnvironmentId).Returns(encode.EnvironmentId);
@@ -255,7 +269,7 @@ namespace FeatureHubTest
     [Test]
     public async Task ActiveRest_CloseDisposesTimer()
     {
-      var sdkKeys = new List<string>(new[] { "key1" });
+      var sdkKeys = new List<string>(SingleKey1);
       config.Setup(c => c.SdkKeys).Returns(sdkKeys);
       var mockApi = OkApiMock(sdkKeys);
       var activePoll = ActiveRestPoll(mockApi, sdkKeys);

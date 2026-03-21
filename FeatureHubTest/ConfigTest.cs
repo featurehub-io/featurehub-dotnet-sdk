@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace FeatureHubTest
 {
-  class ConfigTest
+  sealed class ConfigTest
   {
     [Test]
     public void EnsureConfigCorrectlyDeterminesUrl()

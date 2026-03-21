@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace FeatureHubTest
 {
   [TestFixture]
-  class LocalYamlValueInterceptorTest
+  sealed class LocalYamlValueInterceptorTest
   {
     private string _yamlFile = null!;
 

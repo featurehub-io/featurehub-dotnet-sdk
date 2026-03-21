@@ -12,10 +12,14 @@ using NUnit.Framework;
 namespace FeatureHubUsageOpenTelemetryTest;
 
 [TestFixture]
-public class OpenTelemetryTrackerUsagePluginTest
+#pragma warning disable CA1001 // _listener is disposed in [TearDown]
+public sealed class OpenTelemetryTrackerUsagePluginTest
+#pragma warning restore CA1001
 {
   // One source shared across all tests in this fixture
   private static readonly ActivitySource Source = new ActivitySource("FeatureHubTrackerTest");
+  private static readonly string[] StringAB = { "a", "b" };
+  private static readonly bool[] BoolTrueFalse = { true, false };
 
   private ActivityListener _listener = null!;
   private Activity? _activity;
@@ -43,7 +47,7 @@ public class OpenTelemetryTrackerUsagePluginTest
 
   // ---- Helpers ----
 
-  private static IUsageEventWithFeature FeatureEvent(string key, FeatureValueType type, object? rawValue)
+  private static DefaultUsageEventWithFeature FeatureEvent(string key, FeatureValueType type, object? rawValue)
   {
     var fs = new FeatureState(id: Guid.NewGuid(), key: key, type: type, environmentId: Guid.NewGuid());
     var fuv = new FeatureHubUsageValue(fs, rawValue);
@@ -95,7 +99,7 @@ public class OpenTelemetryTrackerUsagePluginTest
   {
     var list = new List<string> { "a", "b" };
     Assert.That(OpenTelemetryTrackerUsagePlugin.ConvertValue(list),
-        Is.EqualTo(new[] { "a", "b" }));
+        Is.EqualTo(StringAB));
   }
 
   [Test]
@@ -103,7 +107,7 @@ public class OpenTelemetryTrackerUsagePluginTest
   {
     var list = new List<bool> { true, false };
     Assert.That(OpenTelemetryTrackerUsagePlugin.ConvertValue(list),
-        Is.EqualTo(new[] { true, false }));
+        Is.EqualTo(BoolTrueFalse));
   }
 
   [Test]

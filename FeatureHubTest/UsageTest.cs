@@ -11,7 +11,7 @@ namespace FeatureHubTest
 {
   // ---- helpers ----
 
-  class RecordingPlugin : UsagePlugin
+  sealed class RecordingPlugin : UsagePlugin
   {
     public readonly List<IUsageEvent> Received = new List<IUsageEvent>();
     public bool Throws;
@@ -19,7 +19,7 @@ namespace FeatureHubTest
     public override void Send(IUsageEvent usageEvent)
     {
       if (Throws)
-        throw new Exception("plugin error");
+        throw new InvalidOperationException("plugin error");
       Received.Add(usageEvent);
     }
   }
@@ -27,7 +27,7 @@ namespace FeatureHubTest
   // ---- DefaultUsageProvider.Convert ----
 
   [TestFixture]
-  class UsageConvertTest
+  sealed class UsageConvertTest
   {
     [Test]
     public void BooleanTrueBecomesOn()
@@ -61,7 +61,7 @@ namespace FeatureHubTest
   // ---- FeatureHubUsageValue ----
 
   [TestFixture]
-  class FeatureHubUsageValueTest
+  sealed class FeatureHubUsageValueTest
   {
     private Guid _envId;
     private Guid _featureId;
@@ -145,7 +145,7 @@ namespace FeatureHubTest
   // ---- DefaultUsageEvent ----
 
   [TestFixture]
-  class DefaultUsageEventTest
+  sealed class DefaultUsageEventTest
   {
     [Test]
     public void DefaultConstructorHasNullUserKey()
@@ -195,9 +195,9 @@ namespace FeatureHubTest
   // ---- DefaultUsageEventWithFeature ----
 
   [TestFixture]
-  class DefaultUsageEventWithFeatureTest
+  sealed class DefaultUsageEventWithFeatureTest
   {
-    private FeatureHubUsageValue _fv;
+    private FeatureHubUsageValue _fv = null!;
     private Guid _envId;
 
     [SetUp]
@@ -283,9 +283,9 @@ namespace FeatureHubTest
   // ---- DefaultUsageFeaturesCollection ----
 
   [TestFixture]
-  class DefaultUsageFeaturesCollectionTest
+  sealed class DefaultUsageFeaturesCollectionTest
   {
-    private FeatureHubUsageValue MakeValue(string key, FeatureValueType type, object raw)
+    private static FeatureHubUsageValue MakeValue(string key, FeatureValueType type, object raw)
     {
       var fs = new FeatureState(id: Guid.NewGuid(), key: key, varVersion: 1,
         type: type, value: raw, environmentId: Guid.NewGuid());
@@ -328,9 +328,9 @@ namespace FeatureHubTest
   // ---- DefaultUsageFeaturesCollectionContext ----
 
   [TestFixture]
-  class DefaultUsageFeaturesCollectionContextTest
+  sealed class DefaultUsageFeaturesCollectionContextTest
   {
-    private FeatureHubUsageValue MakeValue(string key, FeatureValueType type, object raw)
+    private static FeatureHubUsageValue MakeValue(string key, FeatureValueType type, object raw)
     {
       var fs = new FeatureState(id: Guid.NewGuid(), key: key, varVersion: 1,
         type: type, value: raw, environmentId: Guid.NewGuid());
@@ -375,7 +375,7 @@ namespace FeatureHubTest
   // ---- UsagePlugin ----
 
   [TestFixture]
-  class UsagePluginTest
+  sealed class UsagePluginTest
   {
     [Test]
     public void DefaultEventParamsStartsEmpty()
@@ -398,7 +398,7 @@ namespace FeatureHubTest
   // ---- BaseUsageProvider ----
 
   [TestFixture]
-  class BaseUsageProviderTest
+  sealed class BaseUsageProviderTest
   {
     private BaseUsageProvider _provider = null!;
     private FeatureHubUsageValue _fv = null!;
@@ -414,7 +414,7 @@ namespace FeatureHubTest
 
     [Test]
     public void CreateUsageFeatureReturnsCorrectType()
-      => Assert.That(_provider.CreateUsageFeature(_fv, null, null),
+      => Assert.That(_provider.CreateUsageFeature(_fv, null!, null!),
         Is.InstanceOf<DefaultUsageEventWithFeature>());
 
     [Test]
@@ -458,10 +458,10 @@ namespace FeatureHubTest
   // ---- UsageAdapter ----
 
   [TestFixture]
-  class UsageAdapterTest
+  sealed class UsageAdapterTest
   {
-    private FeatureHubRepository _repo;
-    private UsageAdapter _adapter;
+    private FeatureHubRepository _repo = null!;
+    private UsageAdapter _adapter = null!;
 
     [SetUp]
     public void SetUp()
@@ -535,9 +535,9 @@ namespace FeatureHubTest
   // ---- FeatureHubRepository usage stream integration ----
 
   [TestFixture]
-  class RepositoryUsageStreamTest
+  sealed class RepositoryUsageStreamTest
   {
-    private FeatureHubRepository _repo;
+    private FeatureHubRepository _repo = null!;
 
     [SetUp]
     public void SetUp() => _repo = new FeatureHubRepository();
@@ -617,7 +617,7 @@ namespace FeatureHubTest
 
       Assert.That(received, Is.Not.Null);
       Assert.That(received, Is.InstanceOf<IUsageEventWithFeature>());
-      var withFeature = (IUsageEventWithFeature)received;
+      var withFeature = (IUsageEventWithFeature)received!;
       Assert.That(withFeature.Feature.Key, Is.EqualTo("flag"));
       Assert.That(withFeature.Feature.Value, Is.EqualTo("on"));
     }

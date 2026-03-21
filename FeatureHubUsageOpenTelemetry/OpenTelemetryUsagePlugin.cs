@@ -28,6 +28,7 @@ public class OpenTelemetryUsagePlugin : UsagePlugin
 
   private const string BaggageKey = "fhub";
   private const string FhubKeysMapKey = "fhub_keys";
+  private static readonly char[] CommaSeparator = { ',' };
 
   public override void Send(IUsageEvent usageEvent)
   {
@@ -60,7 +61,7 @@ public class OpenTelemetryUsagePlugin : UsagePlugin
     if (!map.TryGetValue(FhubKeysMapKey, out var keysObj) || keysObj == null)
       return;
 
-    var keys = keysObj.ToString()!.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+    var keys = keysObj.ToString()!.Split(CommaSeparator, StringSplitOptions.RemoveEmptyEntries);
     if (keys.Length == 0)
       return;
 
@@ -100,7 +101,7 @@ public class OpenTelemetryUsagePlugin : UsagePlugin
     string s => s,
     null => null,
     // Fallback for any other numeric type (e.g. int stored by tests)
-    _ => Convert.ToDouble(rawValue).ToString(CultureInfo.InvariantCulture)
+    _ => Convert.ToDouble(rawValue, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture)
   };
 
   /// <summary>

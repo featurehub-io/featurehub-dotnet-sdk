@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace FeatureHubTest
 {
-  class StrategyMatcherTest
+  sealed class StrategyMatcherTest
   {
     private MatcherRegistry registry;
 
