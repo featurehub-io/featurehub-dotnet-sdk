@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
@@ -28,18 +29,19 @@ namespace FeatureHubSDK
     {
       _hashAlgorithm = MurmurHash.Create32();
     }
-    
+
     public int DetermineClientPercentage(string percentageText, Guid featureId)
     {
       var hashCode = _hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(percentageText + featureId));
       var result = BitConverter.ToInt32(hashCode, 0);
       var ratio = (result & 0xFFFFFFFFL) / Math.Pow(2, 32);
-      return (int) Math.Floor(MAX_PERCENTAGE * ratio);
+      return (int)Math.Floor(MAX_PERCENTAGE * ratio);
     }
 
     public void Dispose()
     {
       _hashAlgorithm?.Dispose();
+      GC.SuppressFinalize(this);
     }
   }
 
@@ -83,16 +85,15 @@ namespace FeatureHubSDK
             // determine what the percentage key is
             var newPercentageKey = DeterminePercentageKey(context, rsi.PercentageAttributes);
 
-            if (!basePercentage.ContainsKey(newPercentageKey))
+            if (!basePercentage.TryGetValue(newPercentageKey, out var basePercentageVal))
             {
+              basePercentageVal = 0;
               basePercentage[newPercentageKey] = 0;
             }
 
-            var basePercentageVal = basePercentage[newPercentageKey];
-
             // if we have changed the key or we have never calculated it, calculate it and set the
             // base percentage to null
-            if (percentage == null || !newPercentageKey.Equals(percentageKey))
+            if (percentage == null || !string.Equals(newPercentageKey, percentageKey, StringComparison.Ordinal))
             {
               percentageKey = newPercentageKey;
               percentage = _percentageCalculator.DetermineClientPercentage(percentageKey, featureValueId);
@@ -116,7 +117,7 @@ namespace FeatureHubSDK
               }
             }
 
-              // this was only a percentage and had no other attributes
+            // this was only a percentage and had no other attributes
             if (rsi.Attributes == null || rsi.Attributes.Count == 0)
             {
               basePercentage[percentageKey] += rsi.Percentage;
@@ -142,9 +143,9 @@ namespace FeatureHubSDK
       foreach (var attr in rsi.Attributes)
       {
         var suppliedValue = context.GetAttrs(attr.FieldName);
-        var suppliedEmpty = !suppliedValue.Any();
+        var suppliedEmpty = suppliedValue.Count == 0;
 
-        if (suppliedEmpty && attr.FieldName.ToLower().Equals("now"))
+        if (suppliedEmpty && string.Equals(attr.FieldName, "now", StringComparison.OrdinalIgnoreCase))
         {
           switch (attr.Type)
           {
@@ -186,7 +187,7 @@ namespace FeatureHubSDK
       return true;
     }
 
-    private string DeterminePercentageKey(IClientContext context, List<string> rsiPercentageAttributes)
+    private static string DeterminePercentageKey(IClientContext context, List<string> rsiPercentageAttributes)
     {
       if (rsiPercentageAttributes == null || rsiPercentageAttributes.Count == 0)
       {
@@ -245,7 +246,7 @@ namespace FeatureHubSDK
   {
     public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
-      var val = "true".Equals(suppliedValue);
+      var val = "true".Equals(suppliedValue, StringComparison.OrdinalIgnoreCase);
 
       if (suppliedValue == null)
       {
@@ -254,12 +255,12 @@ namespace FeatureHubSDK
 
       if (attr.Conditional == RolloutStrategyAttributeConditional.EQUALS)
       {
-        return val == (attr.Values[0] is bool ? (bool) attr.Values[0] : bool.Parse(attr.Values[0].ToString()));
+        return val == (attr.Values[0] is bool ? (bool)attr.Values[0] : bool.Parse(attr.Values[0].ToString()));
       }
 
       if (attr.Conditional == RolloutStrategyAttributeConditional.NOTEQUALS)
       {
-        return val != (attr.Values[0] is bool ? ((bool) attr.Values[0]) : bool.Parse(attr.Values[0].ToString()));
+        return val != (attr.Values[0] is bool ? ((bool)attr.Values[0]) : bool.Parse(attr.Values[0].ToString()));
       }
 
       return false;
@@ -275,11 +276,11 @@ namespace FeatureHubSDK
       switch (attr.Conditional)
       {
         case RolloutStrategyAttributeConditional.EQUALS:
-          return vals.Any(v => v.Equals(suppliedValue));
+          return vals.Any(v => v.Equals(suppliedValue, StringComparison.Ordinal));
         case RolloutStrategyAttributeConditional.ENDSWITH:
-          return vals.Any(suppliedValue.EndsWith);
+          return vals.Any(v => suppliedValue.EndsWith(v, StringComparison.Ordinal));
         case RolloutStrategyAttributeConditional.STARTSWITH:
-          return vals.Any(suppliedValue.StartsWith);
+          return vals.Any(v => suppliedValue.StartsWith(v, StringComparison.Ordinal));
         case RolloutStrategyAttributeConditional.GREATER:
           return vals.Any(v => string.Compare(suppliedValue, v, StringComparison.Ordinal) > 0);
         case RolloutStrategyAttributeConditional.GREATEREQUALS:
@@ -289,11 +290,11 @@ namespace FeatureHubSDK
         case RolloutStrategyAttributeConditional.LESSEQUALS:
           return vals.Any(v => string.Compare(suppliedValue, v, StringComparison.Ordinal) <= 0);
         case RolloutStrategyAttributeConditional.NOTEQUALS:
-          return !vals.Any(v => v.Equals(suppliedValue));
+          return !vals.Any(v => v.Equals(suppliedValue, StringComparison.Ordinal));
         case RolloutStrategyAttributeConditional.INCLUDES:
-          return vals.Any(suppliedValue.Contains);
+          return vals.Any(v => suppliedValue.IndexOf(v, StringComparison.Ordinal) >= 0);
         case RolloutStrategyAttributeConditional.EXCLUDES:
-          return !vals.Any(suppliedValue.Contains);
+          return !vals.Any(v => suppliedValue.IndexOf(v, StringComparison.Ordinal) >= 0);
         case RolloutStrategyAttributeConditional.REGEX:
           return vals.Any(v => Regex.IsMatch(suppliedValue, v));
         default:
@@ -306,29 +307,29 @@ namespace FeatureHubSDK
   {
     public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
-      var suppliedDate = LocalDate.FromDateTime(DateTime.Parse(suppliedValue));
+      var suppliedDate = LocalDate.FromDateTime(DateTime.Parse(suppliedValue, CultureInfo.InvariantCulture));
       var vals = attr.Values.Where(v => v != null).Select(v => v.ToString()).ToList();
 
       switch (attr.Conditional)
       {
         case RolloutStrategyAttributeConditional.EQUALS:
         case RolloutStrategyAttributeConditional.INCLUDES:
-          return vals.Any(v => suppliedDate.Equals(LocalDate.FromDateTime(DateTime.Parse(v))));
+          return vals.Any(v => suppliedDate.Equals(LocalDate.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))));
         case RolloutStrategyAttributeConditional.ENDSWITH:
-          return vals.Any(suppliedValue.EndsWith);
+          return vals.Any(v => suppliedValue.EndsWith(v, StringComparison.Ordinal));
         case RolloutStrategyAttributeConditional.STARTSWITH:
-          return vals.Any(suppliedValue.StartsWith);
+          return vals.Any(v => suppliedValue.StartsWith(v, StringComparison.Ordinal));
         case RolloutStrategyAttributeConditional.GREATER:
-          return vals.Any(v => suppliedDate.CompareTo(LocalDate.FromDateTime(DateTime.Parse(v))) > 0);
+          return vals.Any(v => suppliedDate.CompareTo(LocalDate.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))) > 0);
         case RolloutStrategyAttributeConditional.GREATEREQUALS:
-          return vals.Any(v => suppliedDate.CompareTo(LocalDate.FromDateTime(DateTime.Parse(v))) >= 0);
+          return vals.Any(v => suppliedDate.CompareTo(LocalDate.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))) >= 0);
         case RolloutStrategyAttributeConditional.LESS:
-          return vals.Any(v => suppliedDate.CompareTo(LocalDate.FromDateTime(DateTime.Parse(v))) < 0);
+          return vals.Any(v => suppliedDate.CompareTo(LocalDate.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))) < 0);
         case RolloutStrategyAttributeConditional.LESSEQUALS:
-          return vals.Any(v => suppliedDate.CompareTo(LocalDate.FromDateTime(DateTime.Parse(v))) <= 0);
+          return vals.Any(v => suppliedDate.CompareTo(LocalDate.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))) <= 0);
         case RolloutStrategyAttributeConditional.EXCLUDES:
         case RolloutStrategyAttributeConditional.NOTEQUALS:
-          return !vals.Any(v => suppliedDate.Equals(LocalDate.FromDateTime(DateTime.Parse(v.ToString()))));
+          return !vals.Any(v => suppliedDate.Equals(LocalDate.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))));
         case RolloutStrategyAttributeConditional.REGEX:
           return vals.Any(v => Regex.IsMatch(suppliedValue, v));
         default:
@@ -341,29 +342,29 @@ namespace FeatureHubSDK
   {
     public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
-      var suppliedDate = LocalDateTime.FromDateTime(DateTime.Parse(suppliedValue));
+      var suppliedDate = LocalDateTime.FromDateTime(DateTime.Parse(suppliedValue, CultureInfo.InvariantCulture));
       var vals = attr.Values.Where(v => v != null).Select(v => v.ToString()).ToList();
 
       switch (attr.Conditional)
       {
         case RolloutStrategyAttributeConditional.EQUALS:
         case RolloutStrategyAttributeConditional.INCLUDES:
-          return vals.Any(v => suppliedDate.Equals(LocalDateTime.FromDateTime(DateTime.Parse(v))));
+          return vals.Any(v => suppliedDate.Equals(LocalDateTime.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))));
         case RolloutStrategyAttributeConditional.ENDSWITH:
-          return vals.Any(suppliedValue.EndsWith);
+          return vals.Any(v => suppliedValue.EndsWith(v, StringComparison.Ordinal));
         case RolloutStrategyAttributeConditional.STARTSWITH:
-          return vals.Any(suppliedValue.StartsWith);
+          return vals.Any(v => suppliedValue.StartsWith(v, StringComparison.Ordinal));
         case RolloutStrategyAttributeConditional.GREATER:
-          return vals.Any(v => suppliedDate.CompareTo(LocalDateTime.FromDateTime(DateTime.Parse(v))) > 0);
+          return vals.Any(v => suppliedDate.CompareTo(LocalDateTime.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))) > 0);
         case RolloutStrategyAttributeConditional.GREATEREQUALS:
-          return vals.Any(v => suppliedDate.CompareTo(LocalDateTime.FromDateTime(DateTime.Parse(v))) >= 0);
+          return vals.Any(v => suppliedDate.CompareTo(LocalDateTime.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))) >= 0);
         case RolloutStrategyAttributeConditional.LESS:
-          return vals.Any(v => suppliedDate.CompareTo(LocalDateTime.FromDateTime(DateTime.Parse(v))) < 0);
+          return vals.Any(v => suppliedDate.CompareTo(LocalDateTime.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))) < 0);
         case RolloutStrategyAttributeConditional.LESSEQUALS:
-          return vals.Any(v => suppliedDate.CompareTo(LocalDateTime.FromDateTime(DateTime.Parse(v))) <= 0);
+          return vals.Any(v => suppliedDate.CompareTo(LocalDateTime.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))) <= 0);
         case RolloutStrategyAttributeConditional.EXCLUDES:
         case RolloutStrategyAttributeConditional.NOTEQUALS:
-          return !vals.Any(v => suppliedDate.Equals(LocalDateTime.FromDateTime(DateTime.Parse(v.ToString()))));
+          return !vals.Any(v => suppliedDate.Equals(LocalDateTime.FromDateTime(DateTime.Parse(v, CultureInfo.InvariantCulture))));
         case RolloutStrategyAttributeConditional.REGEX:
           return vals.Any(v => Regex.IsMatch(suppliedValue, v));
         default:
@@ -377,12 +378,12 @@ namespace FeatureHubSDK
     private FeatureRolloutStrategyAttribute _attr;
 
     private IEnumerable<decimal> DVals =>
-      _attr.Values.Where(v => v != null).Select(v => decimal.Parse(v.ToString())).ToList();
+      _attr.Values.Where(v => v != null).Select(v => decimal.Parse(v.ToString(), CultureInfo.InvariantCulture)).ToList();
 
     public bool Match(string suppliedValue, FeatureRolloutStrategyAttribute attr)
     {
       _attr = attr;
-      var dec = decimal.Parse(suppliedValue);
+      var dec = decimal.Parse(suppliedValue, CultureInfo.InvariantCulture);
 
       switch (attr.Conditional)
       {
@@ -390,9 +391,9 @@ namespace FeatureHubSDK
         case RolloutStrategyAttributeConditional.INCLUDES:
           return DVals.Any(v => dec.Equals(v));
         case RolloutStrategyAttributeConditional.ENDSWITH:
-          return attr.Values.Where(v => v != null).Any(v => suppliedValue.EndsWith(v.ToString()));
+          return attr.Values.Where(v => v != null).Any(v => suppliedValue.EndsWith(v.ToString(), System.StringComparison.InvariantCulture));
         case RolloutStrategyAttributeConditional.STARTSWITH:
-          return attr.Values.Where(v => v != null).Any(v => suppliedValue.StartsWith(v.ToString()));
+          return attr.Values.Where(v => v != null).Any(v => suppliedValue.StartsWith(v.ToString(), System.StringComparison.InvariantCulture));
         case RolloutStrategyAttributeConditional.GREATER:
           return DVals.Any(v => dec.CompareTo(v) > 0);
         case RolloutStrategyAttributeConditional.GREATEREQUALS:
@@ -499,7 +500,7 @@ namespace FeatureHubSDK
     {
       if (proxy._isAddress && _isAddress)
       {
-        return  _address.Equals(proxy._address);
+        return _address.Equals(proxy._address);
       }
 
       if (!proxy._isAddress && !_isAddress)

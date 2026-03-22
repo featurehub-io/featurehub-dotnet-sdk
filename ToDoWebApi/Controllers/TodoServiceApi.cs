@@ -20,169 +20,169 @@ using Newtonsoft.Json;
 [ApiController]
 public class TodoServiceApiController : ControllerBase
 {
-    private readonly ITodoServiceRepository _todoServiceRepository;
-    private readonly IFeatureHubConfig _featureHub;
+  private readonly ITodoServiceRepository _todoServiceRepository;
+  private readonly IFeatureHubConfig _featureHub;
 
-    public TodoServiceApiController(ITodoServiceRepository todoServiceRepository, IFeatureHubConfig featureHub)
+  public TodoServiceApiController(ITodoServiceRepository todoServiceRepository, IFeatureHubConfig featureHub)
+  {
+    _todoServiceRepository = todoServiceRepository;
+    _featureHub = featureHub;
+  }
+
+  private List<Todo> GetTodosForUser(string user)
+  {
+    return _todoServiceRepository.UsersTodos(user);
+  }
+
+  /// <summary>
+  /// addTodo
+  /// </summary>
+  /// <param name="user"></param>
+  /// <param name="todo"></param>
+  /// <response code="201"></response>
+  [HttpPost]
+  [Route("/todo/{user}")]
+  public virtual async Task<IActionResult> AddTodo([FromRoute][Required] string user, [FromBody] Todo todo)
+  {
+    if (todo.Id == null)
     {
-        _todoServiceRepository = todoServiceRepository;
-        _featureHub = featureHub;
+      todo.Id = new Guid().ToString();
     }
 
-    private List<Todo> GetTodosForUser(string user)
+    var todos = GetTodosForUser(user);
+
+    todos.Add(todo);
+
+    var result = new ObjectResult(await TransformTodos(user, todos)) { StatusCode = 201 };
+    return result;
+  }
+
+  private async Task<List<Todo>> TransformTodos(string user, List<Todo> todos)
+  {
+    var ctx = await _featureHub.NewContext().UserKey(user).Platform(StrategyAttributePlatformName.Macos)
+        .Build();
+    var t = new List<Todo>();
+    foreach (var todo in todos)
     {
-        return _todoServiceRepository.UsersTodos(user);
+      var nTodo = new Todo();
+      nTodo.Id = todo.Id;
+      nTodo.Resolved = todo.Resolved;
+      nTodo.Title = ProcessTitle(ctx, todo.Title);
+      nTodo.When = todo.When;
+      t.Add(nTodo);
     }
 
-    /// <summary>
-    /// addTodo
-    /// </summary>
-    /// <param name="user"></param>
-    /// <param name="todo"></param>
-    /// <response code="201"></response>
-    [HttpPost]
-    [Route("/todo/{user}")]
-    public virtual async Task<IActionResult> AddTodo([FromRoute] [Required] string user, [FromBody] Todo todo)
+    return t;
+  }
+
+  private string ProcessTitle(IClientContext ctx, string title)
+  {
+    if (title == null)
     {
-        if (todo.Id == null)
-        {
-            todo.Id = new Guid().ToString();
-        }
-
-        var todos = GetTodosForUser(user);
-
-        todos.Add(todo);
-
-        var result = new ObjectResult(await TransformTodos(user, todos)) {StatusCode = 201};
-        return result;
+      return null;
     }
 
-    private async Task<List<Todo>> TransformTodos(string user, List<Todo> todos)
+    if (ctx == null)
     {
-        var ctx = await _featureHub.NewContext().UserKey(user).Platform(StrategyAttributePlatformName.Macos)
-            .Build();
-        var t = new List<Todo>();
-        foreach (var todo in todos)
-        {
-            var nTodo = new Todo();
-            nTodo.Id = todo.Id;
-            nTodo.Resolved = todo.Resolved;
-            nTodo.Title = ProcessTitle(ctx, todo.Title);
-            nTodo.When = todo.When;
-            t.Add(nTodo);
-        }
-
-        return t;
+      return title;
     }
 
-    private string ProcessTitle(IClientContext ctx, string title)
+    if (ctx.IsSet("FEATURE_STRING") && "buy" == title)
     {
-        if (title == null)
-        {
-            return null;
-        }
-
-        if (ctx == null)
-        {
-            return title;
-        }
-
-        if (ctx.IsSet("FEATURE_STRING") && "buy" == title)
-        {
-            title = title + " " + ctx["FEATURE_STRING"].StringValue;
-            // log.debug("Processes string feature: {}", title);
-        }
-
-        if (ctx.IsSet("FEATURE_NUMBER") && title == "pay")
-        {
-            title = title + " " + ctx["FEATURE_NUMBER"].NumberValue.ToString();
-            // log.debug("Processed number feature {}", title);
-        }
-
-        if (ctx.IsSet("FEATURE_JSON") && title == "find")
-        {
-            var feat = JsonConvert.DeserializeObject<Dictionary<string, string>>(ctx["FEATURE_JSON"].JsonValue);
-
-            title = title + " " + (feat.ContainsKey("foo") ? feat["foo"] : "");
-            // log.debug("Processed JSON feature {}", title);
-        }
-
-        if (ctx.IsEnabled("FEATURE_TITLE_TO_UPPERCASE"))
-        {
-            title = title.ToUpper();
-            // log.debug("Processed boolean feature {}", title);
-        }
-
-        return title;
+      title = title + " " + ctx["FEATURE_STRING"].StringValue;
+      // log.debug("Processes string feature: {}", title);
     }
 
-    /// <summary>
-    /// listTodos
-    /// </summary>
-    /// <param name="user"></param>
-    /// <response code="200"></response>
-    [HttpGet]
-    [Route("/todo/{user}")]
-    public virtual async Task<IActionResult> ListTodos([FromRoute] [Required] string user)
+    if (ctx.IsSet("FEATURE_NUMBER") && title == "pay")
     {
-        var todos = await TransformTodos(user, GetTodosForUser(user));
-        var result = new ObjectResult(todos) {StatusCode = 200};
-        return result;
+      title = title + " " + ctx["FEATURE_NUMBER"].NumberValue.ToString();
+      // log.debug("Processed number feature {}", title);
     }
 
-    /// <summary>
-    /// removeAll
-    /// </summary>
-    /// <param name="user"></param>
-    /// <response code="204"></response>
-    [HttpDelete]
-    [Route("/todo/{user}")]
-    public virtual IActionResult RemoveAllTodos([FromRoute] [Required] string user)
+    if (ctx.IsSet("FEATURE_JSON") && title == "find")
     {
-        GetTodosForUser(user).Clear();
+      var feat = JsonConvert.DeserializeObject<Dictionary<string, string>>(ctx["FEATURE_JSON"].JsonValue);
 
-        return StatusCode(204);
+      title = title + " " + (feat.ContainsKey("foo") ? feat["foo"] : "");
+      // log.debug("Processed JSON feature {}", title);
     }
 
-    /// <summary>
-    /// removeTodo
-    /// </summary>
-    /// <param name="user"></param>
-    /// <param name="id"></param>
-    /// <response code="200"></response>
-    [HttpDelete]
-    [Route("/todo/{user}/{id}")]
-    public virtual async Task<IActionResult> RemoveTodo([FromRoute] [Required] string user,
-        [FromRoute] [Required] string id)
+    if (ctx.IsEnabled("FEATURE_TITLE_TO_UPPERCASE"))
     {
-        var todos = GetTodosForUser(user);
-        todos.RemoveAll((t) => t.Id == id);
-        var result = new ObjectResult(await TransformTodos(user, todos)) {StatusCode = 200};
-        return result;
+      title = title.ToUpper();
+      // log.debug("Processed boolean feature {}", title);
     }
 
-    /// <summary>
-    /// resolveTodo
-    /// </summary>
-    /// <param name="id"></param>
-    /// <param name="user"></param>
-    /// <response code="200"></response>
-    [HttpPut]
-    [Route("/todo/{user}/{id}/resolve")]
-    public virtual async Task<IActionResult> ResolveTodo([FromRoute] [Required] string id,
-        [FromRoute] [Required] string user)
-    {
-        var todos = GetTodosForUser(user);
-        foreach (var todo in todos)
-        {
-            if (todo.Id == id)
-            {
-                todo.Resolved = true;
-            }
-        }
+    return title;
+  }
 
-        var result = new ObjectResult(await TransformTodos(user, todos)) {StatusCode = 200};
-        return result;
+  /// <summary>
+  /// listTodos
+  /// </summary>
+  /// <param name="user"></param>
+  /// <response code="200"></response>
+  [HttpGet]
+  [Route("/todo/{user}")]
+  public virtual async Task<IActionResult> ListTodos([FromRoute][Required] string user)
+  {
+    var todos = await TransformTodos(user, GetTodosForUser(user));
+    var result = new ObjectResult(todos) { StatusCode = 200 };
+    return result;
+  }
+
+  /// <summary>
+  /// removeAll
+  /// </summary>
+  /// <param name="user"></param>
+  /// <response code="204"></response>
+  [HttpDelete]
+  [Route("/todo/{user}")]
+  public virtual IActionResult RemoveAllTodos([FromRoute][Required] string user)
+  {
+    GetTodosForUser(user).Clear();
+
+    return StatusCode(204);
+  }
+
+  /// <summary>
+  /// removeTodo
+  /// </summary>
+  /// <param name="user"></param>
+  /// <param name="id"></param>
+  /// <response code="200"></response>
+  [HttpDelete]
+  [Route("/todo/{user}/{id}")]
+  public virtual async Task<IActionResult> RemoveTodo([FromRoute][Required] string user,
+      [FromRoute][Required] string id)
+  {
+    var todos = GetTodosForUser(user);
+    todos.RemoveAll((t) => t.Id == id);
+    var result = new ObjectResult(await TransformTodos(user, todos)) { StatusCode = 200 };
+    return result;
+  }
+
+  /// <summary>
+  /// resolveTodo
+  /// </summary>
+  /// <param name="id"></param>
+  /// <param name="user"></param>
+  /// <response code="200"></response>
+  [HttpPut]
+  [Route("/todo/{user}/{id}/resolve")]
+  public virtual async Task<IActionResult> ResolveTodo([FromRoute][Required] string id,
+      [FromRoute][Required] string user)
+  {
+    var todos = GetTodosForUser(user);
+    foreach (var todo in todos)
+    {
+      if (todo.Id == id)
+      {
+        todo.Resolved = true;
+      }
     }
+
+    var result = new ObjectResult(await TransformTodos(user, todos)) { StatusCode = 200 };
+    return result;
+  }
 }
 

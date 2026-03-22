@@ -17,19 +17,19 @@ jobs:
             9.0.x
             10.0.x
       - name: Restore
-        working-directory: FeatureHubSDK
         run: dotnet restore
+      - name: Check formatting
+        run: dotnet format FeatureHubSDK.sln --verify-no-changes
       - name: Build
+        run: dotnet build FeatureHubSDK.sln --configuration Release --no-restore
+      - name: Pack FeatureHubSDK
         working-directory: FeatureHubSDK
-        run: dotnet build /p:PackageVersion=1.0.0 /p:PackageReleaseNotes="1.0.0 - EventSource library dependency update." --configuration Release
-      - name: Pack
-        working-directory: FeatureHubSDK
-        run: dotnet pack /p:PackageVersion=1.0.0 /p:PackageReleaseNotes="1.0.0 - EventSource library dependency update." --configuration Release
-      - name: Install dependencies
-        run: dotnet restore
-      - name: Pack
-        run: dotnet pack --configuration Release --no-restore
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet pack /p:PackageVersion=1.0.0 --configuration Release --no-build
+      - name: Pack FeatureHubInterceptorYaml
+        working-directory: FeatureHubInterceptorYaml
+        run: dotnet pack /p:PackageVersion=1.0.0 --configuration Release --no-build
+      - name: Pack FeatureHubUsageOpenTelemetry
+        working-directory: FeatureHubUsageOpenTelemetry
+        run: dotnet pack /p:PackageVersion=1.0.0 --configuration Release --no-build
       - name: Test
-        run: dotnet test
+        run: dotnet test FeatureHubSDK.sln

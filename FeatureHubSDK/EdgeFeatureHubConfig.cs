@@ -2,18 +2,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 
 namespace FeatureHubSDK
 {
   public delegate IEdgeService EdgeServiceSource(IFeatureRepositoryContext repository, IFeatureHubConfig config);
 
-  public class FeatureHubConfig
+  public enum EdgeType
   {
-    public static EdgeServiceSource defaultEdgeProvider = (repository, config) => {
-      return new EventServiceListener(repository, config);
-    };
-
+    Streaming, ActiveRest, PassiveRest
   }
 
   public interface IFeatureHubConfig
@@ -26,9 +24,9 @@ namespace FeatureHubSDK
     /// <summary>
     ///  this is the URL of the GET edit service
     /// </summary>
-    string EdgeUrl { get;  }
-    List<string> SdkKeys { get;  }
-    
+    string EdgeUrl { get; }
+    List<string> SdkKeys { get; }
+
     bool ServerEvaluation { get; }
 
     /// <summary>
@@ -36,7 +34,21 @@ namespace FeatureHubSDK
     /// </summary>
     /// <param name="timeout"></param>
     /// <returns></returns>
+    [Obsolete("use PassiveRest or ActiveRest instead")]
     IFeatureHubConfig UsePolling(int timeout = 360);
+
+    /// <summary>
+    /// Tells the client to use Active Polling, an automatic timer will kick off a refresh of data after this many seconds.
+    /// </summary>
+    IFeatureHubConfig ActiveRest(int timeout = 360);
+    /// <summary>
+    /// Tells the client to use Passive Polling, only when this amount of time has elapsed since the last request will it ask for another one. Triggered by usage.
+    /// </summary>
+    IFeatureHubConfig PassiveRest(int timeout = 360);
+    /// <summary>
+    /// Uses Streaming, gets near real-time updates from FeatureHub
+    /// </summary>
+    IFeatureHubConfig Streaming();
 
     /*
      * Initialise the configuration. This will kick off the event source to connect and attempt to start
@@ -46,13 +58,23 @@ namespace FeatureHubSDK
 
     IFeatureRepositoryContext Repository { get; set; }
     IEdgeService EdgeService { get; set; }
+    int Timeout { get; }
 
-    IClientContext NewContext(IFeatureRepositoryContext repository = null, EdgeServiceSource edgeServiceSource = null);
+    Guid EnvironmentId { get; }
+
+    IClientContext NewContext();
 
     // is the system ready? use this in your liveness/health check
-    Readyness Readyness { get; }
+    Readiness Readiness { get; }
+
+    void AddFeatureValueInterceptor(IFeatureValueInterceptor interceptor);
+
+    /// <summary>
+    /// Shut down the edge connection, close all usage plugins, and close all feature value interceptors.
+    /// </summary>
+    void Close();
   }
-  
+
   public class FeatureHubKeyInvalidException : Exception
   {
     public FeatureHubKeyInvalidException(string message)
@@ -66,12 +88,27 @@ namespace FeatureHubSDK
     }
   }
 
+  /// <summary>
+  /// Thrown when an operation is attempted on a configuration that has been closed.
+  /// </summary>
+  public class FeatureHubConfigInvalidException : Exception
+  {
+    public FeatureHubConfigInvalidException(string message)
+      : base(message)
+    {
+    }
+  }
+
   public class EdgeFeatureHubConfig : IFeatureHubConfig
   {
     private readonly string _url;
     private readonly bool _serverEvaluation;
     private readonly string _edgeUrl;
     private readonly List<string> _sdkKeys = new List<string>();
+    private EdgeType _edgeType = EdgeType.Streaming;
+    private readonly Guid _environmentId;
+    private int _timeout;
+    private bool _closed;
 
     public EdgeFeatureHubConfig(string edgeUrl, string sdkKey)
     {
@@ -79,22 +116,22 @@ namespace FeatureHubSDK
       {
         throw new FeatureHubKeyInvalidException($"The edge url or sdk key are null.");
       }
-      
+
       _serverEvaluation = !sdkKey.Contains("*"); // two part keys are server evaluated
 
-      if (!sdkKey.Contains("/") || sdkKey.StartsWith("\""))
+      if (!sdkKey.Contains("/") || sdkKey.StartsWith("\"", System.StringComparison.InvariantCulture))
       {
         throw new FeatureHubKeyInvalidException($"The SDK key `{sdkKey}` is invalid");
       }
-      
+
       _sdkKeys.Add(sdkKey);
 
-      if (edgeUrl.EndsWith("/"))
+      if (edgeUrl.EndsWith("/", System.StringComparison.InvariantCulture))
       {
         edgeUrl = edgeUrl.Substring(0, edgeUrl.Length - 1);
       }
 
-      if (edgeUrl.EndsWith("/features"))
+      if (edgeUrl.EndsWith("/features", System.StringComparison.InvariantCulture))
       {
         edgeUrl = edgeUrl.Substring(0, edgeUrl.Length - "/features".Length);
       }
@@ -102,7 +139,32 @@ namespace FeatureHubSDK
       _edgeUrl = edgeUrl; // the API client automatically adds the /features, etc on
 
       _url = edgeUrl + "/features/" + sdkKey;
+
+      // extract the environment id from the sdk key
+      string[] parts = sdkKey.Split('/');
+      _environmentId = parts.Length > 2 ? Guid.Parse(parts[1]) : Guid.Parse(parts[0]);
+
+      DetermineEdgeType();
     }
+
+    private void DetermineEdgeType()
+    {
+      var pollTimeout = Environment.GetEnvironmentVariable("FEATUREHUB_POLL_TIMEOUT");
+      if (pollTimeout != null)
+      {
+        _edgeType = Environment.GetEnvironmentVariable("FEATUREHUB_POLLING_PASSIVE") != null ? EdgeType.PassiveRest : EdgeType.ActiveRest;
+
+        _timeout = int.Parse(pollTimeout, CultureInfo.InvariantCulture);
+      }
+      else
+      {
+        _edgeType = EdgeType.Streaming;
+      }
+    }
+
+    public int Timeout => _timeout;
+
+    public Guid EnvironmentId => _environmentId;
 
     /// <summary>
     /// Use this constructor if you set the environment variables.
@@ -110,11 +172,17 @@ namespace FeatureHubSDK
     public EdgeFeatureHubConfig() : this(Environment.GetEnvironmentVariable("FEATUREHUB_EDGE_URL"),
       Environment.GetEnvironmentVariable("FEATUREHUB_API_KEY"))
     {
-      
-    } 
+
+    }
 
     public string EdgeUrl => _edgeUrl;
     public List<string> SdkKeys => _sdkKeys;
+
+    public IFeatureHubConfig Streaming()
+    {
+      _edgeType = EdgeType.Streaming;
+      return this;
+    }
 
     public async Task Init()
     {
@@ -125,88 +193,152 @@ namespace FeatureHubSDK
 
     private IEdgeService _edgeService;
 
+    private void CheckEdgeService()
+    {
+      if (_closed)
+        return;
+
+      CheckRepository();
+
+      if (_edgeService == null)
+      {
+        switch (_edgeType)
+        {
+          case EdgeType.ActiveRest:
+          case EdgeType.PassiveRest:
+            FeatureLogging.TraceLogger(this, $"using a poll timeout of {_timeout}s ({_edgeType})");
+            _edgeService = new PollingEdgeService(Repository, this, _timeout, _edgeType);
+            break;
+          case EdgeType.Streaming:
+            FeatureLogging.TraceLogger(this, $"connecting via SSE");
+            _edgeService = new StreamingEdgeService(Repository, this);
+            break;
+        }
+      }
+    }
+
     public IEdgeService EdgeService
     {
       get
       {
-        if (_edgeService == null)
-        {
-          var pollTimeoutDefault = Environment.GetEnvironmentVariable("FEATUREHUB_POLL_TIMEOUT");
-          if (pollTimeoutDefault != null)
-          {
-            FeatureLogging.TraceLogger(this, $"using a poll timeout of $pollTimeoutDefault");
-            _edgeService = new EdgeClientPoll(Repository, this,
-              int.Parse(pollTimeoutDefault));
-          }
-          else
-          {
-            FeatureLogging.TraceLogger(this, $"connecting via SSE");
-            _edgeService = FeatureHubConfig.defaultEdgeProvider(this.Repository, this);            
-          }
-        }
+        CheckEdgeService();
 
         return _edgeService;
       }
-      set
-      {
-        _edgeService = value;
-      }
+      set => _edgeService = value;
     }
+
 
     public IFeatureHubConfig UsePolling(int timeout = 360)
     {
-      _edgeService = new EdgeClientPoll(Repository, this, timeout);
+      return ActiveRest(timeout);
+    }
+
+    public IFeatureHubConfig ActiveRest(int timeout = 360)
+    {
+      _edgeType = EdgeType.ActiveRest;
+      _timeout = timeout;
+      return this;
+    }
+
+    public IFeatureHubConfig PassiveRest(int timeout = 360)
+    {
+      _edgeType = EdgeType.PassiveRest;
+      _timeout = timeout;
       return this;
     }
 
     private IFeatureRepositoryContext _repository;
+    private UsageAdapter _usageAdapter;
+
+    // Dispatches async so that Poll() does not block the feature-read call path.
+    private sealed class PassiveRestTriggerPlugin : UsagePlugin
+    {
+      private readonly EdgeFeatureHubConfig _owner;
+
+      internal PassiveRestTriggerPlugin(EdgeFeatureHubConfig owner) => _owner = owner;
+
+      public override bool CanSendAsync => true;
+
+      public override void Send(IUsageEvent usageEvent)
+      {
+        // a feature evaluation came in and we are using passive rest, so tell the poller in case
+        // it needs to break its cache and perform a new poll
+        if (usageEvent is IUsageEventWithFeature &&
+            _owner._edgeType == EdgeType.PassiveRest &&
+            _owner._edgeService != null)
+        {
+          _ = _owner._edgeService.Poll();
+        }
+      }
+    }
+
+    private void CheckRepository()
+    {
+      if (_closed || _repository != null)
+        return;
+
+      _repository = new FeatureHubRepository();
+      _usageAdapter = new UsageAdapter(_repository);
+      _usageAdapter.RegisterPlugin(new PassiveRestTriggerPlugin(this));
+    }
 
     public IFeatureRepositoryContext Repository
     {
       get
       {
-        if (_repository == null)
-        {
-          _repository = new FeatureHubRepository();
-        }
+        CheckRepository();
 
         return _repository;
       }
-      set
-      {
-        _repository = value;
-      }
+      set => _repository = value;
     }
 
-    public IClientContext NewContext(IFeatureRepositoryContext repository = null, EdgeServiceSource edgeServiceSource = null)
+    public IClientContext NewContext()
     {
-      if (repository == null)
-      {
-        repository = Repository;
-      }
+      if (_closed)
+        throw new FeatureHubConfigInvalidException("Cannot create a new context: the configuration has been closed.");
 
-      if (edgeServiceSource == null)
-      {
-        if (_edgeService != null)
-        {
-          edgeServiceSource = (repo, config) => _edgeService;
-        }
-        else 
-        {
-          edgeServiceSource = (repo, config) => FeatureHubConfig.defaultEdgeProvider(repo, config);
-        }
-      }
+      CheckEdgeService();
+
+      // kick off if it hasn't already
+      _edgeService.Poll();
 
       if (_serverEvaluation)
       {
-        return new ServerEvalFeatureContext(repository, this, edgeServiceSource);
+        return new ServerEvalFeatureContext(_repository, this, _edgeService);
       }
 
-      return new ClientEvalFeatureContext(repository, this, edgeServiceSource);
+      return new ClientEvalFeatureContext(_repository, this);
     }
 
-    public Readyness Readyness => Repository.Readyness;
-    
+
+    public Readiness Readyness => _closed ? Readiness.NotReady : Repository.Readiness;
+    public Readiness Readiness => _closed ? Readiness.NotReady : Repository.Readiness;
+
+
     public string Url => _url;
+
+    public void AddFeatureValueInterceptor(IFeatureValueInterceptor interceptor)
+    {
+      CheckRepository();
+
+      _repository.AddFeatureValueInterceptor(interceptor);
+    }
+
+    public void Close()
+    {
+      if (_closed)
+        return;
+
+      _closed = true;
+      _edgeService?.Close();
+      _usageAdapter?.Close();
+      _repository?.Close();
+      _edgeService = null;
+      _usageAdapter = null;
+      _repository = null;
+    }
   }
+
 }

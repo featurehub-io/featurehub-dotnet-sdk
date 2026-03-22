@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <!-- Enable the full set of built-in .NET code-quality analyzers -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <!-- Suppress analyzer noise from auto-generated OpenAPI code -->
+    <GeneratedCodeAnalysisFlags>None</GeneratedCodeAnalysisFlags>
+  </PropertyGroup>
+
+  <!-- Treat analyzer warnings as errors in Release builds (CI),
+       but leave them as warnings locally for a smoother dev loop -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Exclude warnings that fire legitimately in generated/third-party code -->
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+  </PropertyGroup>
+</Project>

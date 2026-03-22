@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,6 @@ using IO.FeatureHub.SSE.Model;
 
 namespace FeatureHubSDK
 {
-
   public interface IClientContext
   {
     IClientContext UserKey(string key);
@@ -16,17 +16,19 @@ namespace FeatureHubSDK
     IClientContext Device(StrategyAttributeDeviceName device);
     IClientContext Platform(StrategyAttributePlatformName platform);
     IClientContext Country(StrategyAttributeCountryName country);
+
     /// expects semantic version Maj.Minor.Patch
     IClientContext Version(string version);
+
     IClientContext Attr(string key, string value);
     IClientContext Attrs(string key, List<string> values);
     IClientContext Clear();
 
     string GetAttr(string key, string defaultValue);
-    
+
     List<string> GetAttrs(string key);
 
-    string DefaultPercentageKey { get; }
+    string? DefaultPercentageKey { get; }
 
     IFeature this[string name] { get; }
 
@@ -46,32 +48,94 @@ namespace FeatureHubSDK
 
     Task<IClientContext> Build();
 
-    IEdgeService EdgeService { get; }
     IFeatureHubRepository Repository { get; }
 
     void Close();
+
+    void Used(FeatureState featureState, object? value);
+
+    void RecordUsageEvent(IUsageEvent usageEvent);
   }
 
-    public abstract class BaseClientContext : IClientContext
+  public abstract class BaseClientContext(IFeatureRepositoryContext repository, IFeatureHubConfig config)
+      : IClientContext
   {
-    protected readonly Dictionary<string, List<string>> _attributes = new Dictionary<string,List<string>>();
-    protected readonly IFeatureRepositoryContext _repository;
-    protected readonly IFeatureHubConfig _config;
+#pragma warning disable CA1051
+    protected readonly Dictionary<string, List<string>> _attributes = new Dictionary<string, List<string>>();
+    protected readonly IFeatureRepositoryContext _repository = repository;
+    protected readonly IFeatureHubConfig _config = config;
+#pragma warning restore CA1051
 
     public IFeatureHubRepository Repository => _repository;
-    
 
     public abstract void Close();
 
-    public BaseClientContext(IFeatureRepositoryContext repository, IFeatureHubConfig config)
+    private Dictionary<string, List<string>> UsageAttributes()
     {
-      _repository = repository;
-      _config = config;
+      Dictionary<string, List<string>> attributes = new(_attributes);
+      attributes.Remove("userkey");
+      return attributes;
     }
+
+    public void RecordUsageEvent(IUsageEvent usageEvent)
+    {
+      _repository.RecordUsageEvent(FillUsage(usageEvent));
+    }
+
+    public void Used(FeatureState featureState, object? value)
+    {
+      _repository.RecordUsageEvent(FillUsage(
+          _repository.UsageProvider.CreateUsageEventWithFeature(
+              new FeatureHubUsageValue(featureState, value),
+              UsageAttributes(), null)));
+    }
+
+    private String? UsageUserKey()
+    {
+      if (_attributes.TryGetValue("userkey", out var userKey))
+      {
+        return userKey[0];
+      }
+
+      if (_attributes.TryGetValue("session", out var session))
+      {
+        return session[0];
+      }
+
+      return null;
+    }
+
+    private IUsageEvent FillUsage(IUsageEvent usageEvent)
+    {
+      var userKey = UsageUserKey();
+      if (userKey != null)
+      {
+        usageEvent.UserKey = userKey;
+      }
+
+      if (usageEvent is IUsageFeaturesCollection collection)
+      {
+        collection.SetFeatureValues(
+            _repository.AllKeys().Select(k =>
+            {
+              var feat = _repository.GetFeature(k);
+
+              return new FeatureHubUsageValue(feat, feat.WithContext(this).UsageFreeValue);
+            }).ToList());
+      }
+
+      if (usageEvent is IUsageFeaturesCollectionContext contextCollection)
+      {
+        contextCollection.SetAttributes(UsageAttributes());
+      }
+
+      return usageEvent;
+    }
+
 
     public IClientContext UserKey(string key)
     {
-      _attributes["userkey"] = new List<string>{key};
+      _attributes["userkey"] = [key];
       return this;
     }
 
@@ -86,38 +150,38 @@ namespace FeatureHubSDK
 
     public IClientContext SessionKey(string key)
     {
-      _attributes["session"] = new List<string>{key};
+      _attributes["session"] = [key];
       return this;
     }
 
     public IClientContext Device(StrategyAttributeDeviceName device)
     {
-      _attributes["device"] = new List<string>{GetEnumMemberValue(device)};
+      _attributes["device"] = [GetEnumMemberValue(device)];
       return this;
     }
 
     public IClientContext Platform(StrategyAttributePlatformName platform)
     {
-      _attributes["platform"] = new List<string>{GetEnumMemberValue(platform)};
+      _attributes["platform"] = [GetEnumMemberValue(platform)];
       return this;
     }
 
     public IClientContext Country(StrategyAttributeCountryName country)
     {
-      _attributes["country"] = new List<string>{GetEnumMemberValue(country)};
+      _attributes["country"] = [GetEnumMemberValue(country)];
       return this;
     }
 
     public IClientContext Version(string version)
     {
-      _attributes["version"] = new List<string> {version};
+      _attributes["version"] = [version];
 
       return this;
     }
 
     public IClientContext Attr(string key, string value)
     {
-      _attributes[key] = new List<string>{value};
+      _attributes[key] = [value];
       return this;
     }
 
@@ -135,28 +199,36 @@ namespace FeatureHubSDK
 
     public string GetAttr(string key, string defaultValue)
     {
-      if (_attributes.ContainsKey(key) && _attributes[key].Count > 0)
-      {
-        return _attributes[key][0];
-      }
+      if (_attributes.TryGetValue(key, out var attrs) && attrs.Count > 0)
+        return attrs[0];
 
       return defaultValue;
     }
 
     public List<string> GetAttrs(string key)
     {
-      if (_attributes.ContainsKey(key))
+      if (_attributes.TryGetValue(key, out var attrs))
       {
-        return _attributes[key];
+        return attrs;
       }
-      
+
       return new List<string>(0);
     }
 
 
-    public string DefaultPercentageKey => _attributes.ContainsKey("session") ? _attributes["session"][0] : (_attributes.ContainsKey("userkey") ? _attributes["userkey"][0] : null);
-    public abstract IFeature this[string name] { get; }
+    public string? DefaultPercentageKey
+    {
+      get
+      {
+        if (_attributes.TryGetValue("session", out var session))
+          return session[0];
+        if (_attributes.TryGetValue("userkey", out var userkey))
+          return userkey[0];
+        return null;
+      }
+    }
 
+    public IFeature this[string name] => _repository.GetFeature(name).WithContext(this);
 
     public bool IsEnabled(string name)
     {
@@ -169,7 +241,6 @@ namespace FeatureHubSDK
     }
 
     public abstract Task<IClientContext> Build();
-    public abstract IEdgeService EdgeService { get; }
 
     public override string ToString()
     {
@@ -184,95 +255,44 @@ namespace FeatureHubSDK
 
         s += "\n";
       }
+
       return s;
     }
   }
 
-  public class ServerEvalFeatureContext : BaseClientContext
+  public class ServerEvalFeatureContext(
+      IFeatureRepositoryContext repository,
+      IFeatureHubConfig config,
+      IEdgeService edgeService)
+      : BaseClientContext(repository, config)
   {
-    private readonly EdgeServiceSource _edgeServiceSource;
-    private IEdgeService _currentEdgeService;
-    private string _xHeader;
-    private readonly bool _weCreatedSources;
-
-    public ServerEvalFeatureContext(IFeatureRepositoryContext repository, IFeatureHubConfig config, EdgeServiceSource edgeServiceSource) : base(repository, config)
-    {
-      _edgeServiceSource = edgeServiceSource;
-      _weCreatedSources = false;
-    }
-
-    public override IFeature this[string name]
-    {
-      get
-      {
-        // we tell edge to poll if it hasn't already, it also lets the timeout go do an update in the background
-        _currentEdgeService?.Poll();
-
-        return _repository.GetFeature(name);
-      }
-    }
+    private string _xHeader = "";
 
     public override async Task<IClientContext> Build()
     {
       var newHeader = string.Join(",",
-        _attributes.Select((e) => e.Key + "=" +
-                                 HttpUtility.UrlEncode(string.Join(",", e.Value))).OrderBy(u => u));
+          _attributes.Select((e) => e.Key + "=" +
+                                    HttpUtility.UrlEncode(string.Join(",", e.Value))).OrderBy(u => u));
 
-      if (!newHeader.Equals(_xHeader))
+      if (!string.Equals(newHeader, _xHeader, StringComparison.Ordinal))
       {
         _xHeader = newHeader;
         _repository.NotReady();
-
-        if (_currentEdgeService != null && _currentEdgeService.IsRequiresReplacementOnHeaderChange)
-        {
-          _currentEdgeService.Close();
-          _currentEdgeService = null;
-        }
       }
 
-      if (_currentEdgeService == null)
-      {
-        _currentEdgeService = _edgeServiceSource(_repository, _config);
-      }
-
-      await _currentEdgeService.ContextChange(_xHeader);
+      await edgeService.ContextChange(_xHeader);
 
       return this;
     }
 
-    public override IEdgeService EdgeService => _currentEdgeService;
     public override void Close()
     {
-      if (_weCreatedSources)
-      {
-        _currentEdgeService?.Close();
-      }
     }
   }
 
-  public class ClientEvalFeatureContext : BaseClientContext
+  public class ClientEvalFeatureContext(IFeatureRepositoryContext repository, IFeatureHubConfig config)
+      : BaseClientContext(repository, config)
   {
-    private readonly IEdgeService _edgeService;
-    private readonly bool _weCreatedSources;
-
-    public ClientEvalFeatureContext(IFeatureRepositoryContext repository, IFeatureHubConfig config,
-      EdgeServiceSource edgeServiceSource) : base(repository, config)
-    {
-      _edgeService = edgeServiceSource(repository, config);
-      _weCreatedSources = false;
-    }
-
-    public override IFeature this[string name]
-    {
-      get
-      {
-        // we tell edge to poll if it hasn't already, it also lets the timeout go do an update in the background
-        _edgeService?.Poll();
-        
-        return _repository.GetFeature(name).WithContext(this);
-      }
-    }
-
 #pragma warning disable 1998
     public override async Task<IClientContext> Build()
 #pragma warning restore 1998
@@ -280,14 +300,9 @@ namespace FeatureHubSDK
       return this;
     }
 
-    public override IEdgeService EdgeService => _edgeService;
 
     public override void Close()
     {
-      if (_weCreatedSources)
-      {
-        _edgeService?.Close();
-      }
     }
   }
 }

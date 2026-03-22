@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
@@ -21,9 +21,9 @@ namespace ConsoleAppExample
     {
       Console.WriteLine("Hello World!");
 
-      FeatureLogging.TraceLogger += (sender, s) => Console.WriteLine(s); 
-      FeatureLogging.ErrorLogger += (sender, s) => Console.WriteLine(s); 
-      FeatureLogging.DebugLogger += (sender, s) => Console.WriteLine(s); 
+      FeatureLogging.TraceLogger += (sender, s) => Console.WriteLine(s);
+      FeatureLogging.ErrorLogger += (sender, s) => Console.WriteLine(s);
+      FeatureLogging.DebugLogger += (sender, s) => Console.WriteLine(s);
       FeatureLogging.InfoLogger += (sender, s) => Console.WriteLine(s);
       FeatureLogging.ExceptionLogger += (sender, s) => Console.WriteLine(s.Message + s.Exception);
 
@@ -52,7 +52,7 @@ namespace ConsoleAppExample
         Console.WriteLine("Using client side validation");
       }
 
-      fh.ReadynessHandler += (sender, readyness) =>
+      fh.ReadinessHandler += (sender, readyness) =>
       {
         Console.WriteLine($"Readyness is {readyness}");
       };
@@ -61,21 +61,21 @@ namespace ConsoleAppExample
       {
         Console.WriteLine($"New features");
       };
-      
+
 
       Console.WriteLine("Context initialized, waiting for readyness - Press a key when readyness appears");
       Console.ReadKey();
 
       // this will set up a ClientContext - which is a bucket of information about this user
-// and then attempt to connect to the repository and retrieve your data. It will return once it
-// has received your data.
+      // and then attempt to connect to the repository and retrieve your data. It will return once it
+      // has received your data.
       var context = await config.NewContext().UserKey("ideally-unique-id")
         .Country(StrategyAttributeCountryName.Australia)
         .Device(StrategyAttributeDeviceName.Desktop)
         .Build();
 
 
-      if (fh.Readyness == Readyness.Ready)
+      if (fh.Readyness == Readiness.Ready)
       {
         Console.Write("Press a key (changed context)");
 
@@ -101,7 +101,7 @@ namespace ConsoleAppExample
       {
         Console.WriteLine("Not ready yet");
       }
-      
+
       context.Close();
     }
   }

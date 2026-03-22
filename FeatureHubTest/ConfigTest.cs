@@ -2,32 +2,33 @@
 using System;
 using FeatureHubSDK;
 using NUnit.Framework;
-using NUnit.Framework.Legacy;
 
 namespace FeatureHubTest
 {
-  class ConfigTest
+  sealed class ConfigTest
   {
     [Test]
     public void EnsureConfigCorrectlyDeterminesUrl()
     {
-      var cfg = new EdgeFeatureHubConfig("http://localhost:80/", "id/123*123");
-      ClassicAssert.IsTrue(!cfg.ServerEvaluation);
-      ClassicAssert.AreEqual("http://localhost:80/features/id/123*123", cfg.Url);
+      var encode = new EncodeUtils();
+      var cfg = new EdgeFeatureHubConfig("http://localhost:80/", encode.ClientApiKey);
+      Assert.That(cfg.ServerEvaluation, Is.False);
+      Assert.That(cfg.Url, Is.EqualTo($"http://localhost:80/features/{encode.ClientApiKey}"));
 
-      cfg = new EdgeFeatureHubConfig("http://localhost:80", "id/123");
-      ClassicAssert.IsTrue(cfg.ServerEvaluation);
-      ClassicAssert.AreEqual("http://localhost:80/features/id/123", cfg.Url);
+      cfg = new EdgeFeatureHubConfig("http://localhost:80", encode.ServerApiKey);
+      Assert.That(cfg.ServerEvaluation, Is.True);
+      Assert.That(cfg.Url, Is.EqualTo($"http://localhost:80/features/{encode.ServerApiKey}"));
     }
 
     [Test]
     public void EnsureEnvConfigWorks()
     {
-      Environment.SetEnvironmentVariable("FEATUREHUB_API_KEY", "id/123");
+      var apiKey = TestUtils.ServerApiKey;
+      Environment.SetEnvironmentVariable("FEATUREHUB_API_KEY", apiKey);
       Environment.SetEnvironmentVariable("FEATUREHUB_EDGE_URL", "http://localhost");
       var cfg = new EdgeFeatureHubConfig();
-      ClassicAssert.AreEqual(cfg.SdkKeys.ToArray(), new string[] {"id/123"});
-      ClassicAssert.AreEqual(cfg.EdgeUrl, "http://localhost");
+      Assert.That(cfg.SdkKeys.ToArray(), Is.EqualTo(new string[] { apiKey }));
+      Assert.That(cfg.EdgeUrl, Is.EqualTo("http://localhost"));
     }
 
     [TearDown]
@@ -35,15 +36,14 @@ namespace FeatureHubTest
     {
       Environment.SetEnvironmentVariable("FEATUREHUB_API_KEY", null);
       Environment.SetEnvironmentVariable("FEATUREHUB_EDGE_URL", null);
-      
     }
 
 
     [Test]
     public void InvalidKeyStructureFails()
     {
-      ClassicAssert.Throws<FeatureHubSDK.FeatureHubKeyInvalidException>(() => 
-        new EdgeFeatureHubConfig("http://localhost:80/", "123*123"));
-    } 
+      Assert.Throws<FeatureHubSDK.FeatureHubKeyInvalidException>(() =>
+        new EdgeFeatureHubConfig("http://localhost:80/", "123"));
+    }
   }
 }

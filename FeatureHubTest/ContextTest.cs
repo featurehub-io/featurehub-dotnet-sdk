@@ -6,25 +6,30 @@ using System.Threading.Tasks;
 using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
 using NUnit.Framework;
-using NUnit.Framework.Legacy;
 
 namespace FeatureHubTest
 {
-  public class ContextTest
+  public sealed class ContextTest
   {
     FeatureHubRepository _repository;
+    private EncodeUtils _encodeUtils;
 
     [SetUp]
     public void Setup()
     {
       _repository = new FeatureHubRepository();
+      _encodeUtils = new EncodeUtils();
     }
 
-    internal class EdgeServiceStub : IEdgeService
+    internal sealed class EdgeServiceStub : IEdgeService
     {
+#pragma warning disable CA1051
       public string header;
-      public int closeCalled = 0;
-      public bool replace = false;
+      public int closeCalled;
+#pragma warning disable CS0649
+      public bool replace;
+#pragma warning restore CS0649
+#pragma warning restore CA1051
 
       public async Task ContextChange(string header)
       {
@@ -49,9 +54,9 @@ namespace FeatureHubTest
     async public Task ChangeInContextFiresRequestToEdgeService()
     {
       var edgeStub = new EdgeServiceStub();
-      var ctx = await new ServerEvalFeatureContext(_repository, null, (repo, config) => edgeStub)
+      var ctx = await new ServerEvalFeatureContext(_repository, null, edgeStub)
         .Attr("city", "Istanbul City")
-        .Attrs("family", new List<String> {"Bambam", "DJ Elif"})
+        .Attrs("family", new List<String> { "Bambam", "DJ Elif" })
         .Country(StrategyAttributeCountryName.Turkey)
         .Platform(StrategyAttributePlatformName.Ios)
         .Device(StrategyAttributeDeviceName.Mobile)
@@ -60,47 +65,35 @@ namespace FeatureHubTest
         .SessionKey("session-key")
         .Build();
 
-      ClassicAssert.AreEqual(_repository, ctx.Repository);
-      ClassicAssert.AreEqual("Istanbul City", ctx.GetAttr("city", "here"));
-      ClassicAssert.AreEqual("here", ctx.GetAttr("city-scape", "here"));
+      Assert.That(ctx.Repository, Is.EqualTo(_repository));
+      Assert.That(ctx.GetAttr("city", "here"), Is.EqualTo("Istanbul City"));
+      Assert.That(ctx.GetAttr("city-scape", "here"), Is.EqualTo("here"));
 
-      ClassicAssert.AreEqual(
-        "city=Istanbul+City,country=turkey,device=mobile,family=Bambam%2cDJ+Elif,platform=ios,session=session-key,userkey=tv-show,version=6.2.3", edgeStub.header);
+      Assert.That(edgeStub.header, Is.EqualTo(
+        "city=Istanbul+City,country=turkey,device=mobile,family=Bambam%2cDJ+Elif,platform=ios,session=session-key,userkey=tv-show,version=6.2.3"));
 
-      ClassicAssert.NotNull(ctx.ToString());
+      Assert.That(ctx.ToString(), Is.Not.Null);
 
-      ClassicAssert.NotNull(ctx["fred"]);
-      ClassicAssert.AreEqual(edgeStub, ctx.EdgeService);
+      Assert.That(ctx["fred"], Is.Not.Null);
 
       await ctx.Clear().Build();
-      ClassicAssert.AreEqual("", edgeStub.header);
-    }
-
-    [Test]
-    async public Task EnsureStubIsReplacedOnBuildForServerEval()
-    {
-      var edgeStub = new EdgeServiceStub();
-      edgeStub.replace = true;
-      var ctx = await new ServerEvalFeatureContext(_repository, null, (repo, config) => edgeStub).Build();
-      ClassicAssert.AreEqual(0, edgeStub.closeCalled);
-      ctx.Attr("replaceme", "now");
-      await ctx.Build();
-      ClassicAssert.AreEqual(1, edgeStub.closeCalled);
+      Assert.That(edgeStub.header, Is.EqualTo(""));
     }
 
     [Test]
     async public Task EnabledFlagWorksIsTrueOnlyOnTrue()
     {
-      var ctx = new ClientEvalFeatureContext(_repository, null, (repo, config) => null);
-      ClassicAssert.AreEqual(false, ctx.IsSet("1"));
-      ClassicAssert.AreEqual(false, ctx.IsEnabled("1"));
-      _repository.Notify(SSEResultState.Features, RepositoryTest.EncodeFeatures(true, 2, FeatureValueType.BOOLEAN));
-      ClassicAssert.AreEqual(true, ctx.IsEnabled("1"));
-      _repository.Notify(SSEResultState.Features, RepositoryTest.EncodeFeatures(false, 3, FeatureValueType.BOOLEAN));
-      ClassicAssert.AreEqual(false, ctx.IsEnabled("1"));
-      ClassicAssert.AreEqual(true, ctx.IsSet("1"));
+      var ctx = new ClientEvalFeatureContext(_repository, null);
+      Assert.That(ctx.IsSet("1"), Is.EqualTo(false));
+      Assert.That(ctx.IsEnabled("1"), Is.EqualTo(false));
+      Guid id = Guid.NewGuid();
+      _repository.Notify(SSEResultState.Features,
+        _encodeUtils.EncodeFeatures(true, 2, FeatureValueType.BOOLEAN), id);
+      Assert.That(ctx.IsEnabled("1"), Is.EqualTo(true));
+      _repository.Notify(SSEResultState.Features, _encodeUtils.EncodeFeatures(false, 3, FeatureValueType.BOOLEAN), id);
+      Assert.That(ctx.IsEnabled("1"), Is.EqualTo(false));
+      Assert.That(ctx.IsSet("1"), Is.EqualTo(true));
 
-      ClassicAssert.IsNull(ctx.EdgeService);
       await ctx.Build();
       ctx.Close();
     }
