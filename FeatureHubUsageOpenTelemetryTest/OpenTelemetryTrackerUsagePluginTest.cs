@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using FeatureHubSDK;
-using FeatureHubUsageOpenTelemetry;
 using IO.FeatureHub.SSE.Model;
 using Moq;
 using NUnit.Framework;

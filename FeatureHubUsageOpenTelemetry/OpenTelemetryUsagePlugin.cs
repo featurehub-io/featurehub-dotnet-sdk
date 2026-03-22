@@ -5,7 +5,7 @@ using System.Globalization;
 using FeatureHubSDK;
 using OpenTelemetry;
 
-namespace FeatureHubUsageOpenTelemetry;
+namespace FeatureHubSDK;
 
 /// <summary>
 /// A <see cref="UsagePlugin"/> that propagates evaluated feature values into the current

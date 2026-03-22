@@ -1,11 +1,9 @@
 #nullable enable
-using System;
 using System.Globalization;
-using FeatureHubSDK;
 using IO.FeatureHub.SSE.Model;
 using OpenTelemetry;
 
-namespace FeatureHubUsageOpenTelemetry;
+namespace FeatureHubSDK;
 
 /// <summary>
 /// Intercepts feature value lookups using OpenTelemetry Baggage.

@@ -14,18 +14,23 @@
     <RepositoryUrl>https://github.com/featurehub-io/featurehub-dotnet-sdk</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>FeatureFlags FeatureToggles SDK Flags Toggles YAML Interceptor</PackageTags>
-    <PackageReleaseNotes>1.0.0 - Initial release.</PackageReleaseNotes>
+    <PackageReleaseNotes>4.0.0 - Initial release.</PackageReleaseNotes>
     <Version>1.0.0</Version>
-    <PackageVersion>1.0.0</PackageVersion>
+    <PackageVersion>4.0.0</PackageVersion>
     <LangVersion>12</LangVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>FeatureHubSDK</RootNamespace>
+    <PackageIcon>FeatureHub-icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
     <None Include="../README.md" Pack="true" PackagePath="\" />
+    <None Update="FeatureHub-icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

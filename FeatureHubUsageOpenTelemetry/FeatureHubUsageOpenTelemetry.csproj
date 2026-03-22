@@ -1,10 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+ <Title>FeatureHub Client .NET SDK (Open Telemetry Support)</Title>
+        <Authors>FeatureHub IO</Authors>
+        <Copyright>MIT</Copyright>
+        <PackageProjectUrl>https://github.com/featurehub-io/featurehub</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageLicense>MIT</PackageLicense>
+        <PackageId>FeatureHub.OpenTelemetry</PackageId>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Description>Supports Otel spans and baggae for feature value consistency.</Description>
+        <RepositoryUrl>https://github.com/featurehub-io/featurehub-dotnet-sdk</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>FeatureFlags FeatureToggles SDK Flags Toggles RemoteConfig</PackageTags>
+        <PackageReleaseNotes>4.0.0 - New repository</PackageReleaseNotes>
+        <Version>4.0.0</Version>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
+    <PackageLicenseUrl></PackageLicenseUrl>
+    <RootNamespace>FeatureHubSDK</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +29,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FeatureHubSDK\FeatureHubSDK.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="FeatureHub-icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

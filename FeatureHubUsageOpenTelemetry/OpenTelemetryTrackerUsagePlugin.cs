@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using FeatureHubSDK;
 
-namespace FeatureHubUsageOpenTelemetry;
+namespace FeatureHubSDK;
 
 /// <summary>
 /// A <see cref="UsagePlugin"/> that forwards feature usage events to the current OpenTelemetry

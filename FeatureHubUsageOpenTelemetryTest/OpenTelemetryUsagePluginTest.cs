@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using FeatureHubSDK;
-using FeatureHubUsageOpenTelemetry;
 using IO.FeatureHub.SSE.Model;
 using Moq;
 using NUnit.Framework;
