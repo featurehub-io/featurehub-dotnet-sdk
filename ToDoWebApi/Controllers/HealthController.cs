@@ -18,5 +18,11 @@ namespace ToDoAspCoreExample.Controllers
         {
             return fhConfig.Readyness == Readyness.Ready ? Ok() : StatusCode(503);
         }
+        
+        [Route("/health/readiness")]
+        public IActionResult Readiness()
+        {
+            return fhConfig.Readyness == Readyness.Ready ? Ok() : StatusCode(503);
+        }
     }
 }
