@@ -65,7 +65,7 @@ namespace FeatureHubTest
       ClassicAssert.AreEqual("here", ctx.GetAttr("city-scape", "here"));
 
       ClassicAssert.AreEqual(
-        "city=Istanbul+City,country=turkey,device=mobile,family=Bambam%2cDJ+Elif,platform=ios,session=session-key,userkey=tv-show,version=6.2.3", edgeStub.header);
+        "city=Istanbul%20City,country=turkey,device=mobile,family=Bambam%2CDJ%20Elif,platform=ios,session=session-key,userkey=tv-show,version=6.2.3", edgeStub.header);
 
       ClassicAssert.NotNull(ctx.ToString());
 

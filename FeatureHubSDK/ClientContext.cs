@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
-using System.Web;
 using IO.FeatureHub.SSE.Model;
 
 namespace FeatureHubSDK
@@ -214,9 +213,7 @@ namespace FeatureHubSDK
 
     public override async Task<IClientContext> Build()
     {
-      var newHeader = string.Join(",",
-        _attributes.Select((e) => e.Key + "=" +
-                                 HttpUtility.UrlEncode(string.Join(",", e.Value))).OrderBy(u => u));
+      var newHeader = ContextHeader.XFeatureHubHeader(_attributes);
 
       if (!newHeader.Equals(_xHeader))
       {
