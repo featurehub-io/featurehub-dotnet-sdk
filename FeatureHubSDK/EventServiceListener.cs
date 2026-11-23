@@ -106,7 +106,7 @@ namespace FeatureHubSDK
     {
       var headers = new Dictionary<string, string>();
 
-      if (_featureHost.ServerEvaluation && _xFeatureHubHeader != null)
+      if (_featureHost.ServerEvaluation && !string.IsNullOrEmpty(_xFeatureHubHeader))
       {
         headers.Add("x-featurehub", _xFeatureHubHeader);
       }

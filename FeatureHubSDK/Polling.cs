@@ -83,16 +83,16 @@ namespace FeatureHubSDK
 
             if (header != _oldHeader)
             {
-                if (header == null)
+                if (string.IsNullOrEmpty(header))
                 {
                     _configuration.DefaultHeaders.Remove("x-featurehub");
-                    _contextSha = "0";
                 }
                 else
                 {
                     _configuration.DefaultHeaders["x-featurehub"] = header;
-                    _contextSha = Sha256(header);
                 }
+
+                _contextSha = ContextHeader.ContextSha(header);
 
                 _configuration.DefaultHeaders.Remove("if-none-match");
                 
@@ -105,16 +105,10 @@ namespace FeatureHubSDK
             }
         }
         
+        [Obsolete("use ContextHeader.ContextSha, which also gives 0 for an empty header")]
         public static string Sha256(string shaString)
         {
-            var crypt = new System.Security.Cryptography.SHA256Managed();
-            var hash = new StringBuilder();
-            byte[] crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(shaString));
-            foreach (byte theByte in crypto)
-            {
-                hash.Append(theByte.ToString("x2"));
-            }
-            return hash.ToString();
+            return ContextHeader.ContextSha(shaString);
         }
 
         public async Task Poll()
